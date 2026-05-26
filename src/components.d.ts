@@ -11,9 +11,8 @@ declare module 'vue' {
     NutEmpty: typeof import('@nutui/nutui-taro')['Empty']
     NutForm: typeof import('@nutui/nutui-taro')['Form']
     NutFormItem: typeof import('@nutui/nutui-taro')['FormItem']
-    NutIcon: typeof import('@nutui/nutui-taro')['Icon']
     NutInput: typeof import('@nutui/nutui-taro')['Input']
     NutInputNumber: typeof import('@nutui/nutui-taro')['InputNumber']
-    NutStepper: typeof import('@nutui/nutui-taro')['Stepper']
+    NutLoading: typeof import('@nutui/nutui-taro')['Loading']
   }
 }

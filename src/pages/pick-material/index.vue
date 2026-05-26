@@ -1,54 +1,23 @@
 <template>
   <view class="pick-material-page">
-    <!-- 顶部表单区域 -->
-    <view class="form-section">
-      <nut-form class="search-form" ref="formRef" :model-value="formData">
-        <nut-form-item label="订单号" required>
-          <nut-input
-            v-model="formData.orderNo"
-            placeholder="请输入生产订单号"
-            clearable
-          />
-        </nut-form-item>
-        <nut-form-item label="SAP物料号" required>
-          <nut-input
-            v-model="formData.sapMaterialNo"
-            placeholder="请输入SAP物料号"
-            clearable
-          />
-        </nut-form-item>
-        <nut-form-item>
-          <nut-button
-            type="primary"
-            block
-            :loading="loading"
-            @click="handleSubmit"
-          >
-            查询BOM物料
-          </nut-button>
-        </nut-form-item>
-      </nut-form>
-    </view>
+    <!-- 项目列表组件 -->
+    <ProjectList :projects="projectList" :selected-id="selectedProject?.projectId" @select="selectProject">
+    </ProjectList>
+    <!-- 物料列表区域 -->
+    <view v-if="selectedProject && materialList.length > 0" class="material-section">
 
-    <!-- 物料列表区域，仅在提交成功后显示 -->
-    <view v-if="materialList.length > 0" class="material-section">
       <view class="section-header">
         <view class="title">物料清单确认</view>
         <view class="sub-title">
-          订单号：{{ formData.orderNo }} | SAP物料号：{{ formData.sapMaterialNo }}
+          项目：{{ selectedProject.projectName }} | SAP物料号：{{ selectedProject.sap }}
         </view>
       </view>
 
       <view class="material-tree">
-        <MaterialNode
-          v-for="(item, index) in materialList"
-          :key="index"
-          :node="item"
-          :depth="0"
-        />
+        <MaterialNode v-for="(item, index) in materialList" :key="index" :node="item" :depth="0"
+          @update:picked-quantity="handlePickQuantityUpdate" />
       </view>
 
-      <!-- 底部统计与确认按钮 -->
       <view class="footer-action">
         <view class="summary">
           <text>需求总数：{{ totalRequiredQuantity }}</text>
@@ -59,36 +28,52 @@
           确认物料领用
         </nut-button>
       </view>
-    </view>
 
-    <!-- 空状态提示 -->
-    <nut-empty v-else-if="submitted && materialList.length === 0" description="暂无物料数据，请先查询" />
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import Taro,{showToast} from '@tarojs/taro'
-import MaterialNode, { type MaterialItem } from '@/components/material-node/index.vue'
+import { ref, computed } from 'vue'
+import Taro from '@tarojs/taro'
+import ProjectList from '@/components/project-list/index.vue'
+import MaterialNode from '@/components/material-node/index.vue'
+import type { ProjectInfo } from '@/types/project'
+import type { MaterialItem } from '@/types/material'
 
-// 表单数据
-const formData = reactive({
-  orderNo: '',
-  sapMaterialNo: ''
-})
+// 模拟项目列表
+const projectList = ref<ProjectInfo[]>([
+  {
+    projectId: '149817',
+    projectCode: 'PJ_1208',
+    projectName: 'PT043D-280-R2.1_215.04kWh_南阳金冠',
+    sap: '91071573',
+    productName: 'PT043D-280-R2.1',
+    productCode: 'ES-0746',
+    quantity: 5,
+  },
+  {
+    projectId: '149818',
+    projectCode: 'PJ_1209',
+    projectName: 'PT053E-300-R2.0_250kWh_郑州宇通',
+    sap: '91071574',
+    productName: 'PT053E-300-R2.0',
+    productCode: 'ES-0747',
+    quantity: 3,
+  },
+])
 
-const loading = ref(false)
-const submitted = ref(false)
+const selectedProject = ref<ProjectInfo | null>(null)
 const materialList = ref<MaterialItem[]>([])
 
-// 统计总需求数量（所有叶子节点的原始需求数量之和）
+// 统计总需求数量
 const totalRequiredQuantity = computed(() => {
   let total = 0
   const traverse = (nodes: MaterialItem[]) => {
     for (const node of nodes) {
       if (!node.hasChildren) {
         total += node.quantity
-      } else if (node.children && node.children.length) {
+      } else if (node.children?.length) {
         traverse(node.children)
       }
     }
@@ -97,14 +82,14 @@ const totalRequiredQuantity = computed(() => {
   return total
 })
 
-// 统计总领用数量（所有叶子节点已填写的领用数量之和）
+// 统计总领用数量
 const totalPickedQuantity = computed(() => {
   let total = 0
   const traverse = (nodes: MaterialItem[]) => {
     for (const node of nodes) {
       if (!node.hasChildren) {
         total += node.pickedQuantity || 0
-      } else if (node.children && node.children.length) {
+      } else if (node.children?.length) {
         traverse(node.children)
       }
     }
@@ -113,13 +98,12 @@ const totalPickedQuantity = computed(() => {
   return total
 })
 
-/**
- * 模拟后端API：根据订单号和SAP物料号获取BOM物料树数据
- * 这里使用提供的样例数据，实际项目中可替换为真实请求
- */
-const fetchBomMaterialList = async (orderNo: string, sapNo: string): Promise<MaterialItem[]> => {
+// 获取物料数据（模拟）
+const fetchBomMaterialList = async (project: ProjectInfo): Promise<MaterialItem[]> => {
+  // 模拟网络延迟
   return new Promise((resolve) => {
     setTimeout(() => {
+      // 完整的物料树数据（基于您最初提供的结构）
       const mockData: MaterialItem[] = [
         {
           componentCode: 'CA-0070',
@@ -219,51 +203,33 @@ const fetchBomMaterialList = async (orderNo: string, sapNo: string): Promise<Mat
   })
 }
 
-/**
- * 深度处理物料树：
- * 为每个叶子节点添加 pickedQuantity 字段，默认等于 quantity
- */
 const processMaterialTree = (nodes: MaterialItem[]): MaterialItem[] => {
-  return nodes.map(node => {
-    const newNode: MaterialItem = {
-      ...node,
-      children: node.children ? processMaterialTree(node.children) : []
-    }
-    if (!newNode.hasChildren) {
-      newNode.pickedQuantity = newNode.quantity
-    }
-    return newNode
-  })
+  return nodes.map(node => ({
+    ...node,
+    children: node.children ? processMaterialTree(node.children) : [],
+    pickedQuantity: node.hasChildren ? undefined : node.quantity
+  }))
 }
 
-// 提交查询
-const handleSubmit = async () => {
-  if (!formData.orderNo.trim()) {
-    Taro.showToast({ title: '请输入生产订单号', icon: 'fail' })
-    return
-  }
-  if (!formData.sapMaterialNo.trim()) {
-    Taro.showToast({ title: '请输入SAP物料号', icon: 'fail' })
-    return
-  }
-
-  loading.value = true
+const selectProject = async (project: ProjectInfo) => {
+  if (selectedProject.value?.projectId === project.projectId) return
+  selectedProject.value = project
+  Taro.showLoading({ title: '加载物料清单中...', mask: true })
   try {
-    const rawData = await fetchBomMaterialList(formData.orderNo, formData.sapMaterialNo)
-    const processedData = processMaterialTree(rawData)
-    materialList.value = processedData
-    submitted.value = true
-    showToast({ title: '物料清单加载成功', icon: 'success' })
+    const rawData = await fetchBomMaterialList(project)
+    materialList.value = processMaterialTree(rawData)
+    Taro.showToast({ title: `已加载项目物料清单`, icon: 'success' })
   } catch (error) {
-    console.error('获取物料失败', error)
-    showToast({ title: '获取物料失败，请重试', icon: 'fail' })
+    Taro.showToast({ title: '加载失败', icon: 'error' })
   } finally {
-    loading.value = false
+    Taro.hideLoading()
   }
 }
 
 // 确认领用
-const handleConfirmPick = () => {
+const handleConfirmPick = async () => {
+  if (!selectedProject.value) return
+
   const pickRecords: Array<{
     componentCode: string
     componentName: string
@@ -284,7 +250,7 @@ const handleConfirmPick = () => {
           unit: node.unit || '个',
           sap: node.sap
         })
-      } else if (node.children && node.children.length) {
+      } else if (node.children?.length) {
         traverse(node.children)
       }
     }
@@ -292,52 +258,72 @@ const handleConfirmPick = () => {
   traverse(materialList.value)
 
   if (pickRecords.length === 0) {
-    showToast({ title: '没有可领用的物料', icon: 'fail' })
+    Taro.showToast({ title: '没有可领用的物料', icon: 'error' })
     return
   }
+
+
 
   const zeroPickItems = pickRecords.filter(item => item.pickedQty <= 0)
   if (zeroPickItems.length > 0) {
     const names = zeroPickItems.map(i => i.componentName).join('、')
-    showToast({ title: `以下物料领用数量为0：${names}`, icon: 'fail', duration: 2000 })
+    Taro.showToast({ title: `以下物料领用数量为0：${names}`, icon: 'error', duration: 2000 })
     return
   }
 
   const totalPickCount = pickRecords.reduce((sum, item) => sum + item.pickedQty, 0)
   const message = `成功领用物料 ${pickRecords.length} 种，总计 ${totalPickCount} 件。`
-  Taro.showModal({
-    title: '物料领用确认',
-    content: `${message}\n\n订单号：${formData.orderNo}\nSAP物料号：${formData.sapMaterialNo}`,
-    confirmText: '确定',
-    showCancel: false,
-    success: () => {
-      showToast({ title: '领用成功，已更新库存', icon: 'success' })
+  Taro.showLoading({ title: '提交领用中...', mask: true })
+  try {
+    // 模拟提交API调用（可替换为真实请求）
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    Taro.hideLoading()
+    Taro.showModal({
+      title: '物料领用确认',
+      content: message,
+      confirmText: '确定',
+      showCancel: false,
+    })
+  } catch (error) {
+    Taro.hideLoading()
+    Taro.showToast({ title: '提交失败', icon: 'error' })
+  }
+}
+
+/**
+ * 递归更新物料树中指定物料的领用数量
+ */
+const updatePickedQuantity = (nodes: MaterialItem[], componentCode: string, newQuantity: number): boolean => {
+  for (const node of nodes) {
+    if (node.componentCode === componentCode && !node.hasChildren) {
+      node.pickedQuantity = newQuantity
+      return true
     }
-  })
+    if (node.children && node.children.length) {
+      const found = updatePickedQuantity(node.children, componentCode, newQuantity)
+      if (found) return true
+    }
+  }
+  return false
+}
+
+const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuantity: number }) => {
+  updatePickedQuantity(materialList.value, payload.componentCode, payload.pickedQuantity)
+  // 触发响应式更新（materialList 已用 ref，直接修改内部属性会保持响应式）
 }
 </script>
 
-<style lang="scss" scoped>
+
+<style type="css">
 .pick-material-page {
   min-height: 100vh;
   background-color: #f5f6f7;
   padding-bottom: 20px;
 }
 
-.form-section {
-  background-color: #fff;
-  padding: 20px 16px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
-  .search-form {
-    --nutui-form-item-label-width: 80px;
-  }
-}
-
 .material-section {
   background-color: #fff;
-  margin: 12px 12px 80px 12px;
+  margin: 0 12px 80px 12px;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
