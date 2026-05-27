@@ -6,8 +6,8 @@
       <view class="node-info">
 
         <view v-if="node.hasChildren" class="expand-icon-wrapper">
-          <IconFont v-show="expanded" name="plus" size="10" />
-          <IconFont v-show="!expanded" name="minus" size="10" />
+          <IconFont v-show="expanded" name="plus" size="13" />
+          <IconFont v-show="!expanded" name="minus" size="13" />
         </view>
 
         <view class="node-main">
@@ -18,7 +18,7 @@
 
       <view class="node-detail">
         <text v-if="node.sap" class="sap">SAP:{{ node.sap }}</text>
-        <text v-if="node.quantity" class="quantity">需求: {{ node.quantity }}{{ node.unit }}</text>
+        <text v-if="node.quantity" class="quantity">需求: {{ node.quantity }}</text>
       </view>
 
     </view>
@@ -29,7 +29,11 @@
 
     <view v-if="!node.hasChildren" class="pick-area">
       <text class="pick-label">领用数量</text>
-      <nut-input class="custom-input-number" v-model="localPickedQuantity" :min="0" :max="100" :step="1"></nut-input>
+      <IconFont name="minus" size="13" />
+      <text>{{ localPickedQuantity }}</text>
+      <IconFont name="plus" size="13" />
+      <!-- todo:使用 封装counter替代 -->
+      <!-- <counter v-model="localPickedQuantity" /> -->
       <text class="unit">{{ node.unit || '个' }}</text>
     </view>
 
@@ -41,7 +45,7 @@
   </view>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" name="MaterialNode">
 
 import { ref, computed } from 'vue'
 import { IconFont } from '@nutui/icons-vue-taro'
@@ -125,14 +129,14 @@ const handleChildUpdate = (payload: { componentCode: string; pickedQuantity: num
         }
 
         .component-code {
-          font-size: 12px;
+          font-size: 14px;
           color: #8595a6;
         }
       }
     }
 
     .node-detail {
-      font-size: 12px;
+      font-size: 14px;
       color: #6c7a8e;
       display: flex;
       gap: 12px;
@@ -146,7 +150,7 @@ const handleChildUpdate = (payload: { componentCode: string; pickedQuantity: num
   }
 
   .spec-desc {
-    font-size: 12px;
+    font-size: 14px;
     color: #8f9eb2;
     margin: 8px 0 4px 24px;
     background: #f8f9fa;
@@ -163,16 +167,15 @@ const handleChildUpdate = (payload: { componentCode: string; pickedQuantity: num
     background: #fef9e6;
     padding: 8px 12px;
     border-radius: 24px;
+    font-size: 14px;
 
     .pick-label {
-      font-size: 13px;
       color: #e67e22;
       font-weight: 500;
     }
 
     // .custom-input-number {}
     .unit {
-      font-size: 13px;
       color: #16a085;
     }
   }

@@ -49,11 +49,11 @@ export default {
 .project-list-container {
   background-color: #fff;
   padding: 16px;
-  margin: 0 12px 12px 12px;
+  margin: 12px 12px 12px 12px;
   border-radius: 16px;
 
   .section-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: #1a2c3e;
     margin-bottom: 12px;
@@ -75,9 +75,9 @@ export default {
         align-items: center;
         gap: 8px;
         margin-bottom: 8px;
+        font-size: 15px;
 
         .project-code {
-          font-size: 14px;
           font-weight: 600;
           color: #2979ff;
           background: #e0e7ff;
@@ -88,14 +88,13 @@ export default {
 
         .project-name {
           flex: 1;
-          font-size: 15px;
           font-weight: 500;
           color: #1e293b;
           word-break: break-word;
         }
 
         .project-status {
-          font-size: 12px;
+          font-size: 14px;
           color: #16a34a;
           background: #dcfce7;
           padding: 2px 8px;
@@ -109,7 +108,7 @@ export default {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        font-size: 12px;
+        font-size: 14px;
         color: #475569;
 
         .info-item {

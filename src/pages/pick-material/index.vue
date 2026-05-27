@@ -1,6 +1,7 @@
 <template>
   <view class="pick-material-page">
     <!-- 项目列表组件 -->
+    <NavBar title="生产领料" />
     <ProjectList :projects="projectList" :selected-id="selectedProject?.projectId" @select="selectProject">
     </ProjectList>
     <!-- 物料列表区域 -->
@@ -28,7 +29,6 @@
           确认物料领用
         </nut-button>
       </view>
-
     </view>
   </view>
 </template>
@@ -38,6 +38,7 @@ import { ref, computed } from 'vue'
 import Taro from '@tarojs/taro'
 import ProjectList from '@/components/project-list/index.vue'
 import MaterialNode from '@/components/material-node/index.vue'
+import NavBar from '@/components/nav-bar/index.vue'
 import type { ProjectInfo } from '@/types/project'
 import type { MaterialItem } from '@/types/material'
 
@@ -334,13 +335,14 @@ const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuanti
     background: #fafcff;
 
     .title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 600;
       color: #1a2c3e;
       margin-bottom: 6px;
     }
+
     .sub-title {
-      font-size: 12px;
+      font-size: 14px;
       color: #6c7a8e;
     }
   }
