@@ -36,9 +36,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Taro from '@tarojs/taro'
-import ProjectList from '@/components/project-list/index.vue'
-import MaterialNode from '@/components/material-node/index.vue'
-import NavBar from '@/components/nav-bar/index.vue'
+import ProjectList from '@/components/project-list/project-list.vue'
+import MaterialNode from '@/components/material-node/material-node.vue'
+import NavBar from '@/components/nav-bar/nav-bar.vue'
 import type { ProjectInfo } from '@/types/project'
 import type { MaterialItem } from '@/types/material'
 

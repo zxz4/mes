@@ -1,6 +1,6 @@
 export default {
   pages: [
-    'pages/pick-material/index'
+    'pages/pick-material/pick-material'
   ],
   window: {
     backgroundTextStyle: 'light',

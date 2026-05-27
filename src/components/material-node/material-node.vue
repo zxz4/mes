@@ -50,7 +50,7 @@
 import { ref, computed } from 'vue'
 import { IconFont } from '@nutui/icons-vue-taro'
 import type { MaterialItem } from '@/types/material'
-import MaterialNode from './index.vue'
+import MaterialNode from './material-node.vue'
 
 const props = defineProps<{
   node: MaterialItem
