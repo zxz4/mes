@@ -1,6 +1,7 @@
 export default {
   pages: [
-    'pages/pick-material/pick-material'
+    'pages/pick-material/pick-material',
+    'pages/prod-trace/prod-trace',
   ],
   window: {
     backgroundTextStyle: 'light',

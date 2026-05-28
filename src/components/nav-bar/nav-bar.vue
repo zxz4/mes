@@ -9,8 +9,6 @@
 import { IconFont } from '@nutui/icons-vue-taro'
 // import { ref } from 'vue';
 
-// const title = ref('生产领料');
-
 const props = defineProps<{
   title: string
 }>()
