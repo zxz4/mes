@@ -23,87 +23,35 @@
 
       <view class="content-area">
         <!-- ===== 卡片列表 ===== -->
-        <view class="product-list">
+        <scroll-view scroll-y class="product-list" >
           <!-- 产品信息卡片 -->
-          <view class="product-card">
+          <view class="product-card" v-for="prod in prodList" :key="prod.batchNo">
             <view class="product-header">
-              <span class="product-name">PT043D-280-R2.1</span>
-              <span class="status-tag" :class="'done'">
-                已完成
+              <span class="product-name">{{ prod.productName }}</span>
+              <span class="status-tag" :class="prod.status">
+                {{ prod.status === 'done' ? '已完成' : prod.status === 'abnormal' ? '异常' : '加工中' }}
               </span>
             </view>
             <view class="product-info-grid">
               <view class="info-item">
                 <span class="info-label">SAP码</span>
-                <span class="info-value highlight">91071573</span>
+                <span class="info-value highlight">{{ prod.sap }}</span>
               </view>
               <view class="info-item">
                 <span class="info-label">批次号</span>
-                <span class="info-value">91071573-A001</span>
+                <span class="info-value">{{ prod.batchNo }}</span>
               </view>
               <view class="info-item">
                 <span class="info-label">产品型号</span>
-                <span class="info-value">LF280K-V3</span>
+                <span class="info-value">{{ prod.productCode }}</span>
               </view>
               <view class="info-item">
                 <span class="info-label">产品规格</span>
-                <span class="info-value">1P48S</span>
+                <span class="info-value">{{ prod.spec }}</span>
               </view>
             </view>
           </view>
-          <view class="product-card">
-            <view class="product-header">
-              <span class="product-name">PT043D-280-R2.1</span>
-              <span class="status-tag" :class="'abnormal'">
-                异常
-              </span>
-            </view>
-            <view class="product-info-grid">
-              <view class="info-item">
-                <span class="info-label">SAP码</span>
-                <span class="info-value highlight">91071573</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">批次号</span>
-                <span class="info-value">91071573-A002</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">产品型号</span>
-                <span class="info-value">LF280K-V3</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">产品规格</span>
-                <span class="info-value">1P48S</span>
-              </view>
-            </view>
-          </view>
-          <view class="product-card">
-            <view class="product-header">
-              <span class="product-name">PT043D-280-R2.1</span>
-              <span class="status-tag" :class="'processing'">
-                加工中
-              </span>
-            </view>
-            <view class="product-info-grid">
-              <view class="info-item">
-                <span class="info-label">SAP码</span>
-                <span class="info-value highlight">91071573</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">批次号</span>
-                <span class="info-value">91071573-A003</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">产品型号</span>
-                <span class="info-value">LF280K-V3</span>
-              </view>
-              <view class="info-item">
-                <span class="info-label">产品规格</span>
-                <span class="info-value">1P48S</span>
-              </view>
-            </view>
-          </view>
-        </view>
+        </scroll-view>
 
         <!-- 进度概览 -->
         <view class="progress-section">
@@ -126,7 +74,7 @@
         </view>
 
         <!-- 工序时间线 -->
-        <view class="timeline-section">
+        <scroll-view scroll-y class="timeline-section">
           <view class="timeline-title">完整工序追溯链路</view>
           <ul class="timeline-list">
             <li class="timeline-node" v-for="(step, idx) in traceResult.steps" :key="step.id"
@@ -144,7 +92,10 @@
               <!-- 右侧工序内容 -->
               <view class="timeline-content">
                 <view class="timeline-step-header">
-                  <span class="step-name">{{ idx + 1 }}. {{ step.stepName }}</span>
+                  <span class="step-name-group">
+                    <span class="step-name">{{ idx + 1 }}. {{ step.stepName }}</span>
+                    <view v-if="step.hasAnomaly" class="anomaly-flag-inline">&#9888; 含异常记录</view>
+                  </span>
                   <span class="expand-icon" :class="{ open: expandedId === step.id }">&#9660;</span>
                 </view>
                 <view class="step-subtitle">
@@ -152,13 +103,12 @@
                   <span v-if="step.endTime">&rarr; {{ step.endTime }}</span>
                   <span>&#128100; {{ step.operator || '--' }}</span>
                 </view>
-                <view v-if="step.hasAnomaly" class="anomaly-flag">&#9888; 含异常记录</view>
 
                 <!-- 展开详情 -->
                 <view v-if="expandedId === step.id" class="timeline-detail">
                   <view class="detail-grid" :class="{ 'single-col': !step.params || step.params.length === 0 }">
                     <view class="detail-kv" v-if="step.equipment">
-                      <span class="detail-k" >设备编号</span>
+                      <span class="detail-k">设备编号</span>
                       <span class="detail-v">{{ step.equipment || '--' }}</span>
                     </view>
                     <view class="detail-kv" v-if="step.equipmentName">
@@ -188,8 +138,8 @@
                     <view v-for="p in step.params" :key="p.name" class="param-row">
                       <span class="param-name">{{ p.name }}</span>
                       <span class="param-value" :class="{ abnormal: p.isAbnormal }">
+                        <span v-if="p.isAbnormal" style="font-size:10px;color:#f5222d;">&#9888;</span>
                         {{ p.value }} {{ p.unit }}
-                        <span v-if="p.isAbnormal" style="font-size:10px;color:#f5222d;">&#9888;超标</span>
                       </span>
                     </view>
                   </view>
@@ -205,8 +155,8 @@
                       <view class="anomaly-record-title">&#128680; 异常记录 #{{ ri + 1 }}</view>
                       <view class="anomaly-record-desc">
                         {{ rec.time }} &mdash; {{ rec.description }}
-                        <!-- <br />处理措施：{{ rec.action }}
-                        <br />处理结果：{{ rec.result }} -->
+                        <br />处理措施：{{ rec.action }}
+                        <br />处理结果：{{ rec.result }}
                       </view>
                     </view>
                   </view>
@@ -214,7 +164,7 @@
               </view>
             </li>
           </ul>
-        </view>
+        </scroll-view>
 
       </view>
 
@@ -226,12 +176,38 @@
 </template>
 
 <script setup lang="ts" name="ProdTrace">
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import NavBar from '@/components/nav-bar/nav-bar.vue'
 import { IconFont } from '@nutui/icons-vue-taro'
+
+const prodList = ref([
+  {
+    productName: 'PT043D-280-R2.1',
+    sap: '91071573',
+    batchNo: '91071573-A001',
+    productCode: 'LF280K-V3',
+    spec: '1P48S',
+    status: 'done'
+  },
+  {
+    productName: 'PT043D-280-R2.1',
+    sap: '91071573',
+    batchNo: '91071573-A002',
+    productCode: 'LF280K-V3',
+    spec: '1P48S',
+    status: 'abnormal'
+  },
+  {
+    productName: 'PT043D-280-R2.1',
+    sap: '91071573',
+    batchNo: '91071573-A003',
+    productCode: 'LF280K-V3',
+    spec: '1P48S',
+    status: 'processing'
+  }
+]);
+
 const isLoading = ref(false);
-
-
 const scanCode = () => {
   // 模拟扫码功能
   setTimeout(() => {
@@ -295,7 +271,7 @@ const mockProduct = {
       operator: '张铁军',
       station: '149873',
       hasAnomaly: false,
-      inspection: '',
+      inspection: '模组堆叠完成，极性正确，堆叠位置无明显偏移',
       anomalyRecords: [
       ]
     },
@@ -326,13 +302,15 @@ const mockProduct = {
       station: '52345',
       hasAnomaly: true,
       params: [
-        { name: '洁净', value: 'true', unit: '', isAbnormal: false },
+        { name: '洁净', value: '脏污', unit: '', isAbnormal: true },
       ],
-      inspection: "赃污检测发现极柱表面有轻微赃污，已打磨处理，后续工序需加强监控",
+      inspection: "工艺人员现场排查，发现极柱表面有轻微赃污。已打磨处理。",
       anomalyRecords: [
         {
           time: '2026-05-26 10:15',
-          description: 'CSS组装过程中发现极柱表面有轻微赃污，已使用酒精棉球进行打磨处理，后续工序需加强监控'
+          action: '打磨处理',
+          result: '已处理',
+          description: 'CSS组装过程会存在极柱表面赃污情况，工序需加入脏污洁净度检查。'
         }
       ]
     },
@@ -401,7 +379,7 @@ const completedCount = computed(() =>
 const expandedId = ref(null)  // 当前展开的工序ID，null表示全部收起;
 
 const toggleStep = (stepId) => {
-    // 如果点击的是当前已展开的节点，则关闭它（设为 null）
+  // 如果点击的是当前已展开的节点，则关闭它（设为 null）
   // 否则展开点击的节点（自动关闭之前打开的）
   expandedId.value = expandedId.value === stepId ? null : stepId;
 }
@@ -422,10 +400,23 @@ const getLineClass = (status, idx) => {
 }
 </script>
 
-<style lang="scss" scoped>
-@use './search.scss';
-@use './prod-card.scss';
-@use './process.scss';
+<style lang="scss">
+@import './search.scss';
+@import './prod-card.scss';
+@import './process.scss';
+
+    :root {
+      --green: #52c41a;
+      --blue: #1890ff;
+      --red: #f5222d;
+      --orange: #fa8c16;
+      --gray: #bfbfbf;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --text-primary: #1a1a2e;
+      --text-secondary: #6b7280;
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+    }
 
 .prod-trace-page {
   min-height: 100vh;
@@ -440,16 +431,16 @@ const getLineClass = (status, idx) => {
 
 /* ===== 工序时间线 ===== */
 .timeline-section {
-  background: var(--card-bg);
-  border-radius: var(--radius);
+  background: #ffffff;
+  border-radius: 14px;
   padding: 6px 16px 14px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .timeline-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #1a1a2e;
   padding: 14px 0 10px;
   display: flex;
   align-items: center;
@@ -561,20 +552,29 @@ const getLineClass = (status, idx) => {
   left: 50%;
   transform: translateX(-50%);
   width: 2.5px;
-  z-index: 1;                /* 置于圆点下方（圆点 z-index:2） */
+  z-index: 1;
+  /* 置于圆点下方（圆点 z-index:2） */
   border-radius: 2px;
 }
 
-.timeline-line-col.line-done::after    { background: var(--green); }
+.timeline-line-col.line-done::after {
+  background: var(--green);
+}
 
 .timeline-line-col.line-none::after {
-  display: none;   /* 彻底隐藏连接线 */
+  display: none;
+  /* 彻底隐藏连接线 */
 }
+
 /* 进行中：渐变线（绿→蓝→灰） */
-.timeline-line-col.line-active::after  { background: linear-gradient(to bottom, var(--green) 30%, var(--blue) 60%, #e8ecf1 100%); }
+.timeline-line-col.line-active::after {
+  background: linear-gradient(to bottom, var(--green) 30%, var(--blue) 60%, #e8ecf1 100%);
+}
 
 /* 待处理：虚线 */
-.timeline-line-col.line-pending::after { background: repeating-linear-gradient(to bottom, #d9dde3 0px, #d9dde3 4px, transparent 4px, transparent 8px); }
+.timeline-line-col.line-pending::after {
+  background: repeating-linear-gradient(to bottom, #d9dde3 0px, #d9dde3 4px, transparent 4px, transparent 8px);
+}
 
 /* 右侧内容 */
 .timeline-content {
@@ -593,20 +593,20 @@ const getLineClass = (status, idx) => {
 .step-name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1a1a2e;
   letter-spacing: 0.2px;
 }
 
 .step-time {
   font-size: 11px;
-  color: var(--text-muted);
+  color: #9ca3af;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .step-subtitle {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: #6b7280;
   margin-top: 3px;
   display: flex;
   align-items: center;
@@ -621,7 +621,7 @@ const getLineClass = (status, idx) => {
 /* 展开箭头 */
 .expand-icon {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #9ca3af;
   transition: transform 0.3s ease;
   flex-shrink: 0;
 }
@@ -630,18 +630,26 @@ const getLineClass = (status, idx) => {
   transform: rotate(180deg);
 }
 
-/* 异常标记 */
-.anomaly-flag {
+.step-name-group {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  /* 无间距紧贴 */
+}
+
+/* 异常标记 */
+.anomaly-flag-inline {
+  display: inline-flex;
+  align-items: center;
   font-size: 11px;
-  color: var(--red);
+  color: #f5222d;
   background: #fff1f0;
-  padding: 3px 9px;
-  border-radius: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
   font-weight: 600;
-  margin-top: 5px;
+  white-space: nowrap;
+  margin-left: 5px;
+  /* 可以调成 0 或 2px，但紧贴可能太近，建议 4px */
 }
 
 /* 展开详情 */
@@ -684,13 +692,13 @@ const getLineClass = (status, idx) => {
 
 .detail-k {
   font-size: 11px;
-  color: var(--text-muted);
+  color: #9ca3af;
 }
 
 .detail-v {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #1a1a2e;
 }
 
 .detail-v.warn {
@@ -709,12 +717,12 @@ const getLineClass = (status, idx) => {
 }
 
 .param-name {
-  color: var(--text-secondary);
+  color: #6b7280;
 }
 
 .param-value {
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1a1a2e;
 }
 
 .param-value.abnormal {

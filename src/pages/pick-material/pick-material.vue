@@ -102,9 +102,9 @@ const totalPickedQuantity = computed(() => {
 // 获取物料数据（模拟）
 const fetchBomMaterialList = async (project: ProjectInfo): Promise<MaterialItem[]> => {
   // 模拟网络延迟
+  console.log(`Fetching BOM material list for project: ${project.projectName} (SAP: ${project.sap})`)
   return new Promise((resolve) => {
     setTimeout(() => {
-      // 完整的物料树数据（基于您最初提供的结构）
       const mockData: MaterialItem[] = [
         {
           componentCode: 'CA-0070',
@@ -200,7 +200,7 @@ const fetchBomMaterialList = async (project: ProjectInfo): Promise<MaterialItem[
         }
       ]
       resolve(mockData)
-    }, 500)
+    }, 1000)
   })
 }
 
@@ -213,13 +213,15 @@ const processMaterialTree = (nodes: MaterialItem[]): MaterialItem[] => {
 }
 
 const selectProject = async (project: ProjectInfo) => {
-  if (selectedProject.value?.projectId === project.projectId) return
+  if (selectedProject.value?.projectId === project.projectId){
+    selectedProject.value = null;
+    return
+  }
   selectedProject.value = project
   Taro.showLoading({ title: '加载物料清单中...', mask: true })
   try {
     const rawData = await fetchBomMaterialList(project)
     materialList.value = processMaterialTree(rawData)
-    Taro.showToast({ title: `已加载项目物料清单`, icon: 'success' })
   } catch (error) {
     Taro.showToast({ title: '加载失败', icon: 'error' })
   } finally {
@@ -310,15 +312,14 @@ const updatePickedQuantity = (nodes: MaterialItem[], componentCode: string, newQ
 
 const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuantity: number }) => {
   updatePickedQuantity(materialList.value, payload.componentCode, payload.pickedQuantity)
-  // 触发响应式更新（materialList 已用 ref，直接修改内部属性会保持响应式）
 }
 </script>
 
 
-<style type="css">
+<style lang="scss">
 .pick-material-page {
   min-height: 100vh;
-  background-color: #f5f6f7;
+  background-color: $help-color;              // #f5f5f5 替换 #f5f6f7
   padding-bottom: 20px;
 }
 
@@ -327,23 +328,23 @@ const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuanti
   margin: 0 12px 80px 12px;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);  // 保留：NutUI 无阴影变量
 
   .section-header {
     padding: 16px;
-    border-bottom: 1px solid #eee;
-    background: #fafcff;
+    border-bottom: 1px solid $help-color;       // 替换 #eee
+    background: #fafcff;                       // 保留：带蓝调的浅背景，无对应变量
 
     .title {
-      font-size: 17px;
+      font-size: 17px;                         // 保留：介于 $font-size-3(16px) 与 $font-size-4(18px) 之间
       font-weight: 600;
-      color: #1a2c3e;
+      color: $title-color;                     // 替换 #1a2c3e → #1A1A1A
       margin-bottom: 6px;
     }
 
     .sub-title {
-      font-size: 14px;
-      color: #6c7a8e;
+      font-size: $font-size-2;                 // 14px 替换硬编码
+      color: $title-color2;                    // 替换 #6c7a8e → #666666
     }
   }
 
@@ -353,26 +354,27 @@ const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuanti
 
   .footer-action {
     padding: 16px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid $help-color;          // 替换 #eee
     background: #fff;
 
     .summary {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #f0f9ff;
+      background: #f0f9ff;                     // 保留：业务汇总区浅蓝高亮背景
       padding: 12px 16px;
       border-radius: 40px;
       margin-bottom: 16px;
-      font-size: 14px;
-      color: #0066cc;
+      font-size: $font-size-2;                 // 14px
+      color: #0066cc;                          // 保留：业务高亮蓝，不同于 $primary-color(#478EF2)
       font-weight: 500;
 
       .separator {
         margin: 0 8px;
-        color: #ccc;
+        color: #ccc;                           // 保留：中等灰分隔符，$help-color 太浅，$title-color2 太深
       }
     }
   }
 }
 </style>
+

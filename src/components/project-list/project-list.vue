@@ -19,7 +19,7 @@
   </view>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" name="ProjectList">
 import type { ProjectInfo } from '@/types/project'
 
 const props = defineProps<{
@@ -38,14 +38,7 @@ const handleSelect = (project: ProjectInfo) => {
 }
 </script>
 
-<script lang="ts">
-// 用于递归组件识别，无实际作用，但避免 TS 报错
-export default {
-  name: 'ProjectList'
-}
-</script>
-
-<style type="css">
+<style lang="scss" scoped>
 .project-list-container {
   background-color: #fff;
   padding: 16px;
@@ -55,15 +48,15 @@ export default {
   .section-title {
     font-size: 17px;
     font-weight: 600;
-    color: #1a2c3e;
+    color: $title-color;
     margin-bottom: 12px;
     padding-left: 4px;
-    border-left: 4px solid #2979ff;
+    border-left: 4px solid $primary-color;
   }
 
   .project-list {
     .project-card {
-      background: #f8fafc;
+      background: $help-color;
       border-radius: 12px;
       padding: 12px 16px;
       border: 1px solid #e2e8f0;
@@ -79,7 +72,7 @@ export default {
 
         .project-code {
           font-weight: 600;
-          color: #2979ff;
+          color: $primary-color;
           background: #e0e7ff;
           padding: 2px 8px;
           border-radius: 16px;
@@ -89,27 +82,26 @@ export default {
         .project-name {
           flex: 1;
           font-weight: 500;
-          color: #1e293b;
+          color: $title-color;
           word-break: break-word;
         }
 
         .project-status {
-          font-size: 14px;
+          font-size: $font-size-2;
           color: #16a34a;
           background: #dcfce7;
           padding: 2px 8px;
           border-radius: 16px;
           margin-left: auto;
         }
-
       }
 
       .project-info {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        font-size: 14px;
-        color: #475569;
+        font-size: $font-size-2;
+        color: $title-color2;
 
         .info-item {
           background: #ffffff;
@@ -126,9 +118,10 @@ export default {
 
     .project-card.active {
       background: #eef2ff;
-      border-color: #2979ff;
-      box-shadow: 0 2px 8px rgba(41, 121, 255, 0.1);
+      border-color: $primary-color;
+      box-shadow: 0 2px 8px rgba(71, 142, 242, 0.1);
     }
   }
 }
 </style>
+
