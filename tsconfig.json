@@ -19,7 +19,8 @@
     "resolveJsonModule": true,
     "paths": {
       "@/components/*": ["./src/components/*"],
-      "@/types/*": ["./src/types/*"]
+      "@/types/*": ["./src/types/*"],
+      "@/styles/*": ["./src/styles/*"]
     },
     "typeRoots": [
       "node_modules/@types"

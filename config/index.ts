@@ -33,7 +33,15 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       // 京东科技主题 > @import "@nutui/nutui-taro/dist/styles/variables-jdt.scss";
       // 京东B商城主题 > @import "@nutui/nutui-taro/dist/styles/variables-jdb.scss";
       // 京东企业业务主题 > @import "@nutui/nutui-taro/dist/styles/variables-jddkh.scss";
-      data: `@import "@nutui/nutui-taro/dist/styles/variables-jdb.scss";`
+      data: `@import "@nutui/nutui-taro/dist/styles/variables-jdt.scss";`
+      //主题样式不生效：https://github.com/jd-opensource/nutui/issues/2960
+    },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: `@import "@nutui/nutui/dist/styles/variables-jdt.scss";`
+        }
+      }
     },
     sourceRoot: 'src',
     outputRoot: 'dist',
@@ -51,7 +59,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       type: 'vite',
       vitePlugins: [
         Components({
-          resolvers: [NutUIResolver({ taro: true })]
+          resolvers: [NutUIResolver({ taro: true , importStyle: 'sass' })]
         })
       ]
     },
@@ -107,6 +115,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       '@/components': path.resolve(__dirname, '..', 'src/components'),
       '@/types': path.resolve(__dirname, '..', 'src/types'),
       '@/api': path.resolve(__dirname, '..', 'src/api'),
+      '@/styles': path.resolve(__dirname, '..', 'src/styles'),
     },
   }
   if (process.env.NODE_ENV === 'development') {

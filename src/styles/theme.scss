@@ -1,0 +1,23 @@
+// styles/theme.scss
+// 科技主题固定颜色（来自 NutUI variables-jdt.scss）
+$tp-primary: #2c68ff;
+$tp-success: #0ed57d;
+$tp-danger: #f52f3e;
+$tp-warning: #ff9c00;
+$tp-white: #fff;
+$tp-help: #f5f5f5;
+$tp-title: #1a1a1a;
+$tp-text: #808080;
+$tp-disable: #cccccc;
+
+$tp-radius-sm: 4px;
+$tp-radius-base: 8px;
+$tp-radius-lg: 16px;
+
+$tp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+$tp-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+
+// 状态背景色混合
+@mixin status-bg($color) {
+  background: rgba($color, 0.1);
+}

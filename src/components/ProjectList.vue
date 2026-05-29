@@ -40,13 +40,13 @@ const handleSelect = (project: ProjectInfo) => {
 
 <style lang="scss" scoped>
 .project-list-container {
-  background-color: #fff;
+  background-color: $white;
   padding: 16px;
-  margin: 12px 12px 12px 12px;
-  border-radius: 16px;
+  margin: 12px;
+  border-radius: $popup-border-radius; // 8px，与科技主题弹窗圆角一致
 
   .section-title {
-    font-size: 17px;
+    font-size: $font-size-3; // 16px
     font-weight: 600;
     color: $title-color;
     margin-bottom: 12px;
@@ -59,7 +59,7 @@ const handleSelect = (project: ProjectInfo) => {
       background: $help-color;
       border-radius: 12px;
       padding: 12px 16px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(0, 0, 0, 0.06); // 使用主题中的浅色边框变量
       transition: all 0.2s;
       margin-bottom: 12px;
 
@@ -68,12 +68,12 @@ const handleSelect = (project: ProjectInfo) => {
         align-items: center;
         gap: 8px;
         margin-bottom: 8px;
-        font-size: 15px;
+        font-size: $font-size-3; // 16px
 
         .project-code {
           font-weight: 600;
           color: $primary-color;
-          background: #e0e7ff;
+          background: rgba($primary-color, 0.15); // 主色浅色背景
           padding: 2px 8px;
           border-radius: 16px;
           flex-shrink: 0;
@@ -87,9 +87,9 @@ const handleSelect = (project: ProjectInfo) => {
         }
 
         .project-status {
-          font-size: $font-size-2;
-          color: #16a34a;
-          background: #dcfce7;
+          font-size: $font-size-2; // 14px
+          color: $button-success-background-color; // #0ed57d
+          background: rgba($button-success-background-color, 0.15);
           padding: 2px 8px;
           border-radius: 16px;
           margin-left: auto;
@@ -100,14 +100,14 @@ const handleSelect = (project: ProjectInfo) => {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        font-size: $font-size-2;
+        font-size: $font-size-2; // 14px
         color: $title-color2;
 
         .info-item {
-          background: #ffffff;
+          background: $white;
           padding: 2px 8px;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
+          border-radius: $tag-default-border-radius; // 4px
+          border: 1px solid rgba(0, 0, 0, 0.06);
         }
       }
     }
@@ -117,9 +117,9 @@ const handleSelect = (project: ProjectInfo) => {
     }
 
     .project-card.active {
-      background: #eef2ff;
+      background: rgba($primary-color, 0.08);
       border-color: $primary-color;
-      box-shadow: 0 2px 8px rgba(71, 142, 242, 0.1);
+      box-shadow: 0 2px 8px rgba($primary-color, 0.1);
     }
   }
 }
