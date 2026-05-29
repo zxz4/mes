@@ -30,18 +30,19 @@ const anomalyCount = computed(() => props.steps.filter(s => s.status === 'anomal
 const pendingCount = computed(() => props.steps.filter(s => s.status === 'pending').length)
 const totalSteps = computed(() => props.steps.length)
 const completedCount = computed(() => doneCount.value + anomalyCount.value)
-const percent = computed(() => Math.round((completedCount.value / totalSteps.value) * 100))
+const percent = computed(() => Math.round((completedCount.value / totalSteps.value) * 100) || 0)
 </script>
 
 <style lang="scss" scoped>
 @import '@/styles/theme.scss';
-/* 进度概览：左右边距16px，下边距12px */
+
 .progress-section {
-  margin: 0 16px 12px;
   background: $tp-white;
   border-radius: $tp-radius-base;
   padding: 17px 18px;
   box-shadow: $tp-shadow-sm;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .progress-header {

@@ -47,6 +47,7 @@ const toggle = () => {
 
 <style lang="scss" scoped>
 @import '@/styles/theme.scss';
+
 .timeline-node {
   display: flex;
   gap: 13px;

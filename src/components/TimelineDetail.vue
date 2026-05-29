@@ -70,6 +70,7 @@ const hasParams = computed(() => props.step.params && props.step.params.length >
 
 <style lang="scss" scoped>
 @import '@/styles/theme.scss';
+
 .timeline-detail {
   margin-top: 10px;
   background: $tp-help;

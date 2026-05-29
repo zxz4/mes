@@ -1,5 +1,5 @@
 <template>
-  <view class="product-card" :class="{ active }" @click="emit('click')">
+  <view class="product-card" @click="emit('click')">
     <view class="product-header">
       <span class="product-name">{{ product.productName }}</span>
       <span class="status-tag" :class="product.status">
@@ -33,8 +33,8 @@ import type { ProductInfo } from '@/types/prod-trace'
 
 const props = defineProps<{
   product: ProductInfo
-  active?: boolean
 }>()
+
 const emit = defineEmits<{ click: [] }>()
 
 const statusText = computed(() => {
@@ -49,16 +49,19 @@ const statusText = computed(() => {
 
 <style lang="scss" scoped>
 @import '@/styles/theme.scss';
+
 .product-card {
   background: $tp-white;
   border-radius: $tp-radius-base;
   padding: 18px;
   box-shadow: $tp-shadow-md;
   margin-bottom: 12px;
-  &.active {
-    border: 2px solid $tp-primary;
-    background: rgba($tp-primary, 0.05);
-    box-shadow: 0 2px 8px rgba($tp-primary, 0.2);
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.98);
+    background: rgba($tp-primary, 0.02);
   }
 }
 
