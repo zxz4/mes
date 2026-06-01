@@ -1,5 +1,6 @@
 export default {
   pages: [
+    'pages/prod-operation/prod-operation',
     'pages/pick-material/pick-material',
     'pages/prod-trace/prod-trace',
   ],

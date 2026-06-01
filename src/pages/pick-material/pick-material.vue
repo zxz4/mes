@@ -105,7 +105,8 @@ const fetchBomMaterialList = async (project: ProjectInfo): Promise<MaterialItem[
   console.log(`Fetching BOM material list for project: ${project.projectName} (SAP: ${project.sap})`)
   return new Promise((resolve) => {
     setTimeout(() => {
-      const mockData: MaterialItem[] = [
+      const mockData: MaterialItem[] =
+      [
         {
           componentCode: 'CA-0070',
           componentName: '方形三元',
@@ -336,7 +337,7 @@ const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuanti
     background: #fafcff;                       // 保留：带蓝调的浅背景，无对应变量
 
     .title {
-      font-size: 17px;                         // 保留：介于 $font-size-3(16px) 与 $font-size-4(18px) 之间
+      font-size: $font-size-3;                         // 保留：介于 $font-size-3(16px) 与 $font-size-4(18px) 之间
       font-weight: 600;
       color: $title-color;                     // 替换 #1a2c3e → #1A1A1A
       margin-bottom: 6px;

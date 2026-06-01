@@ -7,18 +7,27 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    NutActionsheet: typeof import('@nutui/nutui-taro')['Actionsheet']
     NutButton: typeof import('@nutui/nutui-taro')['Button']
     NutCol: typeof import('@nutui/nutui-taro')['Col']
     NutEmpty: typeof import('@nutui/nutui-taro')['Empty']
     NutForm: typeof import('@nutui/nutui-taro')['Form']
     NutFormItem: typeof import('@nutui/nutui-taro')['FormItem']
+    NutFrom: typeof import('@nutui/nutui-taro')['From']
+    NutIcon: typeof import('@nutui/nutui-taro')['Icon']
     NutInput: typeof import('@nutui/nutui-taro')['Input']
     NutInputNumber: typeof import('@nutui/nutui-taro')['InputNumber']
     NutLoading: typeof import('@nutui/nutui-taro')['Loading']
     NutNavbar: typeof import('@nutui/nutui-taro')['Navbar']
+    NutPicker: typeof import('@nutui/nutui-taro')['Picker']
     NutPopup: typeof import('@nutui/nutui-taro')['Popup']
     NutProgress: typeof import('@nutui/nutui-taro')['Progress']
+    NutRadio: typeof import('@nutui/nutui-taro')['Radio']
+    NutRadioGroup: typeof import('@nutui/nutui-taro')['RadioGroup']
     NutRow: typeof import('@nutui/nutui-taro')['Row']
+    NutSelect: typeof import('@nutui/nutui-taro')['Select']
     NutSpace: typeof import('@nutui/nutui-taro')['Space']
+    NutTextarea: typeof import('@nutui/nutui-taro')['Textarea']
+    NutToast: typeof import('@nutui/nutui-taro')['Toast']
   }
 }

@@ -286,7 +286,7 @@ const getLineClass = (status: Step['status'], idx: number) => {
       border: none;
       outline: none;
       background: transparent;
-      font-size: 14px;
+      font-size: $font-size-2;
       color: $tp-title;
       padding: 0;
       line-height: 1.5;
@@ -320,7 +320,7 @@ const getLineClass = (status: Step['status'], idx: number) => {
     flex-shrink: 0;
     padding: 11px 22px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: $font-size-2;
     font-weight: 700;
     cursor: pointer;
     letter-spacing: 0.5px;
@@ -387,14 +387,14 @@ const getLineClass = (status: Step['status'], idx: number) => {
 }
 
 .product-name {
-  font-size: 18px;
+  font-size: $font-size-4;
   font-weight: 600;
   color: $tp-title;
   margin-bottom: 8px;
 }
 
 .product-meta {
-  font-size: 14px;
+  font-size: $font-size-2;
   color: $tp-text;
   margin-top: 4px;
 }
@@ -404,7 +404,7 @@ const getLineClass = (status: Step['status'], idx: number) => {
 }
 
 .timeline-title {
-  font-size: 16px;
+  font-size: $font-size-3;
   font-weight: 700;
   color: $tp-title;
   padding: 14px 0 10px;
