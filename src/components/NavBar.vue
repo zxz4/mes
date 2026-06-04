@@ -1,6 +1,6 @@
 <template>
 <nav class="nav-bar">
-  <view class="nav-back">        <!-- 添加包裹容器 -->
+  <view class="nav-back" @click="handleBack">        <!-- 添加包裹容器 -->
     <IconFont name="rect-left" size="18"></IconFont>
   </view>
   <span class="nav-title">{{ title }}</span>
@@ -9,11 +9,16 @@
 <script setup lang="ts" name="NavBar">
 
 import { IconFont } from '@nutui/icons-vue-taro'
+import { navigateBack } from '@tarojs/taro'
 // import { ref } from 'vue';
 
 const props = defineProps<{
   title: string
 }>()
+
+const handleBack = () => {
+  navigateBack()
+}
 
 </script>
 <style lang="scss" scoped>
