@@ -287,6 +287,11 @@ const handleConfirmPick = async () => {
       content: message,
       confirmText: '确定',
       showCancel: false,
+      success: () => {
+        Taro.navigateTo({
+          url:'/pages/prod-operation/prod-operation?projectId=' + selectedProject.value?.projectId
+        });
+      }
     })
   } catch (error) {
     Taro.hideLoading()

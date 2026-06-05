@@ -212,12 +212,12 @@ const workOrders = ref<WorkOrder[]>([
   }
 ])
 
-// 状态筛选
+// 状态筛选 这个是否从后端返回还是应该前端计算？如果后端返回状态统计数据会更高效，避免前端重复计算。
 const filterStatus = ref<'all' | 'pending_material' | 'in_production' | 'completed' | 'anomaly'>('pending_material')
 
 const pendingMaterialCount = computed(() => workOrders.value.filter(o => o.status === 'pending_material').length)
 const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'in_production').length)
-const completedCount = computed(() => workOrders.value.filter(o => o.status === 'completed').length)
+// const completedCount = computed(() => workOrders.value.filter(o => o.status === 'completed').length)
 const anomalyCount = computed(() => workOrders.value.filter(o => o.hasAnomaly).length)
 
 const filteredOrders = computed(() => {
@@ -255,7 +255,7 @@ const formatDate = (dateStr: string) => {
 
 // 页面跳转
 const goToDetail = (orderId: string) => {
-  Taro.navigateTo({ url: `/pages/work-order-detail/work-order-detail?id=${orderId}` })
+  Taro.navigateTo({ url: `/pages/work-order/order-detail?id=${orderId}` })
 }
 
 const goToPicking = (orderId: string) => {

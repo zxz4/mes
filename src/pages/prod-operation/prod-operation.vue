@@ -77,11 +77,9 @@
             <view v-else-if="task.status === 'progressing'" class="progressing-actions">
               <nut-button type="primary" size="small" @click="openParamPanel(task)">录入参数</nut-button>
               <nut-button type="danger" size="small" plain @click="openAnomalyPanel(task)">记录异常</nut-button>
-              <nut-button type="success" size="small" plain @click="completeTask(task)">完成生产</nut-button>
+           <!-- /  <nut-button type="success" size="small" plain @click="completeTask(task)">完成生产</nut-button> -->
             </view>
-            <view v-else-if="task.status === 'completed'">
-              <nut-button type="info" size="small" plain @click="toggleExpand(task)">🔍 {{ expandedSet.has(task.id) ? '收起详情' : '查看详情' }}</nut-button>
-            </view>
+            <nut-button v-else-if="task.status === 'completed'" type="info" size="small" plain @click="toggleExpand(task)">🔍 {{ expandedSet.has(task.id) ? '收起详情' : '查看详情' }}</nut-button>
             <nut-button v-if="task.status === 'progressing' && (task.paramLogs.length > 0 || task.anomalies.length > 0)"
               size="small" type="info" plain @click="toggleExpand(task)">
               {{ expandedSet.has(task.id) ? '收起记录' : '展开记录' }}
@@ -416,15 +414,15 @@ const startTask = (task: Task) => {
   showToast({ title: '已领取任务', duration: 500 })
 }
 
-// 完成任务
-const completeTask = (task: Task) => {
-  if (task.completedQty < task.planQty) {
-    showToast({icon:'none',  title: `尚有 ${task.planQty - task.completedQty} 件未完成，请确认产量`, duration: 1500, })
-    return
-  }
-  task.status = 'completed'
-  showToast({ title: '任务已完成', duration: 500 })
-}
+// // 完成任务
+// const completeTask = (task: Task) => {
+//   if (task.completedQty < task.planQty) {
+//     showToast({icon:'none',  title: `尚有 ${task.planQty - task.completedQty} 件未完成，请确认产量`, duration: 1500, })
+//     return
+//   }
+//   task.status = 'completed'
+//   showToast({ title: '任务已完成', duration: 500 })
+// }
 
 // 展开/收起
 const expandedSet = ref<Set<string>>(new Set())
@@ -970,7 +968,7 @@ $font-size-4: 22px;
   flex-wrap: wrap;
 
   .nut-button {
-    flex: 1;
+    // flex: 1;
     min-width: 80px;
   }
 }
