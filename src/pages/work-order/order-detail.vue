@@ -13,7 +13,6 @@
             {{ statusLabel(workOrder.status) }}
           </view>
         </view>
-        <!-- 信息网格 -->
         <view class="info-grid">
           <view class="info-item">
             <text class="label">项目编码</text>
@@ -44,7 +43,6 @@
             <text class="value">{{ workOrder.leaderName }} ({{ workOrder.leaderDept }})</text>
           </view>
         </view>
-        <!-- 进度条 -->
         <view class="progress-section">
           <view class="progress-header"><text>生产进度</text><text>{{ workOrder.progress }}%</text></view>
           <nut-progress :percentage="workOrder.progress" :show-text="false" stroke-color="blue" />
@@ -62,48 +60,50 @@
             </view>
             <view class="material-qty">
               <text>需求: {{ item.requiredQty }} {{ item.unit }}</text>
-              <text :class="item.pickedQty && item.pickedQty >= item.requiredQty ? 'picked-done' : 'picked-pending'">已领:
-                {{
-                  item.pickedQty
-                  || 0 }}</text>
+              <text :class="item.pickedQty && item.pickedQty >= item.requiredQty ? 'picked-done' : 'picked-pending'">
+                已领: {{ item.pickedQty || 0 }}
+              </text>
             </view>
           </view>
         </view>
         <view class="material-summary" v-if="materialList.length">
-          <nut-progress :percentage="materialProgress" :show-text="false" stroke-color="green"
-            style="height:4px; flex:1;" />
+          <nut-progress :percentage="materialProgress" :show-text="false" stroke-color="green" style="height:4px; flex:1;" />
           <text class="summary-text">物料齐套率 {{ materialProgress }}%</text>
         </view>
       </view>
 
-      <!-- 工序进度卡片 -->
+      <!-- 工序进度卡片（修正样式） -->
       <view class="info-card" v-if="steps.length">
         <view class="card-header">
           <text class="card-title">工序进度</text>
-          <text class="subtitle">{{ completedStepsCount }} / {{ steps.length }} 道</text>
-        </view>
-        <view class="steps-progress">
-          <nut-progress :percentage="stepsPercent" :show-text="false" stroke-color="blue" />
-          <text class="steps-percent-text">{{ stepsPercent }}%</text>
         </view>
         <view class="steps-list">
           <view v-for="(step, idx) in steps" :key="step.id" class="step-item">
-            <view class="step-index">{{ idx + 1 }}</view>
-            <view class="step-info">
-              <text class="step-name">{{ step.stepName }}</text>
-              <text class="step-desc">{{ step.equipmentName || '未指定设备' }}</text>
+            <view class="step-header">
+              <view class="step-index">{{ idx + 1 }}</view>
+              <view class="step-name">{{ step.stepName }}</view>
+              <view class="step-status" :class="step.statusClass">{{ step.statusLabel }}</view>
             </view>
-            <view class="step-status" :class="step.statusClass">{{ step.statusLabel }}</view>
+            <view class="step-progress-info">
+              <text>加工进度：{{ step.completedQty }} / {{ step.planQty }} 件</text>
+            </view>
+            <view v-if="step.consumedMaterials?.length" class="step-material-info">
+              <text class="material-label">物料消耗：</text>
+              <text v-for="(m, mi) in step.consumedMaterials" :key="mi" class="material-item">
+                {{ m.materialName }} {{ m.consumedQty }}{{ m.unit }}
+              </text>
+            </view>
+            <view class="step-equipment" v-if="step.equipmentName">
+              <text>设备：{{ step.equipmentName }}</text>
+            </view>
           </view>
         </view>
       </view>
 
       <!-- 操作按钮 -->
       <view class="action-buttons">
-        <nut-button v-if="workOrder.status === 'pending_material'" type="primary" block
-          @click="goToPicking">去领料</nut-button>
-        <nut-button v-if="workOrder.status === 'in_production'" type="success" block
-          @click="goToProduction">继续生产</nut-button>
+        <nut-button v-if="workOrder.status === 'pending_material'" type="primary" block @click="goToPicking">去领料</nut-button>
+        <nut-button v-if="workOrder.status === 'in_production'" type="success" block @click="goToProduction">继续生产</nut-button>
         <nut-button v-if="workOrder.status === 'completed'" type="info" block plain @click="goToTrace">查看追溯</nut-button>
         <nut-button v-if="workOrder.hasAnomaly" type="danger" block plain @click="goToTrace">查看异常</nut-button>
       </view>
@@ -129,6 +129,7 @@ const loading = ref(true)
 const workOrder = ref<WorkOrderDetail | null>(null)
 const materialList = ref<MaterialItem[]>([])
 const steps = ref<StepProgress[]>([])
+
 const materialProgress = computed(() => {
   if (!materialList.value.length) return 0
   const totalRequired = materialList.value.reduce((sum, i) => sum + i.requiredQty, 0)
@@ -138,15 +139,16 @@ const materialProgress = computed(() => {
 
 const statusLabel = (s: string) => ({ pending_material: '待领料', in_production: '生产中', completed: '已完成' }[s] || s)
 const statusClass = (s: string) => ({ pending_material: 'status-pending', in_production: 'status-progress', completed: 'status-completed' }[s] || '')
-// 工序进度统计
-const completedStepsCount = computed(() => steps.value.filter(s => s.status === 'completed').length)
-const stepsPercent = computed(() => steps.value.length ? Math.round((completedStepsCount.value / steps.value.length) * 100) : 0)
-const goToPicking = () => Taro.navigateTo({ url: `/pages/picking/index?workOrderId=${workOrderId}` })
-const goToProduction = () => Taro.navigateTo({ url: `/pages/prod-operation/index?workOrderId=${workOrderId}` })
-const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/index?workOrderId=${workOrderId}` })
+
+const goToPicking = () => Taro.navigateTo({ url: `/pages/pick-material/pick-material?workOrderId=${workOrderId}` })
+const goToProduction = () => Taro.navigateTo({ url: `/pages/prod-operation/prod-operation?workOrderId=${workOrderId}` })
+const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/prod-trace?workOrderId=${workOrderId}` })
 const backToList = () => Taro.navigateBack()
 
-// 模拟加载数据（根据实际替换为接口）
+// 工序完成统计（未使用但保留）
+const completedStepsCount = computed(() => steps.value.filter(s => s.status === 'completed').length)
+
+// 加载数据（模拟）
 const loadData = async () => {
   loading.value = true
   await new Promise(resolve => setTimeout(resolve, 500))
@@ -196,12 +198,85 @@ const loadData = async () => {
       { materialName: '端板组件', materialCode: 'EP-48S', requiredQty: 80, unit: '套', pickedQty: 40 }
     ]
     steps.value = [
-      { id: 1, stepName: '短板加工', status: 'completed', statusLabel: '已完成', statusClass: 'step-done', equipmentName: '加工中心' },
-      { id: 2, stepName: '电芯三合一检测', status: 'completed', statusLabel: '已完成', statusClass: 'step-done', equipmentName: '检测仪' },
-      { id: 3, stepName: 'CSS组装', status: 'anomaly', statusLabel: '异常', statusClass: 'step-anomaly', equipmentName: '组装机' }
+      {
+        id: 1,
+        stepName: '短板加工',
+        status: 'completed',
+        statusLabel: '已完成',
+        statusClass: 'step-done',
+        equipmentName: '加工中心',
+        planQty: 200,
+        completedQty: 200,
+        consumedMaterials: [
+          { materialName: '铝板', consumedQty: 200, unit: '片' }
+        ]
+      },
+      {
+        id: 2,
+        stepName: '电芯三合一检测',
+        status: 'in-progress',
+        statusLabel: '进行中',
+        statusClass: 'step-progress',
+        equipmentName: '检测仪',
+        planQty: 200,
+        completedQty: 120,
+        consumedMaterials: [
+          { materialName: '探针', consumedQty: 120, unit: '支' }
+        ]
+      }
     ]
+  } else if (workOrderId === 'WO003') {
+    workOrder.value = {
+      id: 'WO003',
+      projectCode: 'PJ_0823',
+      projectName: 'SC0261-314-R2.3_1306kWh_TD_新加坡',
+      productName: 'SC0261-314-R2.3',
+      productSap: '91062669',
+      productType: 'EVE-BS-ES0726-11',
+      productSpec: '2*3P198S',
+      planQty: 5,
+      completedQty: 5,
+      leaderName: '纪云龙',
+      leaderDept: 'AC261国内产品部一组',
+      unit: 'EA',
+      status: 'completed',
+      progress: 100,
+      hasAnomaly: false
+    }
+    materialList.value = [
+      { materialName: '电芯', materialCode: 'CEL-4815', requiredQty: 660, unit: '个', pickedQty: 660 },
+      { materialName: '端板组件', materialCode: 'EP-48S', requiredQty: 660, unit: '套', pickedQty: 660 }
+    ]
+    steps.value = [
+      {
+        id: 1,
+        stepName: '短板加工',
+        status: 'completed',
+        statusLabel: '已完成',
+        statusClass: 'step-done',
+        equipmentName: '加工中心',
+        planQty: 1000,
+        completedQty: 1000,
+        consumedMaterials: [
+          { materialName: '铝板', consumedQty: 1000, unit: '片' }
+        ]
+      },
+      {
+        id: 2,
+        stepName: '电芯三合一检测',
+        status: 'completed',
+        statusLabel: '已完成',
+        statusClass: 'step-done',
+        equipmentName: '检测仪',
+        planQty: 1000,
+        completedQty: 1000,
+        consumedMaterials: [
+          { materialName: '探针', consumedQty: 1000, unit: '支' }
+        ]
+      }
+    ]
+
   } else {
-    // 默认或错误处理
     workOrder.value = null
   }
   loading.value = false
@@ -209,8 +284,8 @@ const loadData = async () => {
 
 onMounted(() => {
   if (!workOrderId) {
-    Taro.showToast({ title: '参数错误', icon: 'none' })
-    setTimeout(() => backToList(), 1500)
+    Taro.showToast({ title: '参数错误，自动跳转到工单列表', icon: 'none' })
+    setTimeout(() => Taro.navigateTo({ url: '/pages/work-order/order-list' }), 1500)
     return
   }
   loadData()
@@ -272,12 +347,10 @@ onMounted(() => {
         background: rgba($tp-primary, 0.1);
         color: $tp-primary;
       }
-
       &.status-progress {
         background: rgba(#fa8c16, 0.1);
         color: #fa8c16;
       }
-
       &.status-completed {
         background: rgba($tp-success, 0.1);
         color: $tp-success;
@@ -317,7 +390,6 @@ onMounted(() => {
       font-size: 11px;
       color: $tp-text;
     }
-
     .value {
       font-size: 14px;
       font-weight: 500;
@@ -364,7 +436,6 @@ onMounted(() => {
           font-weight: 500;
           color: $tp-title;
         }
-
         .material-code {
           font-size: 11px;
           color: $tp-text;
@@ -382,7 +453,6 @@ onMounted(() => {
         .picked-done {
           color: $tp-success;
         }
-
         .picked-pending {
           color: $tp-danger;
         }
@@ -403,6 +473,7 @@ onMounted(() => {
     }
   }
 
+  /* 工序列表样式（新结构，垂直布局） */
   .steps-list {
     display: flex;
     flex-direction: column;
@@ -410,40 +481,37 @@ onMounted(() => {
   }
 
   .step-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    background: $tp-help;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 0;  // 由父级 gap 控制间距
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
 
     .step-index {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: $tp-help;
+      background: $tp-white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 12px;
       font-weight: 600;
-      color: $tp-text;
+      color: $tp-primary;
       flex-shrink: 0;
     }
 
-    .step-info {
+    .step-name {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-
-      .step-name {
-        font-size: 14px;
-        font-weight: 500;
-        color: $tp-title;
-      }
-
-      .step-desc {
-        font-size: 11px;
-        color: $tp-text;
-      }
+      font-size: 14px;
+      font-weight: 600;
+      color: $tp-title;
     }
 
     .step-status {
@@ -457,48 +525,48 @@ onMounted(() => {
         background: rgba($tp-success, 0.1);
         color: $tp-success;
       }
-
       &.step-progress {
         background: rgba(#fa8c16, 0.1);
         color: #fa8c16;
       }
-
       &.step-pending {
         background: rgba($tp-text, 0.1);
         color: $tp-text;
       }
-
       &.step-anomaly {
         background: rgba($tp-danger, 0.1);
         color: $tp-danger;
       }
     }
-  }
 
-  .empty-tip {
-    text-align: center;
-    padding: 20px;
-    color: $tp-text;
-    font-size: 12px;
+    .step-progress-info,
+    .step-material-info,
+    .step-equipment {
+      font-size: 12px;
+      color: $tp-text;
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .material-label {
+      font-weight: 500;
+      color: $tp-title;
+    }
+
+    .material-item {
+      background: $tp-white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: $tp-text;
+    }
   }
 }
 
-.steps-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  .nut-progress {
-    flex: 1;
-  }
-  .steps-percent-text {
-    font-size: 12px;
-    color: $tp-primary;
-    font-weight: 500;
-  }
-}
-
-/* 操作按钮区域（独立于 info-card） */
+/* 操作按钮区域 */
 .action-buttons {
   margin-top: 8px;
   display: flex;

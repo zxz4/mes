@@ -39,4 +39,11 @@ export interface StepProgress {
   statusLabel: string
   statusClass: string
   equipmentName?: string
+  planQty: number            // 该工序计划加工件数
+  completedQty: number       // 该工序已完成件数
+  consumedMaterials?: {      // 该工序消耗的物料
+    materialName: string
+    consumedQty: number
+    unit: string
+  }[]
 }
