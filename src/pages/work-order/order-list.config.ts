@@ -1,3 +1,4 @@
 export default {
-  navigationBarTitleText: '工单列表'
+  navigationBarTitleText: '工单列表',
+  usingComponents: {  },
 }

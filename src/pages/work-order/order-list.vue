@@ -1,87 +1,90 @@
 <template>
-  <view class="work-order-page">
-    <NavBar title="生产工单" />
+  <TabbarLayout>
+    <view class="work-order-page">
+      <NavBar title="生产工单" />
 
-    <!-- 统计卡片（状态筛选） -->
-    <scroll-view scroll-x class="stats-row">
-      <view class="stat-card" :class="{ 'active-filter': filterStatus === 'all' }" @click="filterStatus = 'all'">
-        <view class="stat-number blue">{{ workOrders.length }}</view>
-        <view class="stat-label">全部工单</view>
-      </view>
-      <view class="stat-card" :class="{ 'active-filter': filterStatus === 'pending_material' }"
-        @click="filterStatus = 'pending_material'">
-        <view class="stat-number orange">{{ pendingMaterialCount }}</view>
-        <view class="stat-label">待领料</view>
-      </view>
-      <view class="stat-card" :class="{ 'active-filter': filterStatus === 'in_production' }"
-        @click="filterStatus = 'in_production'">
-        <view class="stat-number blue">{{ inProductionCount }}</view>
-        <view class="stat-label">生产中</view>
-      </view>
-      <view class="stat-card" :class="{ 'active-filter': filterStatus === 'completed' }"
-        @click="filterStatus = 'completed'">
-        <view class="stat-number green">{{ completedCount }}</view>
-        <view class="stat-label">已完成</view>
-      </view>
-      <view class="stat-card" :class="{ 'active-filter': filterStatus === 'anomaly' }"
-        @click="filterStatus = 'anomaly'">
-        <view class="stat-number red">{{ anomalyCount }}</view>
-        <view class="stat-label">异常工单</view>
-      </view>
-    </scroll-view>
+      <!-- 统计卡片（状态筛选） -->
+      <scroll-view scroll-x class="stats-row">
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'all' }" @click="filterStatus = 'all'">
+          <view class="stat-number blue">{{ workOrders.length }}</view>
+          <view class="stat-label">全部工单</view>
+        </view>
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'pending_material' }"
+          @click="filterStatus = 'pending_material'">
+          <view class="stat-number orange">{{ pendingMaterialCount }}</view>
+          <view class="stat-label">待领料</view>
+        </view>
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'in_production' }"
+          @click="filterStatus = 'in_production'">
+          <view class="stat-number blue">{{ inProductionCount }}</view>
+          <view class="stat-label">生产中</view>
+        </view>
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'completed' }"
+          @click="filterStatus = 'completed'">
+          <view class="stat-number green">{{ completedCount }}</view>
+          <view class="stat-label">已完成</view>
+        </view>
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'anomaly' }"
+          @click="filterStatus = 'anomaly'">
+          <view class="stat-number red">{{ anomalyCount }}</view>
+          <view class="stat-label">异常工单</view>
+        </view>
+      </scroll-view>
 
-    <!-- 工单列表 -->
-    <view class="work-order-list">
-      <view v-for="order in filteredOrders" :key="order.id" class="work-order-card" @click="goToDetail(order.id)">
-        <!-- 卡片头部：项目名称 + 状态 -->
-        <view class="card-header">
-          <!-- 项目/产品信息左对齐 -->
-          <view class="order-info">
-            <view class="project-name">{{ order.projectName }} ({{ order.projectCode }})</view>
-            <view class="product-info">{{ order.productName }} ({{ order.productSap }})</view>
+      <!-- 工单列表 -->
+      <view class="work-order-list">
+        <view v-for="order in filteredOrders" :key="order.id" class="work-order-card" @click="goToDetail(order.id)">
+          <!-- 卡片头部：项目名称 + 状态 -->
+          <view class="card-header">
+            <!-- 项目/产品信息左对齐 -->
+            <view class="order-info">
+              <view class="project-name">{{ order.projectName }} ({{ order.projectCode }})</view>
+              <view class="product-info">{{ order.productName }} ({{ order.productSap }})</view>
+            </view>
+            <!-- 状态徽章保持在右侧 -->
+            <view class="status-badge" :class="statusClass(order.status)">
+              {{ statusLabel(order.status) }}
+            </view>
           </view>
-          <!-- 状态徽章保持在右侧 -->
-          <view class="status-badge" :class="statusClass(order.status)">
-            {{ statusLabel(order.status) }}
+
+          <!-- 卡片主体：数量 + 进度 -->
+          <view class="card-body">
+            <view class="info-row">
+              <text class="label">计划数量</text>
+              <text class="value">{{ order.planQty }} {{ order.unit }}</text>
+            </view>
+            <view class="info-row">
+              <text class="label">已完成</text>
+              <text class="value">{{ order.completedQty }} {{ order.unit }}</text>
+            </view>
+            <view class="progress-row">
+              <nut-progress :percentage="order.progress" :show-text="false" stroke-color="blue" class="progress-bar" />
+              <text class="progress-text">{{ order.progress }}%</text>
+            </view>
+          </view>
+
+          <!-- 卡片底部：操作按钮（无计划时间） -->
+          <view class="card-footer">
+            <view class="actions">
+              <nut-button v-if="order.status === 'pending_material'" size="small" type="primary"
+                @click.stop="goToPicking(order.id)">去领料</nut-button>
+              <nut-button v-if="order.status === 'in_production'" size="small" type="success"
+                @click.stop="goToProduction(order.id)">继续生产</nut-button>
+              <nut-button v-if="order.status === 'completed'" size="small" plain
+                @click.stop="goToTrace(order.id)">查看追溯</nut-button>
+              <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain
+                @click.stop="goToDetail(order.id)">异常详情</nut-button>
+            </view>
           </view>
         </view>
 
-        <!-- 卡片主体：数量 + 进度 -->
-        <view class="card-body">
-          <view class="info-row">
-            <text class="label">计划数量</text>
-            <text class="value">{{ order.planQty }} {{ order.unit }}</text>
-          </view>
-          <view class="info-row">
-            <text class="label">已完成</text>
-            <text class="value">{{ order.completedQty }} {{ order.unit }}</text>
-          </view>
-          <view class="progress-row">
-            <nut-progress :percentage="order.progress" :show-text="false" stroke-color="blue" class="progress-bar" />
-            <text class="progress-text">{{ order.progress }}%</text>
-          </view>
+        <view v-if="filteredOrders.length === 0" class="empty-state">
+          <nut-empty description="暂无工单数据" />
         </view>
-
-        <!-- 卡片底部：操作按钮（无计划时间） -->
-        <view class="card-footer">
-          <view class="actions">
-            <nut-button v-if="order.status === 'pending_material'" size="small" type="primary"
-              @click.stop="goToPicking(order.id)">去领料</nut-button>
-            <nut-button v-if="order.status === 'in_production'" size="small" type="success"
-              @click.stop="goToProduction(order.id)">继续生产</nut-button>
-            <nut-button v-if="order.status === 'completed'" size="small" plain
-              @click.stop="goToTrace(order.id)">查看追溯</nut-button>
-            <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain
-              @click.stop="goToDetail(order.id)">异常详情</nut-button>
-          </view>
-        </view>
-      </view>
-
-      <view v-if="filteredOrders.length === 0" class="empty-state">
-        <nut-empty description="暂无工单数据" />
       </view>
     </view>
-  </view>
+  </TabbarLayout>
+
 </template>
 
 <script setup lang="ts" name="WorkOrderList">
@@ -89,6 +92,9 @@ import { ref, computed } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
+
+import TabbarLayout from '@/components/TabbarLayout.vue'
+import { useTabbarStore } from '@/store/tabbar'
 
 // 模拟数据（新结构）
 const workOrders = ref<WorkOrderListItem[]>([
@@ -132,6 +138,11 @@ const workOrders = ref<WorkOrderListItem[]>([
     hasAnomaly: false
   }
 ])
+
+Taro.onAppShow(() => {
+  const store = useTabbarStore()
+  store.setSelected(1) // 确保切换到工单页时 TabBar 状态正确
+})
 
 // 状态筛选
 const filterStatus = ref<'all' | 'pending_material' | 'in_production' | 'completed' | 'anomaly'>('all')

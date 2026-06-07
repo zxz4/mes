@@ -1,3 +1,4 @@
 export default {
-  navigationBarTitleText: '产线加工'
+  navigationBarTitleText: '产线加工',
+    usingComponents: {},
 }

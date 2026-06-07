@@ -1,3 +1,4 @@
 export default {
-  navigationBarTitleText: '物料领用'
+  navigationBarTitleText: '物料领用',
+    usingComponents: {},
 }

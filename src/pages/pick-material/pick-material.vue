@@ -1,32 +1,90 @@
 <template>
-  <view class="pick-material-page">
-    <!-- 项目列表组件 -->
-    <NavBar title="生产领料" />
-    <ProjectList :projects="projectList" :selected-id="selectedProject?.projectId" @select="selectProject">
-    </ProjectList>
-    <!-- 物料列表区域 -->
-    <view v-if="selectedProject && materialList.length > 0" class="material-section">
+  <view class="picking-page">
+    <NavBar :title="`物料领料`" :show-back="true" />
 
-      <view class="section-header">
-        <view class="title">物料清单确认</view>
-        <view class="sub-title">
-          项目：{{ selectedProject.projectName }} | SAP物料号：{{ selectedProject.sap }}
+    <!-- 错误或状态不允许领料 -->
+    <view v-if="!canPick" class="error-state">
+      <nut-empty :description="errorMessage" />
+      <nut-button type="primary" @click="backToDetail">返回工单详情</nut-button>
+    </view>
+
+    <!-- 正常领料表单 -->
+    <view v-else-if="workOrder" class="picking-content">
+      <!-- 1. 项目基本信息卡片 -->
+      <view class="info-card">
+        <view class="card-title">项目信息</view>
+        <view class="info-grid">
+          <view class="info-item">
+            <text class="label">项目名称</text>
+            <text class="value">{{ workOrder.projectName }}</text>
+          </view>
+          <view class="info-item">
+            <text class="label">产品型号</text>
+            <text class="value">{{ workOrder.productName }}</text>
+          </view>
+          <view class="info-item">
+            <text class="label">产品SAP</text>
+            <text class="value">{{ workOrder.productSap }}</text>
+          </view>
+          <view class="info-item">
+            <text class="label">生产数量</text>
+            <text class="value highlight">{{ workOrder.planQty }} {{ workOrder.unit }}</text>
+          </view>
+          <view class="info-item">
+            <text class="label">工单状态</text>
+            <view class="status-badge" :class="statusClass(workOrder.status)">
+              {{ statusLabel(workOrder.status) }}
+            </view>
+          </view>
         </view>
       </view>
 
-      <view class="material-tree">
-        <MaterialNode v-for="(item, index) in materialList" :key="index" :node="item" :depth="0"
-          @update:picked-quantity="handlePickQuantityUpdate" />
+      <!-- 2. 物料清单卡片（可编辑领料数量） -->
+      <view class="info-card">
+        <view class="card-title">物料清单 <text class="subtitle">请确认/修改领料数量</text></view>
+        <view class="material-list">
+          <view v-for="(item, idx) in materialList" :key="idx" class="material-item">
+            <view class="material-info">
+              <text class="material-name">{{ item.materialName }}</text>
+              <text class="material-code">{{ item.materialCode }}</text>
+            </view>
+            <view class="material-qty-input">
+              <text class="req-qty">需求: {{ item.requiredQty }}{{ item.unit }}</text>
+              <nut-input
+                type="number"
+                v-model="item.pickQty"
+                :placeholder="'实际领料数量'"
+                class="pick-input"
+              />
+            </view>
+          </view>
+        </view>
       </view>
 
-      <view class="footer-action">
-        <view class="summary">
-          <text>需求总数：{{ totalRequiredQuantity }}</text>
-          <text class="separator">|</text>
-          <text>本次领用总数：{{ totalPickedQuantity }}</text>
+      <!-- 3. 工艺路线选择卡片（静态数据） -->
+      <view class="info-card">
+        <view class="card-title">工艺路线 <text class="subtitle">选择该工单使用的工艺</text></view>
+        <view class="process-select">
+          <nut-radio-group v-model="selectedProcessId" direction="vertical">
+            <nut-radio
+              v-for="process in processOptions"
+              :key="process.id"
+              :label="process.id"
+              class="process-radio"
+            >
+              <view class="process-info">
+                <text class="process-name">{{ process.name }}</text>
+                <text class="process-desc">{{ process.description }}</text>
+              </view>
+            </nut-radio>
+          </nut-radio-group>
         </view>
-        <nut-button type="primary" block @click="handleConfirmPick">
-          确认物料领用
+      </view>
+
+      <!-- 4. 提交按钮 -->
+      <view class="action-buttons">
+        <nut-button type="primary" block :loading="submitting" @click="submitPicking">
+          确认领料并开始生产
         </nut-button>
       </view>
     </view>
@@ -34,353 +92,357 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Taro from '@tarojs/taro'
-import ProjectList from '@/components/ProjectList.vue'
-import MaterialNode from '@/components/MaterialNode.vue'
 import NavBar from '@/components/NavBar.vue'
-import type { ProjectInfo } from '@/types/project'
-import type { MaterialItem } from '@/types/material'
+import type { WorkOrderDetail, MaterialItem } from '@/types/work-order'
 
-// 模拟项目列表
-const projectList = ref<ProjectInfo[]>([
+// 路由参数
+const instance = Taro.getCurrentInstance()
+const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || ''
+
+// 页面状态
+const loading = ref(true)
+const submitting = ref(false)
+const canPick = ref(true)
+const errorMessage = ref('')
+
+// 工单数据
+const workOrder = ref<WorkOrderDetail | null>(null)
+const materialList = ref<(MaterialItem & { pickQty?: number })[]>([])
+
+// 工艺选项（静态）
+const processOptions = [
   {
-    projectId: '149817',
-    projectCode: 'PJ_1208',
-    projectName: 'PT043D-280-R2.1_215.04kWh_南阳金冠',
-    sap: '91071573',
-    productName: 'PT043D-280-R2.1',
-    productCode: 'ES-0746',
-    quantity: 5,
+    id: 'PROCESS_STD',
+    name: '标准工艺路线',
+    description: '包含短板加工 → 电芯检测 → CSS组装 → 激光焊接 → EOL测试'
   },
   {
-    projectId: '149818',
-    projectCode: 'PJ_1209',
-    projectName: 'PT053E-300-R2.0_250kWh_郑州宇通',
-    sap: '91071574',
-    productName: 'PT053E-300-R2.0',
-    productCode: 'ES-0747',
-    quantity: 3,
-  },
-])
+    id: 'PROCESS_FAST',
+    name: '快速工艺路线',
+    description: '跳过部分检测工序，适用于紧急订单'
+  }
+]
+const selectedProcessId = ref('PROCESS_STD')
 
-const selectedProject = ref<ProjectInfo | null>(null)
-const materialList = ref<MaterialItem[]>([])
+// 状态辅助函数
+const statusLabel = (s: string) => ({ pending_material: '待领料', in_production: '生产中', completed: '已完成' }[s] || s)
+const statusClass = (s: string) => ({ pending_material: 'status-pending', in_production: 'status-progress', completed: 'status-completed' }[s] || '')
 
-// 统计总需求数量
-const totalRequiredQuantity = computed(() => {
-  let total = 0
-  const traverse = (nodes: MaterialItem[]) => {
-    for (const node of nodes) {
-      if (!node.hasChildren) {
-        total += node.quantity
-      } else if (node.children?.length) {
-        traverse(node.children)
-      }
+// 返回工单详情
+const backToDetail = () => {
+  Taro.navigateBack()
+}
+
+// 提交领料
+const submitPicking = async () => {
+  // 校验领料数量
+  for (const item of materialList.value) {
+    const pickQty = item.pickQty ?? 0
+    if (pickQty < 0 || pickQty > item.requiredQty) {
+      Taro.showToast({ title: `${item.materialName} 领料数量不合法`, icon: 'none' })
+      return
     }
   }
-  traverse(materialList.value)
-  return total
-})
-
-// 统计总领用数量
-const totalPickedQuantity = computed(() => {
-  let total = 0
-  const traverse = (nodes: MaterialItem[]) => {
-    for (const node of nodes) {
-      if (!node.hasChildren) {
-        total += node.pickedQuantity || 0
-      } else if (node.children?.length) {
-        traverse(node.children)
-      }
-    }
-  }
-  traverse(materialList.value)
-  return total
-})
-
-// 获取物料数据（模拟）
-const fetchBomMaterialList = async (project: ProjectInfo): Promise<MaterialItem[]> => {
-  // 模拟网络延迟
-  console.log(`Fetching BOM material list for project: ${project.projectName} (SAP: ${project.sap})`)
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const mockData: MaterialItem[] =
-      [
-        {
-          componentCode: 'CA-0070',
-          componentName: '方形三元',
-          sap: '91030516',
-          specificationDescription: '',
-          quantity: 0,
-          unit: '',
-          hasChildren: true,
-          children: [
-            {
-              componentCode: 'SC-0020',
-              componentName: 'SC',
-              sap: '91049502',
-              specificationDescription: '',
-              quantity: 1,
-              unit: 'EA',
-              hasChildren: true,
-              children: [
-                {
-                  componentCode: 'CG-0004',
-                  componentName: '锂电池',
-                  sap: '81041826',
-                  specificationDescription: '_22V_220mAh',
-                  quantity: 1,
-                  unit: 'each',
-                  hasChildren: false,
-                  children: []
-                },
-                {
-                  componentCode: 'SL-0710',
-                  componentName: '锂离子电池',
-                  sap: '91027989',
-                  specificationDescription: '_23323_32_23V_2332mAh_陆运_23_34',
-                  quantity: 7,
-                  unit: 'each',
-                  hasChildren: false,
-                  children: []
-                },
-                {
-                  componentCode: 'Y-352020-002158',
-                  componentName: '箱内低压线',
-                  sap: '10150547',
-                  specificationDescription: 'EVEBMU3333_0.35mm2_333mm_1111_3333',
-                  quantity: 5,
-                  unit: 'each',
-                  hasChildren: false,
-                  children: []
-                }
-              ]
-            },
-            {
-              componentCode: '10044566',
-              componentName: '结构胶',
-              sap: '10044566',
-              specificationDescription: '德邦_2502H_单组份_硅脂_黑色_体积_600ml/支_0.3W/m*K',
-              quantity: 1,
-              unit: 'EA',
-              hasChildren: false,
-              children: []
-            },
-            {
-              componentCode: '10086673',
-              componentName: '铝壳预充电阻',
-              sap: '10086673',
-              specificationDescription: '来福_RX24-200W50RJ_500Ω_5%_无_铝壳_无_无_无',
-              quantity: 1,
-              unit: 'EA',
-              hasChildren: false,
-              children: []
-            },
-            {
-              componentCode: 'CN-0014',
-              componentName: 'HP电芯',
-              sap: '',
-              specificationDescription: 'test_111V_1000mAh',
-              quantity: 1,
-              unit: 'each',
-              hasChildren: false,
-              children: []
-            },
-            {
-              componentCode: '10050091',
-              componentName: '绝缘材料_模切',
-              sap: '10050091',
-              specificationDescription: '硅胶_285(mm)_90(mm)_3(mm)_淡黄色',
-              quantity: 1,
-              unit: 'EA',
-              hasChildren: false,
-              children: []
-            }
-          ]
-        }
-      ]
-      resolve(mockData)
-    }, 1000)
+  // 确认操作
+  const confirm = await Taro.showModal({
+    title: '确认领料',
+    content: `将领取物料并确定工单工艺为“${processOptions.find(p => p.id === selectedProcessId.value)?.name}”，是否继续？`,
+    confirmText: '确认',
+    cancelText: '取消'
   })
-}
+  if (!confirm.confirm) return
 
-const processMaterialTree = (nodes: MaterialItem[]): MaterialItem[] => {
-  return nodes.map(node => ({
-    ...node,
-    children: node.children ? processMaterialTree(node.children) : [],
-    pickedQuantity: node.hasChildren ? undefined : node.quantity
-  }))
-}
-
-const selectProject = async (project: ProjectInfo) => {
-  if (selectedProject.value?.projectId === project.projectId){
-    selectedProject.value = null;
-    return
-  }
-  selectedProject.value = project
-  Taro.showLoading({ title: '加载物料清单中...', mask: true })
+  submitting.value = true
   try {
-    const rawData = await fetchBomMaterialList(project)
-    materialList.value = processMaterialTree(rawData)
-  } catch (error) {
-    Taro.showToast({ title: '加载失败', icon: 'error' })
-  } finally {
-    Taro.hideLoading()
-  }
-}
-
-// 确认领用
-const handleConfirmPick = async () => {
-  if (!selectedProject.value) return
-
-  const pickRecords: Array<{
-    componentCode: string
-    componentName: string
-    requiredQty: number
-    pickedQty: number
-    unit: string
-    sap: string
-  }> = []
-
-  const traverse = (nodes: MaterialItem[]) => {
-    for (const node of nodes) {
-      if (!node.hasChildren) {
-        pickRecords.push({
-          componentCode: node.componentCode,
-          componentName: node.componentName,
-          requiredQty: node.quantity,
-          pickedQty: node.pickedQuantity || 0,
-          unit: node.unit || '个',
-          sap: node.sap
-        })
-      } else if (node.children?.length) {
-        traverse(node.children)
-      }
-    }
-  }
-  traverse(materialList.value)
-
-  if (pickRecords.length === 0) {
-    Taro.showToast({ title: '没有可领用的物料', icon: 'error' })
-    return
-  }
-
-
-
-  const zeroPickItems = pickRecords.filter(item => item.pickedQty <= 0)
-  if (zeroPickItems.length > 0) {
-    const names = zeroPickItems.map(i => i.componentName).join('、')
-    Taro.showToast({ title: `以下物料领用数量为0：${names}`, icon: 'error', duration: 2000 })
-    return
-  }
-
-  const totalPickCount = pickRecords.reduce((sum, item) => sum + item.pickedQty, 0)
-  const message = `成功领用物料 ${pickRecords.length} 种，总计 ${totalPickCount} 件。`
-  Taro.showLoading({ title: '提交领用中...', mask: true })
-  try {
-    // 模拟提交API调用（可替换为真实请求）
+    // 模拟提交接口
     await new Promise(resolve => setTimeout(resolve, 1000))
-    Taro.hideLoading()
-    Taro.showModal({
-      title: '物料领用确认',
-      content: message,
-      confirmText: '确定',
-      showCancel: false,
-      success: () => {
-        Taro.navigateTo({
-          url:'/pages/prod-operation/prod-operation?projectId=' + selectedProject.value?.projectId
-        });
-      }
-    })
+    // 实际应调用接口更新工单的物料已领数量、工艺路线ID、工单状态为 in_production
+    Taro.showToast({ title: '领料成功，工单已进入生产', icon: 'success' })
+    setTimeout(() => {
+      // 跳转到生产页面（或工单详情）
+      Taro.navigateTo({ url: `/pages/prod-operation/index?workOrderId=${workOrderId}` })
+    }, 1500)
   } catch (error) {
-    Taro.hideLoading()
-    Taro.showToast({ title: '提交失败', icon: 'error' })
+    Taro.showToast({ title: '提交失败', icon: 'none' })
+  } finally {
+    submitting.value = false
   }
 }
 
-/**
- * 递归更新物料树中指定物料的领用数量
- */
-const updatePickedQuantity = (nodes: MaterialItem[], componentCode: string, newQuantity: number): boolean => {
-  for (const node of nodes) {
-    if (node.componentCode === componentCode && !node.hasChildren) {
-      node.pickedQuantity = newQuantity
-      return true
+// 加载工单信息
+const loadData = async () => {
+  loading.value = true
+  try {
+    // 模拟接口请求，实际替换为真实API
+    await new Promise(resolve => setTimeout(resolve, 500))
+    // 根据 workOrderId 获取工单详情和物料清单（实际从后端获取）
+    if (workOrderId === 'WO001') {
+      workOrder.value = {
+        id: 'WO001',
+        projectCode: 'PJ_1098',
+        projectName: 'SM1178D-310-R2.1_1178.496kWh_中交',
+        productName: 'SM1178D-310-R2.1',
+        productSap: '91070999',
+        productType: 'EVE-BS-ES0726-11',
+        productSpec: '2*3P198S',
+        planQty: 1,
+        completedQty: 0,
+        unit: 'EA',
+        status: 'pending_material',
+        progress: 0,
+        hasAnomaly: false,
+        leaderName: '吴兴林',
+        leaderDept: '模块产品部二组'
+      }
+      materialList.value = [
+        { materialName: '电芯', materialCode: 'CEL-4815', requiredQty: 132, unit: '个', pickedQty: 0, pickQty: 132 },
+        { materialName: '端板组件', materialCode: 'EP-48S', requiredQty: 132, unit: '套', pickedQty: 0, pickQty: 132 }
+      ]
+    } else if (workOrderId === 'WO002') {
+      workOrder.value = {
+        id: 'WO002',
+        projectCode: 'PJ_1076',
+        projectName: 'SE5015D-628-R1.1_400MWh_宁夏中光电',
+        productName: 'SE5015D-628-R1.1',
+        productSap: '91070575',
+        productType: 'S556H214',
+        productSpec: 'S5MB56-0.25P',
+        planQty: 80,
+        completedQty: 40,
+        unit: 'EA',
+        status: 'in_production',  // 生产中，不允许再次领料
+        progress: 50,
+        hasAnomaly: true,
+        leaderName: '白天宇',
+        leaderDept: '电力产品一部一组'
+      }
+      materialList.value = []
+    } else {
+      // 默认模拟一个待领料工单
+      workOrder.value = {
+        id: workOrderId,
+        projectCode: 'PRJ_DEMO',
+        projectName: '演示项目',
+        productName: '演示产品',
+        productSap: 'DEMO001',
+        productType: 'DEMO',
+        productSpec: '标准',
+        planQty: 100,
+        completedQty: 0,
+        unit: '个',
+        status: 'pending_material',
+        progress: 0,
+        hasAnomaly: false,
+        leaderName: '测试员',
+        leaderDept: '生产部'
+      }
+      materialList.value = [
+        { materialName: '物料A', materialCode: 'MAT-A', requiredQty: 100, unit: '个', pickedQty: 0, pickQty: 100 },
+        { materialName: '物料B', materialCode: 'MAT-B', requiredQty: 50, unit: '套', pickedQty: 0, pickQty: 50 }
+      ]
     }
-    if (node.children && node.children.length) {
-      const found = updatePickedQuantity(node.children, componentCode, newQuantity)
-      if (found) return true
+
+    // 状态校验：仅待领料的工单可进入领料页
+    if (workOrder.value.status !== 'pending_material') {
+      canPick.value = false
+      errorMessage.value = workOrder.value.status === 'in_production'
+        ? '工单已进入生产，不可重复领料'
+        : workOrder.value.status === 'completed'
+        ? '工单已完成，无法领料'
+        : '当前工单状态不允许领料操作'
+    } else {
+      canPick.value = true
     }
+  } catch (error) {
+    canPick.value = false
+    errorMessage.value = '加载工单信息失败'
+  } finally {
+    loading.value = false
   }
-  return false
 }
 
-const handlePickQuantityUpdate = (payload: { componentCode: string; pickedQuantity: number }) => {
-  updatePickedQuantity(materialList.value, payload.componentCode, payload.pickedQuantity)
-}
+onMounted(() => {
+  if (!workOrderId) {
+    Taro.showToast({ title: '参数错误，自动跳转到工单列表', icon: 'none' })
+    setTimeout(() => Taro.navigateTo({ url: '/pages/work-order/order-list' }), 1500)
+    return
+  }
+  loadData()
+})
 </script>
 
+<style lang="scss" scoped>
+@import '@/styles/theme.scss';
 
-<style lang="scss">
-.pick-material-page {
+.picking-page {
   min-height: 100vh;
-  background-color: $help-color;              // #f5f5f5 替换 #f5f6f7
-  padding-bottom: 20px;
+  background: $tp-help;
+  padding-bottom: 30px;
 }
 
-.material-section {
-  background-color: #fff;
-  margin: 0 12px 80px 12px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);  // 保留：NutUI 无阴影变量
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
 
-  .section-header {
-    padding: 16px;
-    border-bottom: 1px solid $help-color;       // 替换 #eee
-    background: #fafcff;                       // 保留：带蓝调的浅背景，无对应变量
+.picking-content {
+  padding: 12px 16px;
+}
 
-    .title {
-      font-size: $font-size-3;                         // 保留：介于 $font-size-3(16px) 与 $font-size-4(18px) 之间
+/* 卡片通用样式 */
+.info-card {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: $tp-shadow-sm;
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: $tp-title;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .subtitle {
+      font-size: 12px;
+      font-weight: normal;
+      color: $tp-text;
+    }
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .label {
+      font-size: 11px;
+      color: $tp-text;
+    }
+    .value {
+      font-size: 14px;
+      font-weight: 500;
+      color: $tp-title;
+
+      &.highlight {
+        color: $tp-primary;
+        font-weight: 700;
+      }
+    }
+    .status-badge {
+      align-self: flex-start;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
       font-weight: 600;
-      color: $title-color;                     // 替换 #1a2c3e → #1A1A1A
-      margin-bottom: 6px;
-    }
 
-    .sub-title {
-      font-size: $font-size-2;                 // 14px 替换硬编码
-      color: $title-color2;                    // 替换 #6c7a8e → #666666
+      &.status-pending {
+        background: rgba($tp-primary, 0.1);
+        color: $tp-primary;
+      }
+      &.status-progress {
+        background: rgba(#fa8c16, 0.1);
+        color: #fa8c16;
+      }
+      &.status-completed {
+        background: rgba($tp-success, 0.1);
+        color: $tp-success;
+      }
     }
   }
 
-  .material-tree {
-    padding: 8px 0 16px 0;
-  }
-
-  .footer-action {
-    padding: 16px;
-    border-top: 1px solid $help-color;          // 替换 #eee
-    background: #fff;
-
-    .summary {
+  .material-list {
+    .material-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #f0f9ff;                     // 保留：业务汇总区浅蓝高亮背景
-      padding: 12px 16px;
-      border-radius: 40px;
-      margin-bottom: 16px;
-      font-size: $font-size-2;                 // 14px
-      color: #0066cc;                          // 保留：业务高亮蓝，不同于 $primary-color(#478EF2)
-      font-weight: 500;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      flex-wrap: wrap;
+      gap: 8px;
 
-      .separator {
-        margin: 0 8px;
-        color: #ccc;                           // 保留：中等灰分隔符，$help-color 太浅，$title-color2 太深
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .material-info {
+        flex: 2;
+        min-width: 120px;
+        .material-name {
+          font-size: 14px;
+          font-weight: 500;
+          color: $tp-title;
+          display: block;
+        }
+        .material-code {
+          font-size: 11px;
+          color: $tp-text;
+        }
+      }
+
+      .material-qty-input {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        .req-qty {
+          font-size: 12px;
+          color: $tp-text;
+          white-space: nowrap;
+        }
+        .pick-input {
+          width: 120px;
+        }
+      }
+    }
+  }
+
+  .process-select {
+    .process-radio {
+      margin-bottom: 12px;
+      padding: 10px;
+      background: $tp-help;
+      border-radius: 8px;
+      width: 100%;
+      :deep(.nut-radio-label) {
+        width: 100%;
+      }
+      .process-info {
+        margin-left: 24px;
+        .process-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: $tp-title;
+          display: block;
+        }
+        .process-desc {
+          font-size: 11px;
+          color: $tp-text;
+        }
       }
     }
   }
 }
-</style>
 
+.action-buttons {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+</style>
