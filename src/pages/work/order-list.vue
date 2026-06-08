@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts" name="WorkOrderList">
-import { ref, computed } from 'vue'
+import { ref, computed , onMounted } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
@@ -96,6 +96,9 @@ import type { WorkOrderListItem } from '@/types/work-order'
 import TabbarLayout from '@/components/TabbarLayout.vue'
 import { useTabbarStore } from '@/store/tabbar'
 
+onMounted(() => {
+ useTabbarStore().setSelected(0)
+})
 // 模拟数据（新结构）
 const workOrders = ref<WorkOrderListItem[]>([
   {
@@ -139,10 +142,7 @@ const workOrders = ref<WorkOrderListItem[]>([
   }
 ])
 
-Taro.onAppShow(() => {
-  const store = useTabbarStore()
-  store.setSelected(1) // 确保切换到工单页时 TabBar 状态正确
-})
+
 
 // 状态筛选
 const filterStatus = ref<'all' | 'pending_material' | 'in_production' | 'completed' | 'anomaly'>('all')
@@ -161,10 +161,10 @@ const statusLabel = (status: string) => ({ pending_material: '待领料', in_pro
 const statusClass = (status: string) => ({ pending_material: 'status-pending', in_production: 'status-progress', completed: 'status-completed' }[status] || '')
 
 // 跳转
-const goToDetail = (id: string) => Taro.navigateTo({ url: `/pages/work-order/order-detail?id=${id}` })
-const goToPicking = (id: string) => Taro.navigateTo({ url: `/pages/pick-material/pick-material?workOrderId=${id}` })
-const goToProduction = (id: string) => Taro.navigateTo({ url: `/pages/prod-operation/prod-operation?workOrderId=${id}` })
-const goToTrace = (id: string) => Taro.navigateTo({ url: `/pages/prod-trace/prod-trace?workOrderId=${id}` })
+const goToDetail = (id: string) => Taro.navigateTo({ url: `/pages/work/order-detail?id=${id}` })
+const goToPicking = (id: string) => Taro.navigateTo({ url: `/pages/prod/pick-material?workOrderId=${id}` })
+const goToProduction = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
+const goToTrace = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
 </script>
 
 <style lang="scss" scoped>

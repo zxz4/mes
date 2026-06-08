@@ -1,119 +1,125 @@
 <template>
-  <view class="work-order-detail-page">
-    <NavBar :title="`工单详情`" :show-back="true" />
+  <TabbarLayout>
+    <view class="work-order-detail-page">
+      <NavBar :title="`工单详情`" :show-back="true" />
 
-    <view v-if="loading" class="loading-state"></view>
+      <view v-if="loading" class="loading-state"></view>
 
-    <view v-else-if="workOrder" class="detail-content">
-      <!-- 基本信息卡片 -->
-      <view class="info-card">
-        <view class="card-header">
-          <text class="card-title">基本信息</text>
-          <view class="status-badge" :class="statusClass(workOrder.status)">
-            {{ statusLabel(workOrder.status) }}
+      <view v-else-if="workOrder" class="detail-content">
+        <!-- 基本信息卡片 -->
+        <view class="info-card">
+          <view class="card-header">
+            <text class="card-title">基本信息</text>
+            <view class="status-badge" :class="statusClass(workOrder.status)">
+              {{ statusLabel(workOrder.status) }}
+            </view>
+          </view>
+          <view class="info-grid">
+            <view class="info-item">
+              <text class="label">项目编码</text>
+              <text class="value highlight">{{ workOrder.projectCode }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">项目名称</text>
+              <text class="value">{{ workOrder.projectName }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">产品名称</text>
+              <text class="value">{{ workOrder.productName }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">产品SAP码</text>
+              <text class="value">{{ workOrder.productSap }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">产品类型</text>
+              <text class="value">{{ workOrder.productType || '--' }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">产品规格</text>
+              <text class="value">{{ workOrder.productSpec || '--' }}</text>
+            </view>
+            <view class="info-item">
+              <text class="label">负责人</text>
+              <text class="value">{{ workOrder.leaderName }} ({{ workOrder.leaderDept }})</text>
+            </view>
+          </view>
+          <view class="progress-section">
+            <view class="progress-header"><text>生产进度{{`(${workOrder.completedQty}/${workOrder.planQty})`}}</text><text>{{ workOrder.progress }}%</text></view>
+            <nut-progress :percentage="workOrder.progress" :show-text="false" stroke-color="blue" />
           </view>
         </view>
-        <view class="info-grid">
-          <view class="info-item">
-            <text class="label">项目编码</text>
-            <text class="value highlight">{{ workOrder.projectCode }}</text>
+
+        <!-- 物料清单卡片（BOM） -->
+        <view class="info-card" v-if="materialList.length">
+          <view class="card-title">物料清单 <text class="subtitle">{{ materialList.length }} 项</text></view>
+          <view class="material-list">
+            <view v-for="(item, idx) in materialList" :key="idx" class="material-item">
+              <view class="material-info">
+                <text class="material-name">{{ item.materialName }}</text>
+                <text class="material-code">{{ item.materialCode }}</text>
+              </view>
+              <view class="material-qty">
+                <text>需求: {{ item.requiredQty }} {{ item.unit }}</text>
+                <text :class="item.pickedQty && item.pickedQty >= item.requiredQty ? 'picked-done' : 'picked-pending'">
+                  已领: {{ item.pickedQty || 0 }}
+                </text>
+              </view>
+            </view>
           </view>
-          <view class="info-item">
-            <text class="label">项目名称</text>
-            <text class="value">{{ workOrder.projectName }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">产品名称</text>
-            <text class="value">{{ workOrder.productName }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">产品SAP码</text>
-            <text class="value">{{ workOrder.productSap }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">产品类型</text>
-            <text class="value">{{ workOrder.productType || '--' }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">产品规格</text>
-            <text class="value">{{ workOrder.productSpec || '--' }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">负责人</text>
-            <text class="value">{{ workOrder.leaderName }} ({{ workOrder.leaderDept }})</text>
+          <view class="material-summary" v-if="materialList.length">
+            <nut-progress :percentage="materialProgress" :show-text="false" stroke-color="green"
+              style="height:4px; flex:1;" />
+            <text class="summary-text">物料齐套率 {{ materialProgress }}%</text>
           </view>
         </view>
-        <view class="progress-section">
-          <view class="progress-header"><text>生产进度</text><text>{{ workOrder.progress }}%</text></view>
-          <nut-progress :percentage="workOrder.progress" :show-text="false" stroke-color="blue" />
+
+        <!-- 工序进度卡片（修正样式） -->
+        <view class="info-card" v-if="steps.length">
+          <view class="card-header">
+            <text class="card-title">工序进度</text>
+          </view>
+          <view class="steps-list">
+            <view v-for="(step, idx) in steps" :key="step.id" class="step-item">
+              <view class="step-header">
+                <view class="step-index">{{ idx + 1 }}</view>
+                <view class="step-name">{{ step.stepName }}</view>
+                <view class="step-status" :class="step.statusClass">{{ step.statusLabel }}</view>
+              </view>
+              <view class="step-progress-info">
+                <text>加工进度：{{ step.completedQty }} / {{ step.planQty }} 件</text>
+              </view>
+              <view v-if="step.consumedMaterials?.length" class="step-material-info">
+                <text class="material-label">物料消耗：</text>
+                <text v-for="(m, mi) in step.consumedMaterials" :key="mi" class="material-item">
+                  {{ m.materialName }} {{ m.consumedQty }}{{ m.unit }}
+                </text>
+              </view>
+              <view class="step-equipment" v-if="step.equipmentName">
+                <text>设备：{{ step.equipmentName }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="action-buttons">
+          <nut-button v-if="workOrder.status === 'pending_material'" type="primary" block
+            @click="goToPicking">去领料</nut-button>
+          <nut-button v-if="workOrder.status === 'in_production'" type="success" block
+            @click="goToProduction">继续生产</nut-button>
+          <nut-button v-if="workOrder.status === 'completed'" type="info" block plain
+            @click="goToTrace">查看追溯</nut-button>
+          <nut-button v-if="workOrder.hasAnomaly" type="danger" block plain @click="goToTrace">查看异常</nut-button>
         </view>
       </view>
 
-      <!-- 物料清单卡片（BOM） -->
-      <view class="info-card" v-if="materialList.length">
-        <view class="card-title">物料清单 <text class="subtitle">{{ materialList.length }} 项</text></view>
-        <view class="material-list">
-          <view v-for="(item, idx) in materialList" :key="idx" class="material-item">
-            <view class="material-info">
-              <text class="material-name">{{ item.materialName }}</text>
-              <text class="material-code">{{ item.materialCode }}</text>
-            </view>
-            <view class="material-qty">
-              <text>需求: {{ item.requiredQty }} {{ item.unit }}</text>
-              <text :class="item.pickedQty && item.pickedQty >= item.requiredQty ? 'picked-done' : 'picked-pending'">
-                已领: {{ item.pickedQty || 0 }}
-              </text>
-            </view>
-          </view>
-        </view>
-        <view class="material-summary" v-if="materialList.length">
-          <nut-progress :percentage="materialProgress" :show-text="false" stroke-color="green" style="height:4px; flex:1;" />
-          <text class="summary-text">物料齐套率 {{ materialProgress }}%</text>
-        </view>
-      </view>
-
-      <!-- 工序进度卡片（修正样式） -->
-      <view class="info-card" v-if="steps.length">
-        <view class="card-header">
-          <text class="card-title">工序进度</text>
-        </view>
-        <view class="steps-list">
-          <view v-for="(step, idx) in steps" :key="step.id" class="step-item">
-            <view class="step-header">
-              <view class="step-index">{{ idx + 1 }}</view>
-              <view class="step-name">{{ step.stepName }}</view>
-              <view class="step-status" :class="step.statusClass">{{ step.statusLabel }}</view>
-            </view>
-            <view class="step-progress-info">
-              <text>加工进度：{{ step.completedQty }} / {{ step.planQty }} 件</text>
-            </view>
-            <view v-if="step.consumedMaterials?.length" class="step-material-info">
-              <text class="material-label">物料消耗：</text>
-              <text v-for="(m, mi) in step.consumedMaterials" :key="mi" class="material-item">
-                {{ m.materialName }} {{ m.consumedQty }}{{ m.unit }}
-              </text>
-            </view>
-            <view class="step-equipment" v-if="step.equipmentName">
-              <text>设备：{{ step.equipmentName }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 操作按钮 -->
-      <view class="action-buttons">
-        <nut-button v-if="workOrder.status === 'pending_material'" type="primary" block @click="goToPicking">去领料</nut-button>
-        <nut-button v-if="workOrder.status === 'in_production'" type="success" block @click="goToProduction">继续生产</nut-button>
-        <nut-button v-if="workOrder.status === 'completed'" type="info" block plain @click="goToTrace">查看追溯</nut-button>
-        <nut-button v-if="workOrder.hasAnomaly" type="danger" block plain @click="goToTrace">查看异常</nut-button>
+      <view v-else class="error-state">
+        <nut-empty description="工单不存在或加载失败" />
+        <nut-button type="primary" @click="backToList">返回工单列表</nut-button>
       </view>
     </view>
-
-    <view v-else class="error-state">
-      <nut-empty description="工单不存在或加载失败" />
-      <nut-button type="primary" @click="backToList">返回工单列表</nut-button>
-    </view>
-  </view>
+  </TabbarLayout>
 </template>
 
 <script setup lang="ts">
@@ -121,6 +127,8 @@ import { ref, computed, onMounted } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderDetail, MaterialItem, StepProgress } from '@/types/work-order'
+import TabbarLayout from '@/components/TabbarLayout.vue'
+
 
 const instance = Taro.getCurrentInstance()
 const workOrderId = instance?.router?.params?.id || ''
@@ -140,10 +148,10 @@ const materialProgress = computed(() => {
 const statusLabel = (s: string) => ({ pending_material: '待领料', in_production: '生产中', completed: '已完成' }[s] || s)
 const statusClass = (s: string) => ({ pending_material: 'status-pending', in_production: 'status-progress', completed: 'status-completed' }[s] || '')
 
-const goToPicking = () => Taro.navigateTo({ url: `/pages/pick-material/pick-material?workOrderId=${workOrderId}` })
-const goToProduction = () => Taro.navigateTo({ url: `/pages/prod-operation/prod-operation?workOrderId=${workOrderId}` })
-const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/prod-trace?workOrderId=${workOrderId}` })
+const goToPicking = () => Taro.navigateTo({ url: `/pages/prod/pick-material?workOrderId=${workOrderId}` })
+const goToProduction = () => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrderId}` })
 const backToList = () => Taro.navigateBack()
+const goToTrace = () => Taro.navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${workOrderId}` })
 
 // 工序完成统计（未使用但保留）
 const completedStepsCount = computed(() => steps.value.filter(s => s.status === 'completed').length)
@@ -285,7 +293,7 @@ const loadData = async () => {
 onMounted(() => {
   if (!workOrderId) {
     Taro.showToast({ title: '参数错误，自动跳转到工单列表', icon: 'none' })
-    setTimeout(() => Taro.navigateTo({ url: '/pages/work-order/order-list' }), 1500)
+    setTimeout(() => Taro.navigateTo({ url: '/pages/work/order-list' }), 1500)
     return
   }
   loadData()
@@ -347,10 +355,12 @@ onMounted(() => {
         background: rgba($tp-primary, 0.1);
         color: $tp-primary;
       }
+
       &.status-progress {
         background: rgba(#fa8c16, 0.1);
         color: #fa8c16;
       }
+
       &.status-completed {
         background: rgba($tp-success, 0.1);
         color: $tp-success;
@@ -390,6 +400,7 @@ onMounted(() => {
       font-size: 11px;
       color: $tp-text;
     }
+
     .value {
       font-size: 14px;
       font-weight: 500;
@@ -436,6 +447,7 @@ onMounted(() => {
           font-weight: 500;
           color: $tp-title;
         }
+
         .material-code {
           font-size: 11px;
           color: $tp-text;
@@ -453,6 +465,7 @@ onMounted(() => {
         .picked-done {
           color: $tp-success;
         }
+
         .picked-pending {
           color: $tp-danger;
         }
@@ -484,7 +497,7 @@ onMounted(() => {
     background: $tp-help;
     border-radius: 12px;
     padding: 12px;
-    margin-bottom: 0;  // 由父级 gap 控制间距
+    margin-bottom: 0; // 由父级 gap 控制间距
 
     .step-header {
       display: flex;
@@ -525,14 +538,17 @@ onMounted(() => {
         background: rgba($tp-success, 0.1);
         color: $tp-success;
       }
+
       &.step-progress {
         background: rgba(#fa8c16, 0.1);
         color: #fa8c16;
       }
+
       &.step-pending {
         background: rgba($tp-text, 0.1);
         color: $tp-text;
       }
+
       &.step-anomaly {
         background: rgba($tp-danger, 0.1);
         color: $tp-danger;

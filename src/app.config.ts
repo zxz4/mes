@@ -1,10 +1,12 @@
 export default {
   pages: [
-    'pages/work-order/order-list',
-    'pages/work-order/order-detail',
-    'pages/prod-operation/prod-operation',
-    'pages/pick-material/pick-material',
-    'pages/prod-trace/prod-trace',
+    'pages/work/order-list',
+    'pages/work/order-detail',
+    'pages/prod/prod-operation',
+    'pages/prod/pick-material',
+    'pages/prod/prod-trace',
+    'pages/home/home-page',
+    'pages/home/my-profile',
   ],
   window: {
     backgroundTextStyle: 'light',

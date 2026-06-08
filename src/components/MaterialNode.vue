@@ -1,55 +1,43 @@
 <template>
-    <view
-        class="material-node-container"
-        :style="{ marginLeft: depth * 16 + 'px' }">
-        <view class="node-header" @click="toggleExpand">
-            <view class="node-info">
-                <view v-if="node.hasChildren" class="expand-icon-wrapper">
-                    <IconFont v-show="expanded" name="plus" size="13" />
-                    <IconFont v-show="!expanded" name="minus" size="13" />
-                </view>
-
-                <view class="node-main">
-                    <text class="component-name">{{ node.componentName }}</text>
-                    <text class="component-code"
-                        >({{ node.componentCode }})</text
-                    >
-                </view>
-            </view>
-
-            <view class="node-detail">
-                <text v-if="node.sap" class="sap">SAP:{{ node.sap }}</text>
-                <text v-if="node.quantity" class="quantity"
-                    >需求: {{ node.quantity }}</text
-                >
-            </view>
+  <view class="material-node-container" :style="{ marginLeft: depth * 16 + 'px' }">
+    <view class="node-header" @click="toggleExpand">
+      <view class="node-info">
+        <view v-if="node.hasChildren" class="expand-icon-wrapper">
+          <IconFont v-show="expanded" name="plus" size="13" />
+          <IconFont v-show="!expanded" name="minus" size="13" />
         </view>
 
-        <view v-if="node.specificationDescription" class="spec-desc">
-            规格: {{ node.specificationDescription }}
+        <view class="node-main">
+          <text class="component-name">{{ node.componentName }}</text>
+          <text class="component-code">({{ node.componentCode }})</text>
         </view>
+      </view>
 
-        <view v-if="!node.hasChildren" class="pick-area">
-            <text class="pick-label">领用数量</text>
-            <IconFont name="minus" size="13" />
-            <text>{{ localPickedQuantity }}</text>
-            <IconFont name="plus" size="13" />
-            <!-- todo:使用 封装counter替代 -->
-            <!-- <counter v-model="localPickedQuantity" /> -->
-            <text class="unit">{{ node.unit || '个' }}</text>
-        </view>
-
-        <view
-            v-if="node.hasChildren && expanded && node.children && node.children.length"
-            class="children-container">
-            <MaterialNode
-                v-for="(child, idx) in node.children"
-                :key="`${child.componentCode}_${idx}`"
-                :node="child"
-                :depth="depth + 1"
-                @update:picked-quantity="handleChildUpdate" />
-        </view>
+      <view class="node-detail">
+        <text v-if="node.sap" class="sap">SAP:{{ node.sap }}</text>
+        <text v-if="node.quantity" class="quantity">需求: {{ node.quantity }}</text>
+      </view>
     </view>
+
+    <view v-if="node.specificationDescription" class="spec-desc">
+      规格: {{ node.specificationDescription }}
+    </view>
+
+    <view v-if="!node.hasChildren" class="pick-area">
+      <text class="pick-label">领用数量</text>
+      <IconFont name="minus" size="13" />
+      <text>{{ localPickedQuantity }}</text>
+      <IconFont name="plus" size="13" />
+      <!-- todo:使用 封装counter替代 -->
+      <!-- <counter v-model="localPickedQuantity" /> -->
+      <text class="unit">{{ node.unit || '个' }}</text>
+    </view>
+
+    <view v-if="node.hasChildren && expanded && node.children && node.children.length" class="children-container">
+      <MaterialNode v-for="(child, idx) in node.children" :key="`${child.componentCode}_${idx}`" :node="child"
+        :depth="depth + 1" @update:picked-quantity="handleChildUpdate" />
+    </view>
+  </view>
 </template>
 
 <script setup lang="ts" name="MaterialNode">
@@ -257,6 +245,7 @@ const handleChildUpdate = (payload: { componentCode: string; pickedQuantity: num
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -7,15 +7,13 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    NutActionsheet: typeof import('@nutui/nutui-taro')['Actionsheet']
     NutActionSheet: typeof import('@nutui/nutui-taro')['ActionSheet']
     NutButton: typeof import('@nutui/nutui-taro')['Button']
     NutEmpty: typeof import('@nutui/nutui-taro')['Empty']
+    NutIcon: typeof import('@nutui/nutui-taro')['Icon']
     NutInput: typeof import('@nutui/nutui-taro')['Input']
-    NutLoading: typeof import('@nutui/nutui-taro')['Loading']
     NutPopup: typeof import('@nutui/nutui-taro')['Popup']
     NutProgress: typeof import('@nutui/nutui-taro')['Progress']
-    NutProgressing: typeof import('@nutui/nutui-taro')['Progressing']
     NutRadio: typeof import('@nutui/nutui-taro')['Radio']
     NutRadioGroup: typeof import('@nutui/nutui-taro')['RadioGroup']
   }

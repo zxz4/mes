@@ -6,7 +6,6 @@
   padding-bottom: 20px;
 }
 
-/* 统计卡片滚动区 */
 .stats-row {
   display: flex;
   gap: 10px;
@@ -70,15 +69,14 @@
   font-weight: 500;
 }
 
-/* 任务列表 */
-.task-list {
+.process-list {
   padding: 0 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.task-card {
+.process-card {
   background: $tp-white;
   border-radius: 14px;
   box-shadow: $tp-shadow-sm;
@@ -89,7 +87,7 @@
     border-left-color: $tp-primary;
   }
 
-  &.status-in-progress {
+  &.status-progressing {
     border-left-color: #fa8c16;
   }
 
@@ -102,20 +100,20 @@
   }
 }
 
-.task-header {
+.process-header {
   display: flex;
   justify-content: space-between;
   padding: 14px 15px 8px;
   gap: 10px;
 }
 
-.task-process-name {
+.process-name {
   font-size: 16px;
   font-weight: 700;
   flex: 1;
 }
 
-.task-badges {
+.process-badges {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -155,12 +153,6 @@
   animation: pulse 1.4s infinite;
 }
 
-.badge-urgent {
-  background: rgba($tp-danger, 0.1);
-  color: #cf1322;
-  border: 1px solid rgba($tp-danger, 0.3);
-}
-
 @keyframes pulse {
 
   0%,
@@ -173,14 +165,14 @@
   }
 }
 
-.task-body {
+.process-body {
   padding: 4px 15px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.task-info-row {
+.info-row {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -191,49 +183,47 @@
   .highlight {
     color: $tp-primary;
   }
+
+  .intermediate-info {
+    background: rgba($tp-primary, 0.1);
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: $tp-primary;
+  }
 }
 
-/* 进度条区域样式（确保 nut-progress 正确显示） */
 .progress-mini {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 2px;
-  font-size: 11px;
 
   .progress-mini-bar {
     flex: 1;
-    // 覆盖 NutUI Progress 组件的默认样式
+    height: 6px;
+
     :deep(.nut-progress-outer) {
-      background-color: #e8ecf1;
+      background: #e8ecf1;
       border-radius: 4px;
-      height: 6px;
-    }
-    :deep(.nut-progress-inner) {
-      border-radius: 4px;
-      background: linear-gradient(90deg, #1677ff, #69b1ff);
-      transition: width 0.5s ease;
     }
   }
 
-  .task-duration {
+  .duration {
     font-size: 11px;
     color: $tp-text;
     white-space: nowrap;
   }
 }
 
-.task-actions {
+.process-actions {
   display: flex;
   gap: 8px;
   padding: 8px 15px 14px;
   flex-wrap: wrap;
-  .nut-button {
-    flex: 1 0 auto;
-  }
 }
 
-.task-expand {
+.process-expand {
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 12px 15px;
   animation: expandIn 0.3s ease;
@@ -328,14 +318,12 @@
   color: #b0b7c3;
 }
 
-/* 物料录入弹窗样式 */
 .material-panel {
   background: $tp-white;
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size:14px;
 
   .panel-header {
     padding: 16px;
@@ -359,15 +347,15 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 4px;
-  }
 
-  .material-name {
-    font-weight: 600;
-  }
+    .material-name {
+      font-weight: 600;
+    }
 
-  .material-req {
-    font-size: 12px;
-    color: $tp-text;
+    .material-req {
+      font-size: 12px;
+      color: $tp-text;
+    }
   }
 
   .material-progress {
@@ -410,36 +398,86 @@
     padding: 12px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
+
+  .scan-complete-area {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+    .area-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .progress-info {
+      font-size: 12px;
+      color: $tp-primary;
+      margin: 8px 0;
+    }
+
+    .completed-sn-list {
+      margin-top: 12px;
+
+      .list-label {
+        font-size: 12px;
+        color: $tp-text;
+      }
+
+      .sn-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+
+      .sn-tag {
+        background: $tp-white;
+        border-radius: 14px;
+        padding: 4px 10px;
+        font-size: 11px;
+        border: 1px solid rgba($tp-primary, 0.3);
+        color: $tp-primary;
+      }
+    }
+  }
 }
 
-/* 工艺参数面板 */
+.completed-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  color: $tp-success;
+  font-size: 12px;
+}
+
 .panel-content {
   background: $tp-white;
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
   max-height: 85vh;
-}
 
-.panel-header {
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  .panel-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
-  .panel-title {
-    font-size: 16px;
-    font-weight: 700;
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
   }
-}
 
-.panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px 18px;
-}
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 18px;
+  }
 
-.panel-footer {
-  padding: 12px 18px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  .panel-footer {
+    padding: 12px 18px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
 }
 
 .form-group {
@@ -479,43 +517,43 @@
   border-radius: 8px;
   border-left: 3px solid $tp-danger;
   animation: slideDown 0.2s ease;
-}
 
-.anomaly-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: $tp-danger;
-  margin-bottom: 10px;
-}
-
-.anomaly-options {
-  margin-bottom: 8px;
-
-  :deep(.nut-radio-group) {
+  .anomaly-warning {
     display: flex;
-    gap: 20px;
-  }
-}
-
-.change-range-panel {
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.1);
-
-  .form-label-sm {
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
-    font-weight: 500;
-    margin-bottom: 4px;
-    display: block;
-    color: $tp-text;
+    color: $tp-danger;
+    margin-bottom: 10px;
   }
 
-  .change-hint {
-    font-size: 10px;
-    color: $tp-disable;
-    margin-top: 4px;
+  .anomaly-options {
+    margin-bottom: 8px;
+
+    :deep(.nut-radio-group) {
+      display: flex;
+      gap: 20px;
+    }
+  }
+
+  .change-range-panel {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+
+    .form-label-sm {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      display: block;
+      color: $tp-text;
+    }
+
+    .change-hint {
+      font-size: 10px;
+      color: $tp-disable;
+      margin-top: 4px;
+    }
   }
 }
 
@@ -535,137 +573,42 @@
   margin-top: 8px;
   border-top: 1px solid #edf2f7;
   padding-top: 12px;
-}
 
-.list-title {
-  font-weight: 600;
-  margin-bottom: 8px;
-  display: block;
-}
+  .list-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
 
-.list-item-row {
-  background: $tp-help;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #e9eef3;
-  position: relative;
-}
+  .list-item-row {
+    background: $tp-help;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e9eef3;
+    position: relative;
+  }
 
-.delete-row-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none !important;
-  color: $tp-danger !important;
-  font-size: 16px;
-  width: 28px !important;
-  height: 28px !important;
-}
+  .delete-row-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none !important;
+    color: $tp-danger !important;
+    font-size: 16px;
+    width: 28px !important;
+    height: 28px !important;
+  }
 
-.add-row-btn {
-  background: rgba($tp-primary, 0.05);
-  border: 1px dashed $tp-primary;
-  color: $tp-primary;
+  .add-row-btn {
+    background: rgba($tp-primary, 0.05);
+    border: 1px dashed $tp-primary;
+    color: $tp-primary;
+  }
 }
 
 .empty-param {
   text-align: center;
   color: $tp-text;
   padding: 16px;
-}
-
-/* 完成弹窗 */
-.dialog-content {
-  background: $tp-white;
-  border-radius: 16px;
-  padding: 24px 20px;
-  width: 100%;
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  display: block;
-  text-align: center;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-
-  button {
-    flex: 1;
-  }
-}
-
-/* ===== 通用弹窗字体统一 ===== */
-// 物料录入弹窗、参数录入弹窗、异常记录弹窗共用
-
-.panel-content,
-.material-panel {
-  // 弹窗标题
-  .panel-header .panel-title {
-    font-size: 16px;
-    font-weight: 700;
-  }
-
-  // 表单标签
-  .form-label {
-    font-size: 14px;
-    font-weight: 600;
-    .unit {
-      font-size: 12px;
-      font-weight: 400;
-    }
-  }
-
-  // 输入框内部文字（覆盖 nut-input 默认样式）
-  .nut-input {
-    font-size: 14px;
-    :deep(input), :deep(textarea) {
-      font-size: 14px;
-    }
-  }
-
-  // 提示文字（如范围提示、必填星号说明）
-  .input-hint,
-  .change-hint,
-  .material-progress,
-  .material-req {
-    font-size: 12px;
-    color: $tp-text;
-  }
-
-  // 已录入的物料/SN 标签
-  .consumed-item,
-  .param-value-tag {
-    font-size: 12px;
-  }
-
-  // 异常警告区域
-  .anomaly-warning {
-    font-size: 12px;
-  }
-  .anomaly-options {
-    :deep(.nut-radio-label) {
-      font-size: 13px;
-    }
-  }
-
-  // 按钮文字（覆盖 nut-button 默认）
-  .nut-button {
-    font-size: 14px;
-    font-weight: 500;
-  }
-}
-
-// 独立调整异常记录弹窗中的 textarea
-.nut-input[type="textarea"] {
-  :deep(textarea) {
-    font-size: 14px;
-    line-height: 1.5;
-  }
 }

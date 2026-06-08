@@ -1,47 +1,49 @@
 <template>
-  <view class="prod-trace-page">
-    <NavBar title="生产追踪" />
+  <TabbarLayout>
+    <view class="prod-trace-page">
+      <NavBar title="生产追踪" />
 
-    <!-- 搜索栏 -->
-    <view class="search-wrapper">
-      <view class="search-input-wrap">
-        <nut-input class="search-input" type="text" placeholder="输入项目编号 / SAP" />
-      </view>
-      <view class="scan-icon" @click="scanCode">
-        <IconFont name="scan2" size="16" />
-      </view>
-      <nut-button type="info" shape="square" :loading="isLoading" class="search-btn">
-        追溯
-      </nut-button>
-    </view>
-
-    <!-- 产品列表（自然滚动，无加载提示） -->
-    <view class="product-list">
-      <ProductCard v-for="prod in prodList" :key="prod.batchNo" :product="prod" @click="handleProductClick(prod)" />
-      <!-- 哨兵元素，用于触发加载更多（无文字提示） -->
-      <view v-if="hasMore" class="load-trigger"></view>
-    </view>
-
-    <!-- NutUI Popup 弹窗：展示选中的产品详情 -->
-    <nut-popup v-model:visible="showDetailPopup" position="bottom" :style="{ height: '100%' }" :round="false" closeable
-      close-icon-position="top-right" class="full-screen-popup">
-      <view class="popup-content" v-if="selectedProduct">
-        <view class="product-info-header">
-          <view class="product-name">{{ selectedProduct.productName }}</view>
-          <view class="product-meta">批次号：{{ selectedProduct.batchNo }}</view>
-          <view class="product-meta">SAP物料号：{{ selectedProduct.sap }}</view>
+      <!-- 搜索栏 -->
+      <view class="search-wrapper">
+        <view class="search-input-wrap">
+          <nut-input class="search-input" type="text" placeholder="输入项目编号 / SAP" />
         </view>
-        <ProgressOverview :steps="currentSteps" />
-        <view class="timeline-section">
-          <view class="timeline-title">完整工序追溯链路</view>
-          <ul class="timeline-list">
-            <TimelineItem v-for="(step, idx) in currentSteps" :key="step.id" :step="step" :index="idx"
-              :line-class="getLineClass(step.status, idx)" />
-          </ul>
+        <view class="scan-icon" @click="scanCode">
+          <IconFont name="scan2" size="16" />
         </view>
+        <nut-button type="info" shape="square" :loading="isLoading" class="search-btn">
+          追溯
+        </nut-button>
       </view>
-    </nut-popup>
-  </view>
+
+      <!-- 产品列表（自然滚动，无加载提示） -->
+      <view class="product-list">
+        <ProductCard v-for="prod in prodList" :key="prod.batchNo" :product="prod" @click="handleProductClick(prod)" />
+        <!-- 哨兵元素，用于触发加载更多（无文字提示） -->
+        <view v-if="hasMore" class="load-trigger"></view>
+      </view>
+
+      <!-- NutUI Popup 弹窗：展示选中的产品详情 -->
+      <nut-popup v-model:visible="showDetailPopup" position="bottom" :style="{ height: '100%' }" :round="false"
+        closeable close-icon-position="top-right" class="full-screen-popup">
+        <view class="popup-content" v-if="selectedProduct">
+          <view class="product-info-header">
+            <view class="product-name">{{ selectedProduct.productName }}</view>
+            <view class="product-meta">批次号：{{ selectedProduct.batchNo }}</view>
+            <view class="product-meta">SAP物料号：{{ selectedProduct.sap }}</view>
+          </view>
+          <ProgressOverview :steps="currentSteps" />
+          <view class="timeline-section">
+            <view class="timeline-title">完整工序追溯链路</view>
+            <ul class="timeline-list">
+              <TimelineItem v-for="(step, idx) in currentSteps" :key="step.id" :step="step" :index="idx"
+                :line-class="getLineClass(step.status, idx)" />
+            </ul>
+          </view>
+        </view>
+      </nut-popup>
+    </view>
+  </TabbarLayout>
 </template>
 
 <script setup lang="ts" name="ProdTrace">
@@ -52,6 +54,12 @@ import ProgressOverview from '@/components/ProgressOverview.vue'
 import TimelineItem from '@/components/TimelineItem.vue'
 import { IconFont } from '@nutui/icons-vue-taro'
 import type { ProductInfo, Step } from '@/types/prod-trace'
+import TabbarLayout from '@/components/TabbarLayout.vue'
+import { useTabbarStore } from '@/store/tabbar'
+
+onMounted(() => {
+ useTabbarStore().setSelected(2)
+})
 
 // ---------- 模拟产品数据（首屏） ----------
 const prodList = ref<ProductInfo[]>([
@@ -350,6 +358,7 @@ const getLineClass = (status: Step['status'], idx: number) => {
 
 // 全屏弹窗样式
 .full-screen-popup {
+
   // 确保弹窗容器占满
   .nut-popup {
     height: 100% !important;
@@ -361,11 +370,13 @@ const getLineClass = (status: Step['status'], idx: number) => {
   .popup-content {
     height: 100%;
     overflow-y: auto;
+
     // 隐藏滚动条（WebKit）
     &::-webkit-scrollbar {
       width: 0;
       background: transparent;
     }
+
     scrollbar-width: none; // Firefox
     -ms-overflow-style: none; // IE/Edge
   }

@@ -162,7 +162,7 @@ const submitPicking = async () => {
     Taro.showToast({ title: '领料成功，工单已进入生产', icon: 'success' })
     setTimeout(() => {
       // 跳转到生产页面（或工单详情）
-      Taro.navigateTo({ url: `/pages/prod-operation/index?workOrderId=${workOrderId}` })
+      Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrderId}` })
     }, 1500)
   } catch (error) {
     Taro.showToast({ title: '提交失败', icon: 'none' })
@@ -266,7 +266,7 @@ const loadData = async () => {
 onMounted(() => {
   if (!workOrderId) {
     Taro.showToast({ title: '参数错误，自动跳转到工单列表', icon: 'none' })
-    setTimeout(() => Taro.navigateTo({ url: '/pages/work-order/order-list' }), 1500)
+    setTimeout(() => Taro.navigateTo({ url: '/pages/work/order-list' }), 1500)
     return
   }
   loadData()
