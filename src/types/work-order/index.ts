@@ -9,7 +9,6 @@ export interface WorkOrderListItem {
   completedQty: number
   unit: string
   status: 'pending_material' | 'in_production' | 'completed'
-  progress: number
   hasAnomaly: boolean
 }
 

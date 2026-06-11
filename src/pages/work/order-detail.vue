@@ -3,9 +3,9 @@
     <view class="work-order-detail-page">
       <NavBar :title="`工单详情`" :show-back="true" />
 
-      <view v-if="loading" class="loading-state"></view>
+      <!-- <view v-if="loading" class="loading-state"><nut-loading type="circular" /></view> -->
 
-      <view v-else-if="workOrder" class="detail-content">
+      <view v-if="workOrder" class="detail-content">
         <!-- 基本信息卡片 -->
         <view class="info-card">
           <view class="card-header">
@@ -15,37 +15,23 @@
             </view>
           </view>
           <view class="info-grid">
-            <view class="info-item">
-              <text class="label">项目编码</text>
-              <text class="value highlight">{{ workOrder.projectCode }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">项目名称</text>
-              <text class="value">{{ workOrder.projectName }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">产品名称</text>
-              <text class="value">{{ workOrder.productName }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">产品SAP码</text>
-              <text class="value">{{ workOrder.productSap }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">产品类型</text>
-              <text class="value">{{ workOrder.productType || '--' }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">产品规格</text>
-              <text class="value">{{ workOrder.productSpec || '--' }}</text>
-            </view>
-            <view class="info-item">
-              <text class="label">负责人</text>
-              <text class="value">{{ workOrder.leaderName }} ({{ workOrder.leaderDept }})</text>
-            </view>
+            <view class="info-item"><text class="label">项目编码</text><text class="value highlight">{{
+              workOrder.projectCode }}</text></view>
+            <view class="info-item"><text class="label">项目名称</text><text class="value">{{ workOrder.projectName
+                }}</text></view>
+            <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.productName
+                }}</text></view>
+            <view class="info-item"><text class="label">产品SAP码</text><text class="value">{{ workOrder.productSap
+                }}</text></view>
+            <view class="info-item"><text class="label">产品类型</text><text class="value">{{ workOrder.productType || '--'
+                }}</text></view>
+            <view class="info-item"><text class="label">产品规格</text><text class="value">{{ workOrder.productSpec || '--'
+                }}</text></view>
+            <view class="info-item"><text class="label">负责人</text><text class="value">{{ workOrder.leaderName }} ({{
+              workOrder.leaderDept }})</text></view>
           </view>
           <view class="progress-section">
-            <view class="progress-header"><text>生产进度{{`(${workOrder.completedQty}/${workOrder.planQty})`}}</text><text>{{ workOrder.progress }}%</text></view>
+            <view class="progress-header"><text>生产进度</text><text>{{ workOrder.progress }}%</text></view>
             <nut-progress :percentage="workOrder.progress" :show-text="false" stroke-color="blue" />
           </view>
         </view>
@@ -74,27 +60,35 @@
           </view>
         </view>
 
-        <!-- 工序进度卡片（修正样式） -->
+        <!-- 工序进度卡片（核心：展示每个工序的完成量和物料消耗） -->
         <view class="info-card" v-if="steps.length">
           <view class="card-header">
             <text class="card-title">工序进度</text>
           </view>
           <view class="steps-list">
-            <view v-for="(step, idx) in steps" :key="step.id" class="step-item">
+            <view v-for="(step, idx) in steps" :key="step.id" class="step-item-card">
+              <!-- 工序头部 -->
               <view class="step-header">
                 <view class="step-index">{{ idx + 1 }}</view>
                 <view class="step-name">{{ step.stepName }}</view>
                 <view class="step-status" :class="step.statusClass">{{ step.statusLabel }}</view>
               </view>
+              <!-- 进度信息 -->
               <view class="step-progress-info">
                 <text>加工进度：{{ step.completedQty }} / {{ step.planQty }} 件</text>
+                <!-- <nut-progress :percentage="step.percent" :show-text="false" stroke-color="blue"
+                  class="step-progress-bar" /> -->
               </view>
-              <view v-if="step.consumedMaterials?.length" class="step-material-info">
-                <text class="material-label">物料消耗：</text>
-                <text v-for="(m, mi) in step.consumedMaterials" :key="mi" class="material-item">
-                  {{ m.materialName }} {{ m.consumedQty }}{{ m.unit }}
-                </text>
+              <!-- 物料消耗明细（该工序消耗的物料） -->
+              <view v-if="step.consumedMaterials && step.consumedMaterials.length" class="step-material-info">
+                <text class="material-label">消耗物料：</text>
+                <view class="material-tag-list">
+                  <text v-for="(m, mi) in step.consumedMaterials" :key="mi" class="material-tag">
+                    {{ m.materialName }}: {{ m.consumedQty }}{{ m.unit }}
+                  </text>
+                </view>
               </view>
+              <!-- 设备信息 -->
               <view class="step-equipment" v-if="step.equipmentName">
                 <text>设备：{{ step.equipmentName }}</text>
               </view>
@@ -123,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, computed, onMounted } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
@@ -154,7 +149,7 @@ const backToList = () => Taro.navigateBack()
 const goToTrace = () => Taro.navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${workOrderId}` })
 
 // 工序完成统计（未使用但保留）
-const completedStepsCount = computed(() => steps.value.filter(s => s.status === 'completed').length)
+// const completedStepsCount = computed(() => steps.value.filter(s => s.status === 'completed').length)
 
 // 加载数据（模拟）
 const loadData = async () => {
@@ -176,7 +171,8 @@ const loadData = async () => {
       progress: 0,
       hasAnomaly: false,
       leaderName: '吴兴林',
-      leaderDept: '模块产品部二组'
+      leaderDept: '模块产品部二组',
+
     }
     materialList.value = [
       { materialName: '电芯', materialCode: 'CEL-4815', requiredQty: 132, unit: '个', pickedQty: 0 },
@@ -301,292 +297,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/theme.scss';
-
-.work-order-detail-page {
-  min-height: 100vh;
-  background: $tp-help;
-  padding-bottom: 30px;
-}
-
-.loading-state,
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  gap: 20px;
-}
-
-.detail-content {
-  padding: 12px 16px;
-}
-
-/* 卡片通用样式 */
-.info-card {
-  background: $tp-white;
-  border-radius: $tp-radius-base;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: $tp-shadow-sm;
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: $tp-title;
-      margin-bottom: 0;
-    }
-
-    .status-badge {
-      flex-shrink: 0;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-
-      &.status-pending {
-        background: rgba($tp-primary, 0.1);
-        color: $tp-primary;
-      }
-
-      &.status-progress {
-        background: rgba(#fa8c16, 0.1);
-        color: #fa8c16;
-      }
-
-      &.status-completed {
-        background: rgba($tp-success, 0.1);
-        color: $tp-success;
-      }
-    }
-  }
-
-  .card-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: $tp-title;
-    margin-bottom: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .subtitle {
-      font-size: 12px;
-      font-weight: normal;
-      color: $tp-text;
-    }
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 16px;
-    margin-bottom: 16px;
-  }
-
-  .info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    .label {
-      font-size: 11px;
-      color: $tp-text;
-    }
-
-    .value {
-      font-size: 14px;
-      font-weight: 500;
-      color: $tp-title;
-
-      &.highlight {
-        color: $tp-primary;
-        font-weight: 700;
-      }
-    }
-  }
-
-  .progress-section {
-    margin-top: 8px;
-
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 8px;
-      color: $tp-text;
-    }
-  }
-
-  .material-list {
-    .material-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .material-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .material-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: $tp-title;
-        }
-
-        .material-code {
-          font-size: 11px;
-          color: $tp-text;
-        }
-      }
-
-      .material-qty {
-        text-align: right;
-        font-size: 12px;
-        color: $tp-text;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .picked-done {
-          color: $tp-success;
-        }
-
-        .picked-pending {
-          color: $tp-danger;
-        }
-      }
-    }
-  }
-
-  .material-summary {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-
-    .summary-text {
-      font-size: 11px;
-      color: $tp-primary;
-      white-space: nowrap;
-    }
-  }
-
-  /* 工序列表样式（新结构，垂直布局） */
-  .steps-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .step-item {
-    background: $tp-help;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 0; // 由父级 gap 控制间距
-
-    .step-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .step-index {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: $tp-white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-      color: $tp-primary;
-      flex-shrink: 0;
-    }
-
-    .step-name {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 600;
-      color: $tp-title;
-    }
-
-    .step-status {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-
-      &.step-done {
-        background: rgba($tp-success, 0.1);
-        color: $tp-success;
-      }
-
-      &.step-progress {
-        background: rgba(#fa8c16, 0.1);
-        color: #fa8c16;
-      }
-
-      &.step-pending {
-        background: rgba($tp-text, 0.1);
-        color: $tp-text;
-      }
-
-      &.step-anomaly {
-        background: rgba($tp-danger, 0.1);
-        color: $tp-danger;
-      }
-    }
-
-    .step-progress-info,
-    .step-material-info,
-    .step-equipment {
-      font-size: 12px;
-      color: $tp-text;
-      margin-top: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .material-label {
-      font-weight: 500;
-      color: $tp-title;
-    }
-
-    .material-item {
-      background: $tp-white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      color: $tp-text;
-    }
-  }
-}
-
-/* 操作按钮区域 */
-.action-buttons {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+@import './order-detail.scss';
 </style>

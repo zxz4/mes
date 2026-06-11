@@ -68,10 +68,6 @@
                 <nut-button v-else-if="!process.intermediateReady" size="small" type="warning" plain disabled>
                   ⏳ 等待中间件
                 </nut-button>
-                <nut-button v-else-if="process.autoComplete" size="small" type="success"
-                  @click="openMaterialPanel(process)">
-                  📦 扫码完成
-                </nut-button>
                 <nut-button v-else size="small" type="info" @click="openParamPanel(process)">
                   📝 录入参数
                 </nut-button>
@@ -146,7 +142,7 @@
               <text class="material-progress">已录入: {{ material.consumedQuantity || 0 }}</text>
               <view v-if="(material.consumedQuantity || 0) < material.requiredQty" class="input-row">
                 <nut-input v-model="tempMaterialCode[material.sapCode]"
-                  :placeholder="material.isUniqueCode ? '扫描/输入 SN' : '扫描/输入 批次号'"
+                  placeholder="模拟手动录入SN/批次号"
                   @confirm="() => addMaterialItem(currentProcessForMaterial!, material)" />
                 <nut-button size="small" type="primary"
                   @click="() => addMaterialItem(currentProcessForMaterial!, material)">添加</nut-button>
@@ -168,7 +164,7 @@
             <view v-if="currentProcessForMaterial?.autoComplete" class="scan-complete-area">
               <view class="area-title">📷 连续扫码完成加工</view>
               <view class="input-row">
-                <nut-input v-model="scanSNInput" placeholder="扫描/输入 SN 码" @confirm="handleScanComplete" />
+                <nut-input v-model="scanSNInput" placeholder="模拟扫码自动录入批次/SN号" @confirm="handleScanComplete" />
                 <nut-button size="small" type="primary" @click="handleScanComplete">确认</nut-button>
               </view>
               <view class="progress-info">已完成：{{ currentProcessForMaterial.completedQty }} / {{
