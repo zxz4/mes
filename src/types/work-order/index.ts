@@ -1,14 +1,14 @@
 // 工单列表项（用于列表展示）
 export interface WorkOrderListItem {
   id: string
-  projectCode: string
-  projectName: string
+  workOrderNo: string
+  workOrderName: string
   productName: string
   productSap: string
-  planQty: number
+  plannedQty: number
   completedQty: number
-  unit: string
-  status: 'pending_material' | 'in_production' | 'completed'
+  processRouteId:string
+  status: 'Pending' | 'Processing' | 'Completed'
   hasAnomaly: boolean
 }
 
@@ -19,15 +19,20 @@ export interface WorkOrderDetail extends WorkOrderListItem {
   leaderName: string            // 负责人名称
   leaderDept: string            // 负责人部门
   // 可选：物料清单、工序进度等，可继续扩展
-  materialList?: MaterialItem[]
+  materialRequirements : MaterialRequirement[]
   steps?: StepProgress[]
 }
 
-export interface MaterialItem {
+
+export interface StartWorkOrderPara{
+  processRouteId:string
+  workOrderMaterialReq:Array<MaterialRequirement>
+}
+
+export interface MaterialRequirement {
   materialName: string
   materialCode: string
   requiredQty: number
-  unit: string
   pickedQty?: number
 }
 

@@ -9,25 +9,20 @@
           <view class="stat-number blue">{{ workOrders.length }}</view>
           <view class="stat-label">全部工单</view>
         </view>
-        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'pending_material' }"
-          @click="filterStatus = 'pending_material'">
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Pending' }"
+          @click="filterStatus = 'Pending'">
           <view class="stat-number orange">{{ pendingMaterialCount }}</view>
           <view class="stat-label">待领料</view>
         </view>
-        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'in_production' }"
-          @click="filterStatus = 'in_production'">
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Processing' }"
+          @click="filterStatus = 'Processing'">
           <view class="stat-number blue">{{ inProductionCount }}</view>
           <view class="stat-label">生产中</view>
         </view>
-        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'completed' }"
-          @click="filterStatus = 'completed'">
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Completed' }"
+          @click="filterStatus = 'Completed'">
           <view class="stat-number green">{{ completedCount }}</view>
           <view class="stat-label">已完成</view>
-        </view>
-        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'anomaly' }"
-          @click="filterStatus = 'anomaly'">
-          <view class="stat-number red">{{ anomalyCount }}</view>
-          <view class="stat-label">异常工单</view>
         </view>
       </scroll-view>
 
@@ -38,7 +33,7 @@
           <view class="card-header">
             <!-- 项目/产品信息左对齐 -->
             <view class="order-info">
-              <view class="project-name">{{ order.projectName }} ({{ order.projectCode }})</view>
+              <view class="project-name">{{ order.workOrderName }} ({{ order.workOrderNo }})</view>
               <view class="product-info">{{ order.productName }} ({{ order.productSap }})</view>
             </view>
             <!-- 状态徽章保持在右侧 -->
@@ -51,26 +46,26 @@
           <view class="card-body">
             <view class="info-row">
               <text class="label">计划数量</text>
-              <text class="value">{{ order.planQty }} {{ order.unit }}</text>
+              <text class="value">{{ order.plannedQty }} EA</text>
             </view>
             <view class="info-row">
               <text class="label">已完成</text>
-              <text class="value">{{ order.completedQty }} {{ order.unit }}</text>
+              <text class="value">{{ order.completedQty }} EA</text>
             </view>
             <view class="progress-row">
-              <nut-progress :percentage="order.progress" :show-text="false" stroke-color="blue" class="progress-bar" />
-              <text class="progress-text">{{ order.progress }}%</text>
+              <nut-progress :percentage="order.completedQty/order.plannedQty" :show-text="false" stroke-color="blue" class="progress-bar" />
+              <text class="progress-text">{{ order.completedQty/order.plannedQty }}%</text>
             </view>
           </view>
 
           <!-- 卡片底部：操作按钮（无计划时间） -->
           <view class="card-footer">
             <view class="actions">
-              <nut-button v-if="order.status === 'pending_material'" size="small" type="primary"
+              <nut-button v-if="order.status === 'Pending'" size="small" type="primary"
                 @click.stop="goToPicking(order.id)">去领料</nut-button>
-              <nut-button v-if="order.status === 'in_production'" size="small" type="success"
+              <nut-button v-if="order.status === 'Processing'" size="small" type="success"
                 @click.stop="goToProduction(order.id)">继续生产</nut-button>
-              <nut-button v-if="order.status === 'completed'" size="small" plain
+              <nut-button v-if="order.status === 'Completed'" size="small" plain
                 @click.stop="goToTrace(order.id)">查看追溯</nut-button>
               <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain
                 @click.stop="goToDetail(order.id)">异常详情</nut-button>
@@ -92,64 +87,30 @@ import { ref, computed , onMounted } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
-
+import { getLWorkOrderList } from '@/api/work-order'
 import TabbarLayout from '@/components/TabbarLayout.vue'
 import { useTabbarStore } from '@/store/tabbar'
+import{getBomChildren} from "@/api/bom"
+
+const workOrders = ref<WorkOrderListItem[]>([]);
+
+
+getBomChildren('158024133');
 
 onMounted(() => {
  useTabbarStore().setSelected(0)
+ getLWorkOrderList().then(data=>{
+  workOrders.value = data.items;
+ })
 })
-// 模拟数据（新结构）
-const workOrders = ref<WorkOrderListItem[]>([
-  {
-    id: 'WO001',
-    projectCode: 'PJ_1098',
-    projectName: 'SM1178D-310-R2.1_1178.496kWh_中交',
-    productName: 'SM1178D-310-R2.1',
-    productSap: '91070999',
-    planQty: 1,
-    completedQty: 0,
-    unit: 'EA',
-    status: 'pending_material',
-    progress: 0,
-    hasAnomaly: false
-  },
-  {
-    id: 'WO002',
-    projectCode: 'PJ_1076',
-    projectName: 'SE5015D-628-R1.1_400MWh_宁夏中光电',
-    productName: 'SE5015D-628-R1.1',
-    productSap: '91070575',
-    planQty: 80,
-    completedQty: 40,
-    unit: 'EA',
-    status: 'in_production',
-    progress: 50,
-    hasAnomaly: true
-  },
-  {
-    id: 'WO003',
-    projectCode: 'PJ_0823',
-    projectName: 'SC0261-314-R2.3_1306kWh_TD_新加坡',
-    productName: 'SC0261-314-R2.3',
-    productSap: '91062669',
-    planQty: 5,
-    completedQty: 5,
-    unit: 'EA',
-    status: 'completed',
-    progress: 100,
-    hasAnomaly: false
-  }
-])
-
 
 
 // 状态筛选
-const filterStatus = ref<'all' | 'pending_material' | 'in_production' | 'completed' | 'anomaly'>('all')
-const pendingMaterialCount = computed(() => workOrders.value.filter(o => o.status === 'pending_material').length)
-const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'in_production').length)
-const completedCount = computed(() => workOrders.value.filter(o => o.status === 'completed').length)
-const anomalyCount = computed(() => workOrders.value.filter(o => o.hasAnomaly).length)
+const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed' | 'anomaly'>('all')
+const pendingMaterialCount = computed(() => workOrders.value.filter(o => o.status === 'Pending').length)
+const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'Processing').length)
+const completedCount = computed(() => workOrders.value.filter(o => o.status === 'Completed').length)
+
 
 const filteredOrders = computed(() => {
   if (filterStatus.value === 'all') return workOrders.value
@@ -157,8 +118,8 @@ const filteredOrders = computed(() => {
   return workOrders.value.filter(o => o.status === filterStatus.value)
 })
 
-const statusLabel = (status: string) => ({ pending_material: '待领料', in_production: '生产中', completed: '已完成' }[status] || status)
-const statusClass = (status: string) => ({ pending_material: 'status-pending', in_production: 'status-progress', completed: 'status-completed' }[status] || '')
+const statusLabel = (status: string) => ({ Pending: '待领料', Processing: '生产中', completed: '已完成' }[status] || status)
+const statusClass = (status: string) => ({ Pending: 'status-pending', Processing: 'status-progress', completed: 'status-completed' }[status] || '')
 
 // 跳转
 const goToDetail = (id: string) => Taro.navigateTo({ url: `/pages/work/order-detail?id=${id}` })
