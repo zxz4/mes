@@ -1,9 +1,5 @@
-import {
-  showLoading,
-  hideLoading,
-  request,
-  getStorageSync
-} from '@tarojs/taro';
+import { request, getStorageSync, showToast } from '@tarojs/taro';
+import { loadingManager } from '@/util/loadingManager';
 
 export const customHeader: Record<string, string> = {
   'Authorization': getStorageSync<string>('token') ?? '',
@@ -26,7 +22,6 @@ export async function ajax<T = any>(
   // 防止重复提交处理
   if (tempFetchFlag === fetchFlag) {
     fetchFlag = '';
-    hideLoading();
     throw new Error('请不要重复点击提交');
   } else {
     fetchFlag = tempFetchFlag;
@@ -36,14 +31,10 @@ export async function ajax<T = any>(
     }, 600);
   }
   requestQueue.push(tempFetchFlag);
-  console.log('requestQueue==>', requestQueue);
   if (!customHeader.Authorization) delete customHeader.Authorization;
 
   if (isShowLoading) {
-    showLoading({
-      title: '加载中',
-      mask: true
-    });
+    loadingManager.show();
   }
 
   if (url.startsWith('/')) {
@@ -62,27 +53,34 @@ export async function ajax<T = any>(
     };
     request(requestOptions)
       .then(async res => {
+        if (isShowLoading) {
+          loadingManager.hide();
+        }
         switch (res.statusCode) {
           case 200:
           case 201:
           case 204:
             resolve(<T>res.data);
-            break;
+            return;
           case 400:
-            break;
+            return;
           case 500:
           default:
-            reject(res.data)
-            break;
+            reject(res.data);
+            return;
         }
       })
-      .catch(err => {
-        console.log(err);
-        reject(err);
-      }).finally(() => {
+      .catch(() => {
         if (isShowLoading) {
-          hideLoading();
+          loadingManager.forceHide();
+          showToast({
+            title: '无法访问到资源，请检查网络连接。',
+            icon: 'error',
+            duration: 2500
+          });
         }
+        reject();
+      }).finally(() => {
         requestQueue = requestQueue.filter(z => z !== tempFetchFlag);
       });
   });
