@@ -37,9 +37,9 @@ export async function ajax<T = any>(
     loadingManager.show();
   }
 
-  if (url.startsWith('/')) {
-    url = `https://localhost:51243${url}`;
-  }
+  // if (url.startsWith('/')) {
+  //   url = `https://localhost:51243${url}`;
+  // }
 
   return new Promise((resolve, reject) => {
     let requestOptions = {

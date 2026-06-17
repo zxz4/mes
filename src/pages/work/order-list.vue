@@ -2,7 +2,6 @@
   <TabbarLayout>
     <view class="work-order-page">
       <NavBar title="生产工单" />
-
       <!-- 统计卡片（状态筛选） -->
       <scroll-view scroll-x class="stats-row">
         <view class="stat-card" :class="{ 'active-filter': filterStatus === 'all' }" @click="filterStatus = 'all'">
@@ -11,8 +10,8 @@
         </view>
         <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Pending' }"
           @click="filterStatus = 'Pending'">
-          <view class="stat-number orange">{{ pendingMaterialCount }}</view>
-          <view class="stat-label">待领料</view>
+          <view class="stat-number orange">{{ pendingConfigureCount }}</view>
+          <view class="stat-label">配置中</view>
         </view>
         <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Processing' }"
           @click="filterStatus = 'Processing'">
@@ -41,7 +40,6 @@
               {{ statusLabel(order.status) }}
             </view>
           </view>
-
           <!-- 卡片主体：数量 + 进度 -->
           <view class="card-body">
             <view class="info-row">
@@ -57,12 +55,11 @@
               <text class="progress-text">{{ order.completedQty/order.plannedQty }}%</text>
             </view>
           </view>
-
           <!-- 卡片底部：操作按钮（无计划时间） -->
           <view class="card-footer">
             <view class="actions">
               <nut-button v-if="order.status === 'Pending'" size="small" type="primary"
-                @click.stop="goToSetup(order.id)">生产配置</nut-button>
+                @click.stop="goToSetup(order.id)">工单配置</nut-button>
               <nut-button v-if="order.status === 'Processing'" size="small" type="success"
                 @click.stop="goToProduction(order.id)">继续生产</nut-button>
               <nut-button v-if="order.status === 'Completed'" size="small" plain
@@ -78,7 +75,6 @@
       </view>
     </view>
   </TabbarLayout>
-
 </template>
 
 <script setup lang="ts" name="WorkOrderList">
@@ -89,12 +85,7 @@ import type { WorkOrderListItem } from '@/types/work-order'
 import { getLWorkOrderList } from '@/api/work-order'
 import TabbarLayout from '@/components/TabbarLayout.vue'
 import { useTabbarStore } from '@/store/tabbar'
-import{getBomChildren} from "@/api/bom"
-
 const workOrders = ref<WorkOrderListItem[]>([]);
-
-
-getBomChildren('158024133');
 
 onMounted(() => {
  useTabbarStore().setSelected(0)
@@ -105,19 +96,18 @@ onMounted(() => {
 
 
 // 状态筛选
-const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed' | 'anomaly'>('all')
-const pendingMaterialCount = computed(() => workOrders.value.filter(o => o.status === 'Pending').length)
+const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed' >('all')
+const pendingConfigureCount = computed(() => workOrders.value.filter(o => o.status === 'Pending').length)
 const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'Processing').length)
 const completedCount = computed(() => workOrders.value.filter(o => o.status === 'Completed').length)
 
 
 const filteredOrders = computed(() => {
   if (filterStatus.value === 'all') return workOrders.value
-  // if (filterStatus.value === 'anomaly') return workOrders.value.filter(o => o.hasAnomaly)
   return workOrders.value.filter(o => o.status === filterStatus.value)
 })
 
-const statusLabel = (status: string) => ({ Pending: '待领料', Processing: '生产中', completed: '已完成' }[status] || status)
+const statusLabel = (status: string) => ({ Pending: '配置中', Processing: '生产中', completed: '已完成' }[status] || status)
 const statusClass = (status: string) => ({ Pending: 'status-pending', Processing: 'status-progress', completed: 'status-completed' }[status] || '')
 
 // 跳转

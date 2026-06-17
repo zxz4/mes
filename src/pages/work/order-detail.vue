@@ -102,7 +102,7 @@
                   <text class="material-name">{{ req.materialName }}</text>
                   <text class="material-sap">({{ req.materialSap }})</text>
                   <text v-if="req.isSNManaged" class="badge-sn">SN</text>
-                  <text v-else-if="req.isLotManaged" class="badge-lot">批次</text>
+                  <text v-else class="badge-lot">批次</text>
                 </view>
                 <view class="material-qty-summary">
                   <text>需求: {{ req.plannedQty }}</text>
@@ -125,7 +125,7 @@
 
       <!-- 操作按钮 -->
       <view class="action-buttons">
-        <nut-button v-if="workOrder.status === 'Pending'" type="primary" block @click="goToPicking">去领料</nut-button>
+        <nut-button v-if="workOrder.status === 'Pending'" type="primary" block @click="goToConfigure">配置工单</nut-button>
         <nut-button v-if="workOrder.status === 'Processing'" type="success" block @click="goToProduction">继续生产</nut-button>
         <nut-button v-if="workOrder.status === 'Completed'" type="info" block plain @click="goToTrace">查看追溯</nut-button>
       </view>
@@ -139,17 +139,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import Taro from '@tarojs/taro'
-import NavBar from '@/components/NavBar.vue'
-import type { WorkOrderDetail } from '@/types/work-order'
-import { getWorkOrderDetail } from '@/api/work-order' // 需要实现此接口
+import { ref, computed, onMounted } from 'vue';
+import Taro from '@tarojs/taro';
+import NavBar from '@/components/NavBar.vue';
+import type { WorkOrderDetail } from '@/types/work-order';
+import { getWorkOrderDetail } from '@/api/work-order';
 
-const instance = Taro.getCurrentInstance()
-const workOrderId = instance?.router?.params?.id || ''
+const instance = Taro.getCurrentInstance();
+const workOrderId = instance?.router?.params?.id || '';
 
-const loading = ref(true)
-const workOrder = ref<WorkOrderDetail | null>(null)
+const workOrder = ref<WorkOrderDetail | null>(null);
 
 // 计算整体进度
 const progressPercent = computed(() => {
@@ -157,20 +156,18 @@ const progressPercent = computed(() => {
   const total = workOrder.value.plannedQty
   if (total === 0) return 0
   return Math.round((workOrder.value.completedQty / total) * 100)
-})
-
-// 辅助函数
-const statusLabel = (s: string) => ({ Pending: '待领料', Processing: '生产中', Completed: '已完成' }[s] || s)
-const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[s] || '')
-const opStatusLabel = (s: string) => ({ Pending: '待处理', Processing: '进行中', Completed: '已完成' }[s] || s)
-const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '')
-const opPercent = (op: any) => op.planQty ? Math.round((op.completedQty / op.planQty) * 100) : 0
+});
+const statusLabel = (s: string) => ({ Pending: '待领料', Processing: '生产中', Completed: '已完成' }[s] || s);
+const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[s] || '');
+const opStatusLabel = (s: string) => ({ Pending: '待处理', Processing: '进行中', Completed: '已完成' }[s] || s);
+const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '');
+const opPercent = (op: any) => op.planQty ? Math.round((op.completedQty / op.planQty) * 100) : 0;
 
 // 跳转
-const goToPicking = () => Taro.navigateTo({ url: `/pages/picking/index?workOrderId=${workOrderId}` })
-const goToProduction = () => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrderId}` })
-const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/index?workOrderId=${workOrderId}` })
-const backToList = () => Taro.navigateTo({ url: '/pages/work/order-list' })
+const goToConfigure = () => Taro.navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${workOrderId}` });
+const goToProduction = () => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrderId}` });
+const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/index?workOrderId=${workOrderId}` });
+const backToList = () => Taro.navigateTo({ url: '/pages/work/order-list' });
 
 // 加载工单详情
 const loadData = async () => {
@@ -179,17 +176,8 @@ const loadData = async () => {
     setTimeout(() => backToList(), 1500)
     return
   }
-  loading.value = true
-  try {
-    const data = await getWorkOrderDetail(workOrderId)
-    workOrder.value = data
-  } catch (err) {
-    console.error('加载工单失败', err)
-    Taro.showToast({ title: '加载失败', icon: 'none' })
-    workOrder.value = null
-  } finally {
-    loading.value = false
-  }
+  const data = await getWorkOrderDetail(workOrderId);
+  workOrder.value = data
 }
 
 onMounted(() => {
