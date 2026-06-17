@@ -1,4 +1,4 @@
 export default {
-  navigationBarTitleText: '物料领用',
+  navigationBarTitleText: '生产配置',
     usingComponents: {},
 }

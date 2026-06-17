@@ -15,5 +15,6 @@ declare module 'vue' {
     NutProgress: typeof import('@nutui/nutui-taro')['Progress']
     NutRadio: typeof import('@nutui/nutui-taro')['Radio']
     NutRadioGroup: typeof import('@nutui/nutui-taro')['RadioGroup']
+    NutSwitch: typeof import('@nutui/nutui-taro')['Switch']
   }
 }

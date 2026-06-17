@@ -116,7 +116,8 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       '@/types': path.resolve(__dirname, '..', 'src/types'),
       '@/api': path.resolve(__dirname, '..', 'src/api'),
       '@/styles': path.resolve(__dirname, '..', 'src/styles'),
-      '@/store': path.resolve(__dirname, '..', 'src/store')
+      '@/store': path.resolve(__dirname, '..', 'src/store'),
+      "@/util":path.resolve(__dirname, '..', 'src/util'),
     },
   }
   if (process.env.NODE_ENV === 'development') {

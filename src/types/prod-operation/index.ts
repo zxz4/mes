@@ -90,7 +90,7 @@ export interface AnomalyRecord {
  */
 export interface MaterialRequirement {
   /** 物料SAP编码 */
-  sapCode: string
+  materialSap: string
   /** 物料名称 */
   materialName: string
   /** 本工序对该物料的需求数量（每加工一件需要的数量） */

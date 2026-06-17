@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { getBomRoot, getBom, getBomChildren } from '@/api/bom';
-import type { Component, ComponentBase, BomTreeNode } from '@/types/bom/component';
+import type { Component, ComponentBase, BomTreeNode } from '@/types/bom';
 
 export const useBomStore = defineStore('bom', () => {
   // ============ 状态 ============
@@ -851,6 +851,7 @@ export const useBomStore = defineStore('bom', () => {
     currentRootId,
     loading,
     loadingNodes,
+    childrenCache,
     error,
     expandedNodes,
     checkedNodes,

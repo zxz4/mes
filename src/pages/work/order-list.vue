@@ -62,13 +62,12 @@
           <view class="card-footer">
             <view class="actions">
               <nut-button v-if="order.status === 'Pending'" size="small" type="primary"
-                @click.stop="goToPicking(order.id)">去领料</nut-button>
+                @click.stop="goToSetup(order.id)">生产配置</nut-button>
               <nut-button v-if="order.status === 'Processing'" size="small" type="success"
                 @click.stop="goToProduction(order.id)">继续生产</nut-button>
               <nut-button v-if="order.status === 'Completed'" size="small" plain
                 @click.stop="goToTrace(order.id)">查看追溯</nut-button>
-              <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain
-                @click.stop="goToDetail(order.id)">异常详情</nut-button>
+              <!-- <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain @click.stop="goToDetail(order.id)">异常详情</nut-button> -->
             </view>
           </view>
         </view>
@@ -114,7 +113,7 @@ const completedCount = computed(() => workOrders.value.filter(o => o.status === 
 
 const filteredOrders = computed(() => {
   if (filterStatus.value === 'all') return workOrders.value
-  if (filterStatus.value === 'anomaly') return workOrders.value.filter(o => o.hasAnomaly)
+  // if (filterStatus.value === 'anomaly') return workOrders.value.filter(o => o.hasAnomaly)
   return workOrders.value.filter(o => o.status === filterStatus.value)
 })
 
@@ -123,7 +122,7 @@ const statusClass = (status: string) => ({ Pending: 'status-pending', Processing
 
 // 跳转
 const goToDetail = (id: string) => Taro.navigateTo({ url: `/pages/work/order-detail?id=${id}` })
-const goToPicking = (id: string) => Taro.navigateTo({ url: `/pages/prod/pick-material?workOrderId=${id}` })
+const goToSetup = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
 const goToProduction = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
 const goToTrace = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
 </script>

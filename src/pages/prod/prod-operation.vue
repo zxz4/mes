@@ -133,7 +133,7 @@
           <view class="panel-header">📦 物料录入 - {{ currentProcessForMaterial?.processName }}</view>
           <scroll-view scroll-y class="material-list-scroll">
             <!-- 新物料录入（仅 autoComplete 工序可能存在物料需求） -->
-            <view v-for="material in currentProcessForMaterial?.materialList" :key="material.sapCode"
+            <view v-for="material in currentProcessForMaterial?.materialList" :key="material.materialSap"
               class="material-item-panel">
               <view class="material-header">
                 <text class="material-name">{{ material.materialName }}</text>
@@ -141,7 +141,7 @@
               </view>
               <text class="material-progress">已录入: {{ material.consumedQuantity || 0 }}</text>
               <view v-if="(material.consumedQuantity || 0) < material.requiredQty" class="input-row">
-                <nut-input v-model="tempMaterialCode[material.sapCode]"
+                <nut-input v-model="tempMaterialCode[material.materialSap]"
                   placeholder="模拟手动录入SN/批次号"
                   @confirm="() => addMaterialItem(currentProcessForMaterial!, material)" />
                 <nut-button size="small" type="primary"
@@ -470,7 +470,7 @@ const closeMaterialPanel = () => {
   scanSNInput.value = ''
 }
 const addMaterialItem = (process: Process, material: MaterialRequirement) => {
-  const code = tempMaterialCode[material.sapCode]?.trim()
+  const code = tempMaterialCode[material.materialSap]?.trim()
   if (!code) { showToast('请输入物料编码', 'none'); return }
   if (!material.consumedItems) material.consumedItems = []
   if (material.isUniqueCode) {
@@ -482,7 +482,7 @@ const addMaterialItem = (process: Process, material: MaterialRequirement) => {
     else material.consumedItems.push({ code, quantity: 1, timestamp: Date.now() })
   }
   material.consumedQuantity = material.consumedItems.reduce((s, i) => s + i.quantity, 0)
-  tempMaterialCode[material.sapCode] = ''
+  tempMaterialCode[material.materialSap] = ''
   const allReady = process.materialList.every(m => (m.consumedQuantity || 0) >= m.requiredQty)
   if (allReady !== process.materialReady) process.materialReady = allReady
 }

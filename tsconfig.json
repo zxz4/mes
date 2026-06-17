@@ -22,7 +22,8 @@
       "@/types/*": ["./src/types/*"],
       "@/styles/*": ["./src/styles/*"],
       "@/store/*" : ["./src/store/*"],
-      "@/api/*":  ["./src/api/*"]
+      "@/api/*":  ["./src/api/*"],
+      "@/util/*":["./src/util/*"]
     },
     "typeRoots": [
       "node_modules/@types"
