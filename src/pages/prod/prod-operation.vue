@@ -3,14 +3,16 @@
     <view class="prod-operation-page">
       <NavBar title="生产执行" />
 
+
       <!-- 工单不存在 -->
       <view v-if="!workOrder" class="error-state">
         <nut-empty description="工单不存在或加载失败" />
+        <nut-button type="primary" @click="backToList">返回工单列表</nut-button>
       </view>
 
       <!-- 工单内容 -->
       <view v-else class="content-wrapper">
-        <!-- 1. 工单基本信息卡片 -->
+        <!-- 工单基本信息卡片 -->
         <view class="info-card">
           <view class="card-header">
             <text class="card-title">工单信息</text>
@@ -23,7 +25,7 @@
               workOrder.workOrderNo }}</text></view>
             <view class="info-item"><text class="label">工单名称</text><text class="value">{{ workOrder.workOrderName
                 }}</text></view>
-            <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.productName
+            <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.materialName
                 }}</text></view>
             <view class="info-item"><text class="label">计划数量</text><text class="value">{{ workOrder.plannedQty }}
                 EA</text></view>
@@ -37,7 +39,7 @@
           </view>
         </view>
 
-        <!-- 2. 统计卡片（筛选） -->
+        <!-- 统计卡片（筛选） -->
         <scroll-view scroll-x class="stats-row">
           <view class="stat-card" :class="{ 'active-filter': filterStatus === 'all' }" @click="filterStatus = 'all'">
             <view class="stat-number blue">{{ operations.length }}</view>
@@ -60,95 +62,136 @@
           </view>
         </scroll-view>
 
-        <!-- 3. 工序列表 -->
+        <!-- 工序列表 -->
         <view class="operation-list">
-          <view v-for="op in filteredOperations" :key="op.id" class="operation-card">
+          <view v-for="(op, index) in filteredOperations" :key="op.id" class="operation-card" :class="{
+            'status-Pending': op.status === 'Pending',
+            'status-Processing': op.status === 'Processing',
+            'status-Completed': op.status === 'Completed',
+            'blocked': isBlocked(op)
+          }">
             <!-- 卡片头部 -->
             <view class="op-header" @click="toggleExpand(op.id)">
               <view class="op-info">
+                <text class="op-index">{{ index + 1 }}</text>
                 <text class="op-name">{{ op.operationCode }} - {{ op.operationName }}</text>
                 <view class="op-status" :class="opStatusClass(op.status)">{{ opStatusLabel(op.status) }}</view>
               </view>
               <view class="op-progress-summary">
-                <text>{{ op.completedQty }} / {{ op.planQty }} 件</text>
+                <text>{{ op.completedQty }} / {{ op.plannedQty }} 件</text>
                 <text class="expand-icon">{{ expandedSet.has(op.id) ? '▲' : '▼' }}</text>
               </view>
             </view>
+
+            <!-- 当前批次号 -->
+            <view class="op-batch" v-if="op.currentProduction">
+              <text class="batch-label">📋 当前批次：</text>
+              <text class="batch-no">{{ op.currentProduction.batchNo }}</text>
+              <text class="batch-status" :class="{ 'batch-completed': op.currentProduction.status === 'Completed' }">
+                {{ op.currentProduction.status === 'Completed' ? '已完成' : '进行中' }}
+              </text>
+            </view>
+            <view class="op-batch" v-else>
+              <text class="batch-label">📋 当前批次：</text>
+              <text class="batch-no" style="color: #ccc;">暂无批次</text>
+            </view>
+
             <!-- 进度条 -->
             <view class="op-progress-bar-wrapper">
               <nut-progress :percentage="opPercent(op)" :show-text="false" stroke-color="blue" />
             </view>
-            <!-- 操作按钮（仅展示，无功能） -->
+
+            <!-- 操作按钮 -->
             <view class="op-actions">
-              <nut-button size="small" type="primary" plain>扫码投料</nut-button>
-              <nut-button size="small" type="info" plain>录入参数</nut-button>
-              <nut-button size="small" type="danger" plain>上报异常</nut-button>
+              <template v-if="op.status !== 'Completed'">
+                <nut-button v-if="isBlocked(op)" size="small" type="warning" plain disabled>
+                  ⏳ 等待前置工序
+                </nut-button>
+                <template v-else>
+                  <nut-button size="small" type="primary" plain :loading="inputLoading && inputTargetId === op.id"
+                    @click="handleMaterialInput(op)">
+                    📦 扫码投料
+                  </nut-button>
+                  <nut-button size="small" type="info" plain :disabled="!canInputParameter(op)"
+                    @click="handleParameterInput(op)">
+                    📝 录入参数
+                  </nut-button>
+                  <nut-button size="small" type="danger" plain @click="handleAnomalyReport(op)">
+                    ⚠️ 上报异常
+                  </nut-button>
+                </template>
+              </template>
+              <template v-else>
+                <nut-button size="small" plain disabled>✅ 已完成</nut-button>
+              </template>
             </view>
 
-            <!-- 展开详情 -->
+            <!-- 展开详情（当前批次的前3条记录） -->
             <view v-if="expandedSet.has(op.id)" class="op-detail">
-              <!-- 投料信息 -->
+              <!-- 投料记录 -->
               <view class="detail-section">
                 <view class="section-title">
-                  <text>📦 投料信息</text>
-                  <text class="section-count">最新 {{ latestMaterialInputs(op).length }} 条</text>
+                  <text>📦 投料记录</text>
                 </view>
-                <view v-if="latestMaterialInputs(op).length === 0" class="empty-tip">暂无投料记录</view>
+                <view v-if="!op.currentProduction || op.currentProduction.productionInputs?.length === 0"
+                  class="empty-tip">暂无投料记录
+                </view>
                 <view v-else>
-                  <view v-for="(input, idx) in latestMaterialInputs(op)" :key="idx" class="detail-item">
+                  <view v-for="(input, idx) in op.currentProduction.productionInputs" :key="idx" class="detail-item">
                     <text class="item-label">{{ input.materialName }} ({{ input.materialSap }})</text>
                     <text class="item-value">数量: {{ input.quantity }}</text>
                   </view>
                 </view>
-                <view class="view-all" @click="goToDetail(op.id)">查看全部 →</view>
               </view>
 
-              <!-- 参数信息（预留） -->
+              <!-- 参数记录 -->
               <view class="detail-section">
                 <view class="section-title">
                   <text>📝 参数记录</text>
-                  <text class="section-count">最新 {{ latestParameters(op).length }} 条</text>
                 </view>
-                <view v-if="latestParameters(op).length === 0" class="empty-tip">暂无参数记录</view>
+                <view v-if="!op.currentProduction || op.currentProduction.parameters?.length === 0" class="empty-tip">
+                  暂无参数记录</view>
                 <view v-else>
-                  <view v-for="(param, idx) in latestParameters(op)" :key="idx" class="detail-item">
+                  <view v-for="(param, idx) in op.currentProduction.parameters" :key="idx" class="detail-item">
                     <text class="item-label">{{ param.paramName }}</text>
-                    <text class="item-value">{{ param.value }} {{ param.unit }}</text>
+                    <text class="item-value">{{ param.value }} {{ param.unit || '' }}</text>
                   </view>
                 </view>
-                <view class="view-all" @click="goToDetail(op.id)">查看全部 →</view>
               </view>
 
-              <!-- 异常信息（预留） -->
+              <!-- 异常记录 -->
               <view class="detail-section">
                 <view class="section-title">
                   <text>⚠️ 异常记录</text>
-                  <text class="section-count">最新 {{ latestAnomalies(op).length }} 条</text>
                 </view>
-                <view v-if="latestAnomalies(op).length === 0" class="empty-tip">暂无异常记录</view>
+                <view v-if="!op.currentProduction || op.currentProduction.anomalies?.length === 0" class="empty-tip">
+                  暂无异常记录</view>
                 <view v-else>
-                  <view v-for="(anomaly, idx) in latestAnomalies(op)" :key="idx" class="detail-item">
+                  <view v-for="(anomaly, idx) in op.currentProduction.anomalies" :key="idx" class="detail-item">
                     <text class="item-label">{{ anomaly.type }}</text>
                     <text class="item-value">{{ anomaly.description }}</text>
                   </view>
                 </view>
-                <view class="view-all" @click="goToDetail(op.id)">查看全部 →</view>
               </view>
 
-              <!-- 产出信息（预留） -->
+              <!-- 产出记录 -->
               <view class="detail-section">
                 <view class="section-title">
                   <text>🏭 产出记录</text>
-                  <text class="section-count">最新 {{ latestOutputs(op).length }} 条</text>
                 </view>
-                <view v-if="latestOutputs(op).length === 0" class="empty-tip">暂无产出记录</view>
+                <view v-if="!op.currentProduction || op.currentProduction.outputs?.length === 0" class="empty-tip">
+                  暂无产出记录</view>
                 <view v-else>
-                  <view v-for="(output, idx) in latestOutputs(op)" :key="idx" class="detail-item">
+                  <view v-for="(output, idx) in op.currentProduction.outputs" :key="idx" class="detail-item">
                     <text class="item-label">{{ output.materialName }}</text>
                     <text class="item-value">数量: {{ output.quantity }}</text>
                   </view>
                 </view>
-                <view class="view-all" @click="goToDetail(op.id)">查看全部 →</view>
+              </view>
+
+              <!-- 查看全部 -->
+              <view class="view-all-wrapper">
+                <nut-button size="small" plain @click="goToDetail(op.id)">查看全部批次记录 →</nut-button>
               </view>
             </view>
           </view>
@@ -164,89 +207,156 @@ import Taro from '@tarojs/taro';
 import NavBar from '@/components/NavBar.vue';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useTabbarStore } from '@/store/tabbar';
-import { getWorkOrderDetail } from '@/api/work-order';
-import type { WorkOrderDetail, WorkOrderOperation, MaterialInputRequirement, MaterialInput } from '@/types/work-order';
+import { getWorkOrderDetail } from '@/api/work-order/look-up';
+import { feedMaterial } from '@/api/prod/index'
+import type { WorkOrderDetail, WorkOrderOperation } from '@/types/work-order';
 
 // ========== 路由参数 ==========
 const instance = Taro.getCurrentInstance();
-const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || '3a21c6ab-75cd-efbb-fcc9-2d887c279a33';
+const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || '';
 
 // ========== 页面状态 ==========
-const workOrder = ref<WorkOrderDetail | null>(null);
+const workOrder = ref<WorkOrderDetail>();
+
 const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed'>('all');
 const expandedSet = ref<Set<string>>(new Set());
+const inputLoading = ref(false);
+const inputTargetId = ref<string | null>(null);
 
 // ========== 计算属性 ==========
-// 整体进度
 const overallProgress = computed(() => {
-  if (!workOrder.value) return 0;
-  const total = workOrder.value.plannedQty;
-  if (total === 0) return 0;
-  return Math.round((workOrder.value.completedQty / total) * 100);
+  if (!operations.value || operations.value.length == 0) return 0;
+  let total = 0, completed = 0;
+  operations.value.forEach(op => {
+    total += op.plannedQty;
+    completed += op.completedQty;
+  });
+  return Math.round((completed / total) * 100);
 });
 
-// 工序列表
 const operations = computed(() => workOrder.value?.operations || []);
 
-// 筛选后的工序
 const filteredOperations = computed(() => {
   if (filterStatus.value === 'all') return operations.value;
   return operations.value.filter(op => op.status === filterStatus.value);
 });
 
-// 统计数量
 const pendingCount = computed(() => operations.value.filter(op => op.status === 'Pending').length);
 const processingCount = computed(() => operations.value.filter(op => op.status === 'Processing').length);
 const completedCount = computed(() => operations.value.filter(op => op.status === 'Completed').length);
 
-// 辅助函数
+// ========== 辅助函数 ==========
 const statusLabel = (s: string) => ({ Pending: '待领料', Processing: '生产中', Completed: '已完成' }[s] || s);
 const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[s] || '');
 const opStatusLabel = (s: string) => ({ Pending: '待处理', Processing: '进行中', Completed: '已完成' }[s] || s);
 const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '');
-const opPercent = (op: WorkOrderOperation) => (op.planQty ? Math.round((op.completedQty / op.planQty) * 100) : 0);
+const opPercent = (op: WorkOrderOperation) => (op.plannedQty ? Math.round((op.completedQty / op.plannedQty) * 100) : 0);
 
-// 展开/折叠切换
+// 判断前置工序是否完成（顺序依赖）
+const isBlocked = (op: WorkOrderOperation): boolean => {
+  // 找到当前索引
+  if (op.currentProduction?.status == 'Feeding') return false;
+  const currentIndex = operations.value.findIndex(o => o.id === op.id);
+  if (currentIndex <= 0) return false;
+  const currentBatchNo = op.currentProduction?.batchNo ?? '';
+  const prevProd = operations.value[currentIndex - 1].productions?.find(i => {
+    var result = (i.status == 'Completed' && i.batchNo > currentBatchNo);
+    return result;
+  });
+  return prevProd?.status !== 'Completed';
+};
+
+// 是否可以录入参数（投料全部完成且当前批次未完成）
+const canInputParameter = (op: WorkOrderOperation): boolean => {
+  if (!op.currentProduction) return false;
+  // 检查所有物料是否已投满
+  const allInputsReady = op.materialDefinitions.every(def => {
+    const consumed = def.consumedQty || 0;
+    return consumed >= def.standardQty;
+  });
+  return allInputsReady && op.currentProduction.status !== 'Completed';
+};
+
+// ========== 展开/折叠 ==========
 const toggleExpand = (opId: string) => {
   if (expandedSet.value.has(opId)) expandedSet.value.delete(opId);
   else expandedSet.value.add(opId);
 };
 
-// ========== 获取最新数据（最多3条） ==========
-// 投料记录：从 materialInputRequirements 中提取所有 materialInputs 并合并，按时间倒序取最新3条
-const latestMaterialInputs = (op: WorkOrderOperation): MaterialInput[] => {
-  const allInputs: MaterialInput[] = [];
-  op.materialInputRequirements?.forEach(req => {
+// ========== 模拟扫码投料 ==========
+const handleMaterialInput = async (op: WorkOrderOperation) => {
+  // 检查是否有物料需要投料
+  const incompleteDef = op.materialDefinitions.find(def => (def.consumedQty || 0) < def.standardQty);
+  if (!incompleteDef && op.plannedQty == op.completedQty) {
+    Taro.showToast({ title: '所有物料已投满。', icon: 'none' });
+    return;
+  }
 
-  });
-  // 按 id 或时间排序（假设 id 是递增的，或可添加时间字段）
-  allInputs.sort((a, b) => (a.id > b.id ? -1 : 1));
-  return allInputs.slice(0, 3);
+  let batchNo: string = '';
+  // 找到当前工序索引
+  const currentIndex = operations.value.findIndex(o => o.id === op.id);
+  const isFirstOperation = currentIndex === 0;
+  if (op.currentProduction?.status == 'Feeding') {
+    batchNo = op.currentProduction.batchNo;
+  }
+  else if (!isFirstOperation) {
+    let prevProductions = operations.value[currentIndex - 1].productions;
+    let prev = prevProductions?.find(i => (i.status == 'Completed' && i.batchNo > (op.currentProduction?.batchNo ?? '')));
+    batchNo = prev?.batchNo ?? '';
+  }
+
+  // 模拟生成 SN/批次码（实际由扫码枪输入）
+  // const mockCode = `SIM${Date.now().toString().slice(-6)}`;
+  // 构造投料参数
+  let params: {
+    workOrderOperationId: string,
+    materialSap: string,
+    materialName: string,
+    quantity: number,
+    batchNo?: string
+  } = {
+    workOrderOperationId: op.id,
+    materialSap: incompleteDef?.materialSap ?? '',
+    materialName: incompleteDef?.materialName ?? '',
+    quantity: 1,
+  };
+
+  if (batchNo) {
+    params = {
+      ...params,
+      batchNo
+    }
+  }
+
+  inputLoading.value = true;
+  inputTargetId.value = op.id;
+  try {
+    const updatedOp = await feedMaterial(params);
+    // 更新本地 operations 数据（用返回的新数据替换）
+    operations.value[currentIndex] = updatedOp;
+    if(currentIndex == operations.value.length - 1 && updatedOp.currentProduction?.status == 'Completed'){
+      if(workOrder.value){
+        workOrder.value.completedQty +=  1;
+        if(workOrder.value.plannedQty == workOrder.value.completedQty){
+          workOrder.value.status = 'Completed';
+        }
+      }
+    }
+    setTimeout(() => Taro.showToast({ title: `投料成功: ${incompleteDef?.materialName} ×1`, icon: 'success' }), 100)
+
+  } finally {
+    inputLoading.value = false;
+    inputTargetId.value = null;
+  }
 };
 
-// 参数记录（模拟数据，待后端提供）
-const latestParameters = (op: WorkOrderOperation): any[] => {
-  // 模拟数据，实际应从 op.parameters 获取
-  return [
-    { paramName: '电压', value: '3.25', unit: 'V' },
-    { paramName: '内阻', value: '0.08', unit: 'mΩ' }
-  ].slice(0, 3);
+// ========== 其他操作（占位） ==========
+const handleParameterInput = (op: WorkOrderOperation) => {
+  Taro.showToast({ title: `录入参数 - ${op.operationName}`, icon: 'none' });
 };
 
-// 异常记录（模拟）
-const latestAnomalies = (op: WorkOrderOperation): any[] => {
-  // 模拟数据，实际应从 op.anomalies 获取
-  return [
-    { type: '参数超标', description: '电压超出范围' }
-  ].slice(0, 3);
-};
-
-// 产出记录（模拟）
-const latestOutputs = (op: WorkOrderOperation): any[] => {
-  // 模拟数据，实际应从 op.outputs 获取
-  return [
-    { materialName: '电芯半成品', quantity: 10 }
-  ].slice(0, 3);
+const handleAnomalyReport = (op: WorkOrderOperation) => {
+  Taro.showToast({ title: `上报异常 - ${op.operationName}`, icon: 'none' });
 };
 
 // ========== 跳转 ==========
@@ -255,7 +365,6 @@ const backToList = () => {
 };
 
 const goToDetail = (opId: string) => {
-  // 跳转到独立详情页（后续实现）
   Taro.navigateTo({ url: `/pages/work/operation-detail?workOrderId=${workOrderId}&operationId=${opId}` });
 };
 
@@ -266,14 +375,12 @@ const loadData = async () => {
     setTimeout(() => backToList(), 1500);
     return;
   }
-
   const data = await getWorkOrderDetail(workOrderId);
   workOrder.value = data;
-  // 默认展开第一个工序（可选）
+  // 默认展开第一个工序
   if (data.operations && data.operations.length > 0) {
     expandedSet.value.add(data.operations[0].id);
   }
-
 };
 
 // ========== 生命周期 ==========
@@ -285,289 +392,4 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @import './prod-operation.scss';
-
-/* 新增样式 */
-.content-wrapper {
-  padding: 12px 16px;
-}
-
-.info-card {
-  background: $tp-white;
-  border-radius: $tp-radius-base;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: $tp-shadow-sm;
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: $tp-title;
-    }
-
-    .status-badge {
-      flex-shrink: 0;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-
-      &.status-pending {
-        background: rgba($tp-primary, 0.1);
-        color: $tp-primary;
-      }
-
-      &.status-progress {
-        background: rgba(#fa8c16, 0.1);
-        color: #fa8c16;
-      }
-
-      &.status-completed {
-        background: rgba($tp-success, 0.1);
-        color: $tp-success;
-      }
-    }
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
-    margin-bottom: 12px;
-  }
-
-  .info-item {
-    display: flex;
-    flex-direction: column;
-
-    .label {
-      font-size: 11px;
-      color: $tp-text;
-    }
-
-    .value {
-      font-size: 14px;
-      font-weight: 500;
-      color: $tp-title;
-
-      &.highlight {
-        color: $tp-primary;
-        font-weight: 700;
-      }
-    }
-  }
-
-  .progress-section {
-    margin-top: 4px;
-  }
-}
-
-/* 统计卡片 */
-.stats-row {
-  display: flex;
-  gap: 10px;
-  padding: 8px 0 12px;
-  overflow-x: auto;
-  white-space: nowrap;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.stat-card {
-  flex: 1;
-  min-width: 70px;
-  background: $tp-white;
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
-  box-shadow: $tp-shadow-sm;
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition: 0.2s;
-
-  &:active {
-    transform: scale(0.96);
-  }
-
-  &.active-filter {
-    border-color: $tp-primary;
-    background: rgba($tp-primary, 0.08);
-  }
-
-  .stat-number {
-    font-size: 22px;
-    font-weight: 800;
-
-    &.blue {
-      color: $tp-primary;
-    }
-
-    &.orange {
-      color: #fa8c16;
-    }
-
-    &.green {
-      color: $tp-success;
-    }
-  }
-
-  .stat-label {
-    font-size: 11px;
-    color: $tp-text;
-    margin-top: 2px;
-  }
-}
-
-/* 工序列表 */
-.operation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.operation-card {
-  background: $tp-white;
-  border-radius: $tp-radius-base;
-  padding: 12px;
-  box-shadow: $tp-shadow-sm;
-  border-left: 4px solid transparent;
-
-  &.status-Pending {
-    border-left-color: $tp-primary;
-  }
-
-  &.status-Processing {
-    border-left-color: #fa8c16;
-  }
-
-  &.status-Completed {
-    border-left-color: $tp-success;
-  }
-
-  .op-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-
-    .op-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .op-name {
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .op-status {
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 600;
-
-        &.op-pending {
-          background: rgba($tp-primary, 0.1);
-          color: $tp-primary;
-        }
-
-        &.op-progress {
-          background: rgba(#fa8c16, 0.1);
-          color: #fa8c16;
-        }
-
-        &.op-completed {
-          background: rgba($tp-success, 0.1);
-          color: $tp-success;
-        }
-      }
-    }
-
-    .op-progress-summary {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: $tp-text;
-
-      .expand-icon {
-        font-size: 12px;
-        color: $tp-text;
-      }
-    }
-  }
-
-  .op-progress-bar-wrapper {
-    margin: 8px 0;
-  }
-
-  .op-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-  }
-
-  .op-detail {
-    margin-top: 12px;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-    padding-top: 12px;
-
-    .detail-section {
-      margin-bottom: 12px;
-
-      .section-title {
-        display: flex;
-        justify-content: space-between;
-        font-size: 13px;
-        font-weight: 600;
-        color: $tp-title;
-        margin-bottom: 6px;
-
-        .section-count {
-          font-weight: 400;
-          color: $tp-text;
-          font-size: 11px;
-        }
-      }
-
-      .detail-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 4px 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-        font-size: 12px;
-
-        .item-label {
-          color: $tp-text;
-        }
-
-        .item-value {
-          font-weight: 500;
-        }
-      }
-
-      .empty-tip {
-        font-size: 12px;
-        color: $tp-text;
-        padding: 8px 0;
-      }
-
-      .view-all {
-        text-align: right;
-        font-size: 12px;
-        color: $tp-primary;
-        cursor: pointer;
-        margin-top: 4px;
-      }
-    }
-  }
-}
 </style>

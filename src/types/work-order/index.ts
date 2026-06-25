@@ -17,11 +17,11 @@ export interface WorkOrderListItem {
   /**
    * 产品名称
    */
-  productName: string;
+  materialName: string;
   /**
    * 产品SAP
    */
-  productSap: string;
+  materialSap: string;
   /**
    * 计划生产数量
    */
@@ -33,7 +33,7 @@ export interface WorkOrderListItem {
   /**
    * 工艺id
    */
-  processRouteId: string;
+  processId: string;
   /**
    * 工单状态
    */
@@ -62,51 +62,22 @@ export interface WorkOrderDetail extends WorkOrderListItem {
   /**
    * 工单领料信息
   */
-  materialRequirements: WorkOrderMaterialRequirement[];
+  materialDefinitions: WorkOrderOperationMaterialDefinition[];
   /**
    * 工单工序信息
    */
-  operations?: WorkOrderOperation[];
+  operations : WorkOrderOperation[];
 }
 
-/**
- * 工单物料信息
- */
-export interface WorkOrderMaterialRequirement {
-  /**
-   * 物料名称
-   */
-  materialName: string;
-  /**
-   * SAP
-   */
-  materialSap: string;
-  /**
-   * 需求数量
-   */
-  requiredQty: number;
-  /**
-   * 实际领取数量
-   */
-  pickedQty?: number;
-}
 
 /**
- * 工单工序实例
+ * 工单工序生产实例
  */
 export interface WorkOrderOperation {
   /**
    * 工单工序id
    */
   id: string;
-  /**
-   * 工单id
-   */
-  workOrderId: string;
-  /**
-   * 工序id
-   */
-  routeStepId: string;
   /**
    * 工序编码
    */
@@ -120,13 +91,21 @@ export interface WorkOrderOperation {
    */
   status: 'Pending' | 'Processing' | 'Completed';
   /**
-   * 工序需求物料信息
+   * 工序需求物料配置
    */
-  materialInputRequirements: MaterialInputRequirement[];
+  materialDefinitions: WorkOrderOperationMaterialDefinition[];
+  /**
+   * 工序执行信息
+   */
+  productions?: ProductionOperation[],
+  /**
+   * 当前工序生产信息
+   */
+  currentProduction?: ProductionOperation;
   /**
    * 该工序预计完成数量(与工单数量一致)
    */
-  planQty: number;
+  plannedQty: number;
   /**
    * 该工序实际完成数量
    */
@@ -134,9 +113,33 @@ export interface WorkOrderOperation {
 }
 
 /**
+ * 工单物料配置信息
+ */
+export interface WorkOrderOperationMaterialDefinition {
+  /**
+   * 物料名称
+   */
+  materialName: string;
+  /**
+   * SAP
+   */
+  materialSap: string;
+  /**
+   * BOM标准数量
+   */
+  standardQty: number;
+  /**
+   * 实际领取数量
+   */
+  pickedQty?: number;
+}
+
+
+
+/**
  * 工单工序投料配置
  */
-export interface MaterialInputRequirement {
+export interface WorkOrderOperationMaterialDefinition {
   /**
    * 工单工序投料配置id
    */
@@ -158,15 +161,15 @@ export interface MaterialInputRequirement {
    */
   materialSap: string;
   /**
-   * 工序所需物料数量
+   * 工序所需物料标准用量
    */
-  plannedQty: number;
+  standardQty: number;
   /**
    * 工序实际消耗数量
    */
   consumedQty: number;
   /**
-  * 是否按SN管理
+  * 是否按SN管理，false按批次管理
   */
   isSNManaged: boolean;
   /**
@@ -176,29 +179,74 @@ export interface MaterialInputRequirement {
 }
 
 /**
- * 工序批次信息
+ * 工序执行批次信息
  */
-// ========== 工序批次 ==========
-export interface ProductionBatch {
+export interface ProductionOperation {
+  /**
+   * id
+   */
   id: string;
-  batchNo: string;                     // 批次号，如 BT20260617OP10100001
-  workOrderOperationId: string;
-  status: 'Processing' | 'Completed';
-  materialInputs: MaterialInput[];
-  parameters: OperationParameter[];
-  anomalies: OperationAnomaly[];
-  outputs: OperationOutput[];
-  createdAt: string;
-  completedAt?: string;
+  /**
+   * 批次号
+   */
+  batchNo: string;
+  /**
+   * 工序编号（冗余）
+   */
+  sequence: number;
+  /**
+   * 批次状态
+   */
+  status: 'Feeding' | 'Completed';
+  /**
+   * 投料信息
+   */
+  productionInputs?: OperationInput[];
+  /**
+   * 参数记录信息
+   */
+  parameters?: ProductionParameter[];
+  /**
+   * 异常记录信息
+   */
+  anomalies?: OperationAnomaly[];
+  /**
+   * 产出信息
+   */
+  outputs?: OperationOutput[];
+  /**
+   * 开始时间
+   */
+  startAt: string;
+  /**
+   * 完成时间
+   */
+  endAt?: string;
 }
 
 // ========== 参数记录 ==========
-export interface OperationParameter {
+export interface ProductionParameter {
+  /**
+   * id
+   */
   id: string;
+  /**
+   * 参数名称
+   */
   paramName: string;
+  /**
+   * 参数值
+   */
   value: string | number;
+  /**
+   * 单位
+   */
   unit?: string;
+  /**
+   * 是否异常
+   */
   isAbnormal?: boolean;
+
   recordedAt: string;
 }
 
@@ -219,16 +267,21 @@ export interface OperationOutput {
   quantity: number;
   unit: string;
   outputAt: string;
+  materialInputs: Array<OperationInput>;
 }
 
 /**
  * 工单工序投料记录
  */
-export interface MaterialInput {
+export interface OperationInput {
   /**
    * id
    */
   id: string;
+  /**
+   * 工单id
+   */
+  workOrderId: string;
   /**
    * 关联工序工单id
    */
@@ -236,7 +289,7 @@ export interface MaterialInput {
   /**
    * 关联的批次id
    */
-  productionBatchId:string;
+  productionId: string;
   /**
    * 使用的LOTID
    */
@@ -254,6 +307,3 @@ export interface MaterialInput {
    */
   quantity: number;
 }
-
-
-

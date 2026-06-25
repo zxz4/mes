@@ -1,32 +1,23 @@
 import { ajaxGet,ajaxPut } from "..";
-import { PagedList } from "@/types/index";
-import { WorkOrderListItem , WorkOrderDetail , WorkOrderOperation} from "@/types/work-order";
+import { WorkOrderOperation} from "@/types/work-order";
 
 
 
-export async function getLWorkOrderList() {
-  return ajaxGet<PagedList<WorkOrderListItem>>('/api/mes/work-order');
-}
-
-export async function getWorkOrderDetail(id:string) {
-  return ajaxGet<WorkOrderDetail>(`/api/mes/work-order/${id}`);
-}
 
 export async function configure(id:string,para:{
-  processRouteId:string,
+  processId:string,
   materialRequirements:Array<{
       materialSap:string,
       materialName:string,
       pickedQty:number,
-      requiredQty:number
+      standardQty:number
   }>;
   operations:Array<{
-    routeStepId:string,
     materialRequirements:Array<{
       materialSap:string,
       materialName:string,
       isSNManaged:boolean,
-      requiredQty:number
+      standardQty:number
     }>
   }>
 }) {

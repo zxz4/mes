@@ -20,11 +20,11 @@
             </view>
             <view class="info-item">
               <text class="label">产品型号</text>
-              <text class="value">{{ workOrder.productName }}</text>
+              <text class="value">{{ workOrder.materialName }}</text>
             </view>
             <view class="info-item">
               <text class="label">产品SAP</text>
-              <text class="value">{{ workOrder.productSap }}</text>
+              <text class="value">{{ workOrder.materialSap }}</text>
             </view>
             <view class="info-item">
               <text class="label">生产数量</text>
@@ -84,7 +84,7 @@
         <view class="info-card">
           <view class="card-title">工艺路线 <text class="subtitle">选择该工单使用的工艺</text></view>
           <view class="process-select">
-            <nut-radio-group v-model="workOrder.processRouteId" direction="horizontal" @change="routeChange">
+            <nut-radio-group v-model="workOrder.processId" direction="horizontal" @change="routeChange">
               <nut-radio v-for="process in processStore.routes" :key="process.id" :label="process.id"
                 class="process-radio">
                 <view class="process-info">
@@ -104,7 +104,7 @@
             </view>
 
             <!-- 工序投料清单 - 原生表格 -->
-            <view class="native-table" v-if="op.materialInputRequirements.length">
+            <view class="native-table" v-if="op.materialDefinitions.length">
               <view class="table-header">
                 <view class="col col-sap">物料SAP</view>
                 <view class="col col-name">物料名称</view>
@@ -112,7 +112,7 @@
                 <view class="col col-control">是否SN</view>
                 <view class="col col-action">操作</view>
               </view>
-              <view v-for="(req, idx) in op.materialInputRequirements" :key="idx" class="table-row">
+              <view v-for="(req, idx) in op.materialDefinitions" :key="idx" class="table-row">
                 <view class="col col-sap">
                   <nut-input type="text" v-model="req.materialSap" placeholder="扫描/输入SAP"
                     @blur="fetchMaterialInfo(req)" />
@@ -121,7 +121,7 @@
                   <text class="material-name">{{ req.materialName || '待查询' }}</text>
                 </view>
                 <view class="col col-qty">
-                  <nut-input type="digit" v-model.number="req.plannedQty" placeholder="数量" class="qty-input" />
+                  <nut-input type="digit" v-model.number="req.standardQty" placeholder="数量" class="qty-input" />
                 </view>
                 <view class="col col-control">
                   <nut-switch v-model="req.isSNManaged" size="small" />
@@ -151,7 +151,8 @@ import { ref, onMounted, computed } from 'vue';
 import Taro from '@tarojs/taro';
 import NavBar from '@/components/NavBar.vue';
 import type { WorkOrderDetail, WorkOrderOperation } from '@/types/work-order';
-import { getWorkOrderDetail, configure } from '@/api/work-order';
+import {getWorkOrderDetail} from "@/api/work-order/look-up"
+import { configure } from '@/api/work-order';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useProcessStore } from '@/store/process';
 import type { Component } from '@/types/bom';
@@ -234,7 +235,7 @@ const getMaterialListForSubmit = () => {
   return leafMaterialList.value.map(node => ({
     materialSap: node.sap,
     materialName: node.componentName,
-    requiredQty: calculateRequiredQty(node),
+    standardQty: calculateRequiredQty(node),
     pickedQty: pickedQuantities.value[node.id] || 0,
     unit: node.unit
   }));
@@ -242,11 +243,10 @@ const getMaterialListForSubmit = () => {
 
 const getOperationListForSubmit = () =>
   routeSteps.value.map(item => ({
-    routeStepId: item.routeStepId,
-    materialRequirements: item.materialInputRequirements.map(mt => ({
+    materialRequirements: item.materialDefinitions.map(mt => ({
       materialName: mt.materialName,
       materialSap: mt.materialSap,
-      requiredQty: mt.plannedQty,
+      standardQty: mt.standardQty,
       isSNManaged: mt.isSNManaged
     }))
 }));
@@ -270,14 +270,14 @@ const submitPicking = async () => {
   }
   for (let item of materialList) {
     let pickQty = item.pickedQty ?? 0;
-    if (pickQty <= 0 || pickQty > item.requiredQty) {
+    if (pickQty <= 0 || pickQty > item.standardQty) {
       Taro.showToast({ title: `${item.materialName}领料数量不合法`, icon: 'none' });
       return;
     }
   }
   const confirm = await Taro.showModal({
     title: '确认配置',
-    content: `将领取物料并确定工单工艺为“${processStore.routes.find(p => p.id === workOrder.value?.processRouteId)?.routeName}”，是否继续？`,
+    content: `将领取物料并确定工单工艺为“${processStore.routes.find(p => p.id === workOrder.value?.processId)?.routeName}”，是否继续？`,
     confirmText: '确认',
     cancelText: '取消',
   });
@@ -285,7 +285,7 @@ const submitPicking = async () => {
 
 
   let para = {
-    processRouteId:workOrder.value?.processRouteId,
+    processId:workOrder.value?.processId,
     materialRequirements:materialList,
     operations: getOperationListForSubmit(),
   } ;
@@ -298,23 +298,22 @@ const submitPicking = async () => {
 
 // 工序投料配置方法
 const addMaterialRequirement = (op: WorkOrderOperation) => {
-  op.materialInputRequirements.push({
+  op.materialDefinitions.push({
     id: '',
     workOrderOperationId: op.id,
     materialId: '',
     materialName: '',
     materialSap: '',
-    plannedQty: 1,
+    standardQty: 1,
     consumedQty: 0,
     isSNManaged: false,
-    sequence: op.materialInputRequirements.length + 1,
-    materialInputs: [],
+    sequence: op.materialDefinitions.length + 1,
   });
 };
 
 const removeMaterialRequirement = (op: WorkOrderOperation, idx: number) => {
-  op.materialInputRequirements.splice(idx, 1);
-  op.materialInputRequirements.forEach((req, i) => (req.sequence = i + 1));
+  op.materialDefinitions.splice(idx, 1);
+  op.materialDefinitions.forEach((req, i) => (req.sequence = i + 1));
 };
 
 const fetchMaterialInfo = async (req: any) => {
@@ -339,10 +338,9 @@ const routeChange = (value: string) => {
     processStore.routes.find(i => i.id == value)?.routeSteps.forEach(r => {
       routes?.push({
         ...r,
-        routeStepId:r.id,
         status: 'Pending',
-        materialInputRequirements: [],
-        planQty: 0,
+        materialDefinitions: [],
+        plannedQty: 0,
         completedQty: 0,
       });
     });
@@ -364,10 +362,10 @@ const loadData = async () => {
   try {
     const data = await getWorkOrderDetail(workOrderId);
     workOrder.value = data;
-    if (data.productSap) {
-      await loadBomTree(data.productSap);
-      if (workOrder.value.processRouteId) {
-        routeChange(workOrder.value.processRouteId);
+    if (data.materialSap) {
+      await loadBomTree(data.materialSap);
+      if (workOrder.value.processId) {
+        routeChange(workOrder.value.processId);
       }
     }
   } catch (err) {

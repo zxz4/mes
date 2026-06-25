@@ -1,5 +1,6 @@
 import { request, getStorageSync, showToast } from '@tarojs/taro';
 import { loadingManager } from '@/util/loadingManager';
+import { AbpError } from '../types';
 
 export const customHeader: Record<string, string> = {
   'Authorization': getStorageSync<string>('token') ?? '',
@@ -52,7 +53,7 @@ export async function ajax<T = any>(
       }
     };
     request(requestOptions)
-      .then(async res => {
+      .then(res => {
         if (isShowLoading) {
           loadingManager.hide();
         }
@@ -63,7 +64,17 @@ export async function ajax<T = any>(
             resolve(<T>res.data);
             return;
           case 400:
-            return;
+          case 403:
+            let error = res.data.error as AbpError;
+            if(error.message){
+              showToast({
+                title: '无法访问到资源，请检查网络连接。',
+                icon: 'error',
+                duration: 2500
+               });
+              }
+              reject();
+              return;
           case 500:
           default:
             reject(res.data);

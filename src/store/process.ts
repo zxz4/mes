@@ -1,12 +1,12 @@
 // stores/process.ts
 import { defineStore } from 'pinia'
-import type { ProcessRoute, RouteStep } from '@/types/process'
+import type { Process, RouteStep } from '@/types/process'
 import { getAllProcess } from '@/api/process'
 
 
 export const useProcessStore = defineStore('process', {
   state: () => ({
-    routes: [] as ProcessRoute[]
+    routes: [] as Process[]
   }),
 
   getters: {
@@ -36,7 +36,7 @@ export const useProcessStore = defineStore('process', {
 
     // 新增工艺路线
     addRoute(routeName: string) {
-      const newRoute: ProcessRoute = {
+      const newRoute: Process = {
         id:'',
         routeName,
         routeSteps: []
@@ -92,7 +92,7 @@ export const useProcessStore = defineStore('process', {
     },
 
     // 重新整理步骤顺序（使 stepOrder 从 1 开始连续递增）
-    reorderSteps(route: ProcessRoute) {
+    reorderSteps(route: Process) {
       route.routeSteps.sort((a, b) => a.stepOrder - b.stepOrder)
       route.routeSteps.forEach((step, idx) => {
         step.stepOrder = idx + 1

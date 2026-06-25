@@ -5,7 +5,7 @@ export interface RouteStep {
   operationName: string
 }
 
-export interface ProcessRoute {
+export interface Process {
   id: string
   routeName: string
   routeSteps: RouteStep[]

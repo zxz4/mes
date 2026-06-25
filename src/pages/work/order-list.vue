@@ -33,7 +33,7 @@
             <!-- 项目/产品信息左对齐 -->
             <view class="order-info">
               <view class="project-name">{{ order.workOrderName }} ({{ order.workOrderNo }})</view>
-              <view class="product-info">{{ order.productName }} ({{ order.productSap }})</view>
+              <view class="product-info">{{ order.materialName }} ({{ order.materialSap }})</view>
             </view>
             <!-- 状态徽章保持在右侧 -->
             <view class="status-badge" :class="statusClass(order.status)">
@@ -82,7 +82,7 @@ import { ref, computed , onMounted } from 'vue'
 import Taro from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
-import { getLWorkOrderList } from '@/api/work-order'
+import { getLWorkOrderList } from '@/api/work-order/look-up'
 import TabbarLayout from '@/components/TabbarLayout.vue'
 import { useTabbarStore } from '@/store/tabbar'
 const workOrders = ref<WorkOrderListItem[]>([]);

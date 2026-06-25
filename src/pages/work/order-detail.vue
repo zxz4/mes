@@ -23,11 +23,11 @@
           </view>
           <view class="info-item">
             <text class="label">产品名称</text>
-            <text class="value">{{ workOrder.productName }}</text>
+            <text class="value">{{ workOrder.materialName }}</text>
           </view>
           <view class="info-item">
             <text class="label">产品SAP码</text>
-            <text class="value">{{ workOrder.productSap }}</text>
+            <text class="value">{{ workOrder.materialSap }}</text>
           </view>
           <view class="info-item">
             <text class="label">产品类型</text>
@@ -60,10 +60,10 @@
       </view>
 
       <!-- 2. 工单级物料清单（领料需求） -->
-      <view v-if="workOrder.materialRequirements && workOrder.materialRequirements.length" class="info-card">
+      <view v-if="workOrder.materialDefinitions && workOrder.materialDefinitions.length" class="info-card">
         <view class="card-title">物料清单 (领料需求)</view>
         <view class="material-list">
-          <view v-for="(item, idx) in workOrder.materialRequirements" :key="idx" class="material-item">
+          <view v-for="(item, idx) in workOrder.materialDefinitions" :key="idx" class="material-item">
             <view class="material-info">
               <text class="material-name">{{ item.materialName }}</text>
               <text class="material-code">{{ item.materialSap }}</text>
@@ -91,13 +91,13 @@
             </view>
             <!-- 工序进度 -->
             <view class="op-progress">
-              <text>完成: {{ op.completedQty }} / {{ op.planQty }} 件</text>
+              <text>完成: {{ op.completedQty }} / {{ op.plannedQty }} 件</text>
               <nut-progress :percentage="opPercent(op)" :show-text="false" stroke-color="blue" class="op-progress-bar" />
             </view>
             <!-- 该工序的物料需求 -->
-            <view v-if="op.materialInputRequirements && op.materialInputRequirements.length" class="op-materials">
+            <view v-if="op.materialDefinitions && op.materialDefinitions.length" class="op-materials">
               <view class="subtitle">📦 本工序投料需求</view>
-              <view v-for="(req, ri) in op.materialInputRequirements" :key="ri" class="op-material-item">
+              <view v-for="(req, ri) in op.materialDefinitions" :key="ri" class="op-material-item">
                 <view class="material-info">
                   <text class="material-name">{{ req.materialName }}</text>
                   <text class="material-sap">({{ req.materialSap }})</text>
@@ -105,17 +105,11 @@
                   <text v-else class="badge-lot">批次</text>
                 </view>
                 <view class="material-qty-summary">
-                  <text>需求: {{ req.plannedQty }}</text>
+                  <text>需求: {{ req.standardQty }}</text>
                   <text>已投: {{ req.consumedQty || 0 }}</text>
                 </view>
                 <!-- 投料明细记录 -->
-                <view v-if="req.materialInputs && req.materialInputs.length" class="input-list">
-                  <view v-for="(input, ii) in req.materialInputs" :key="ii" class="input-item">
-                    <text>📌 {{ input.materialName }} ({{ input.materialSap }})</text>
-                    <text>数量: {{ input.quantity }}</text>
-                  </view>
-                </view>
-                <view v-else class="input-empty">暂无投料记录</view>
+                <view class="input-empty">暂无投料记录</view>
               </view>
             </view>
             <view v-else class="op-materials-empty">该工序无物料需求</view>
@@ -143,7 +137,7 @@ import { ref, computed, onMounted } from 'vue';
 import Taro from '@tarojs/taro';
 import NavBar from '@/components/NavBar.vue';
 import type { WorkOrderDetail } from '@/types/work-order';
-import { getWorkOrderDetail } from '@/api/work-order';
+import { getWorkOrderDetail } from '@/api/work-order/look-up';
 
 const instance = Taro.getCurrentInstance();
 const workOrderId = instance?.router?.params?.id || '';
