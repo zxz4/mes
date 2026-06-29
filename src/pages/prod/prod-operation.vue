@@ -3,11 +3,9 @@
     <view class="prod-operation-page">
       <NavBar title="生产执行" />
 
-
       <!-- 工单不存在 -->
       <view v-if="!workOrder" class="error-state">
         <nut-empty description="工单不存在或加载失败" />
-        <nut-button type="primary" @click="backToList">返回工单列表</nut-button>
       </view>
 
       <!-- 工单内容 -->
@@ -24,9 +22,9 @@
             <view class="info-item"><text class="label">工单编号</text><text class="value highlight">{{
               workOrder.workOrderNo }}</text></view>
             <view class="info-item"><text class="label">工单名称</text><text class="value">{{ workOrder.workOrderName
-                }}</text></view>
+            }}</text></view>
             <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.materialName
-                }}</text></view>
+            }}</text></view>
             <view class="info-item"><text class="label">计划数量</text><text class="value">{{ workOrder.plannedQty }}
                 EA</text></view>
             <view class="info-item"><text class="label">已完成</text><text class="value">{{ workOrder.completedQty }}
@@ -65,10 +63,9 @@
         <!-- 工序列表 -->
         <view class="operation-list">
           <view v-for="(op, index) in filteredOperations" :key="op.id" class="operation-card" :class="{
-            'status-Pending': op.status === 'Pending',
-            'status-Processing': op.status === 'Processing',
-            'status-Completed': op.status === 'Completed',
-            'blocked': isBlocked(op)
+            'status-pending': op.status === 'Pending',
+            'status-processing': op.status === 'Processing',
+            'status-completed': op.status === 'Completed',
           }">
             <!-- 卡片头部 -->
             <view class="op-header" @click="toggleExpand(op.id)">
@@ -87,8 +84,8 @@
             <view class="op-batch" v-if="op.currentProduction">
               <text class="batch-label">📋 当前批次：</text>
               <text class="batch-no">{{ op.currentProduction.batchNo }}</text>
-              <text class="batch-status" :class="{ 'batch-completed': op.currentProduction.status === 'Completed' }">
-                {{ op.currentProduction.status === 'Completed' ? '已完成' : '进行中' }}
+              <text class="batch-status" :class="{ 'batch-completed': op.currentProduction.status === 'COMPLETED' }">
+                {{ prodStatusLabel(op.currentProduction.status) }}
               </text>
             </view>
             <view class="op-batch" v-else>
@@ -104,22 +101,17 @@
             <!-- 操作按钮 -->
             <view class="op-actions">
               <template v-if="op.status !== 'Completed'">
-                <nut-button v-if="isBlocked(op)" size="small" type="warning" plain disabled>
-                  ⏳ 等待前置工序
+                <nut-button size="small" type="primary" plain :loading="inputLoading && inputTargetId === op.id"
+                  :disabled="isMaterialInputDisabled(op)" @click="handleMaterialInput(op)">
+                  📦 扫码投料
                 </nut-button>
-                <template v-else>
-                  <nut-button size="small" type="primary" plain :loading="inputLoading && inputTargetId === op.id"
-                    @click="handleMaterialInput(op)">
-                    📦 扫码投料
-                  </nut-button>
-                  <nut-button size="small" type="info" plain :disabled="!canInputParameter(op)"
-                    @click="handleParameterInput(op)">
-                    📝 录入参数
-                  </nut-button>
-                  <nut-button size="small" type="danger" plain @click="handleAnomalyReport(op)">
-                    ⚠️ 上报异常
-                  </nut-button>
-                </template>
+                <nut-button size="small" type="warning" plain :disabled="!canInputParameter(op)"
+                  @click="handleParameterInput(op)">
+                  📝 录入参数
+                </nut-button>
+                <nut-button size="small" type="danger" plain @click="handleAnomalyReport(op)">
+                  ⚠️ 上报异常
+                </nut-button>
               </template>
               <template v-else>
                 <nut-button size="small" plain disabled>✅ 已完成</nut-button>
@@ -133,11 +125,10 @@
                 <view class="section-title">
                   <text>📦 投料记录</text>
                 </view>
-                <view v-if="!op.currentProduction || op.currentProduction.productionInputs?.length === 0"
-                  class="empty-tip">暂无投料记录
+                <view v-if="!op.currentProduction || op.currentProduction.inputs?.length === 0" class="empty-tip">暂无投料记录
                 </view>
                 <view v-else>
-                  <view v-for="(input, idx) in op.currentProduction.productionInputs" :key="idx" class="detail-item">
+                  <view v-for="(input, idx) in op.currentProduction.inputs" :key="idx" class="detail-item">
                     <text class="item-label">{{ input.materialName }} ({{ input.materialSap }})</text>
                     <text class="item-value">数量: {{ input.quantity }}</text>
                   </view>
@@ -152,8 +143,8 @@
                 <view v-if="!op.currentProduction || op.currentProduction.parameters?.length === 0" class="empty-tip">
                   暂无参数记录</view>
                 <view v-else>
-                  <view v-for="(param, idx) in op.currentProduction.parameters" :key="idx" class="detail-item">
-                    <text class="item-label">{{ param.paramName }}</text>
+                  <view v-for="(param) in op.currentProduction.parameters" :key="param.id" class="detail-item">
+                    <text class="item-label">{{ param.parameterName }}</text>
                     <text class="item-value">{{ param.value }} {{ param.unit || '' }}</text>
                   </view>
                 </view>
@@ -175,7 +166,7 @@
               </view>
 
               <!-- 产出记录 -->
-              <view class="detail-section">
+              <!-- <view class="detail-section">
                 <view class="section-title">
                   <text>🏭 产出记录</text>
                 </view>
@@ -187,7 +178,7 @@
                     <text class="item-value">数量: {{ output.quantity }}</text>
                   </view>
                 </view>
-              </view>
+              </view> -->
 
               <!-- 查看全部 -->
               <view class="view-all-wrapper">
@@ -199,6 +190,49 @@
       </view>
     </view>
   </TabbarLayout>
+  <!-- ========== 参数录入弹窗 ========== -->
+  <nut-popup v-model:visible="showParamDialog" position="bottom" round :style="{ height: '65%' }" closeable>
+    <view class="param-dialog">
+      <view class="dialog-header">
+        <text class="dialog-title">📝 录入参数 - {{ currentParamOp?.operationName }}</text>
+        <text class="dialog-batch" v-if="currentParamOp?.currentProduction">
+          批次号：{{ currentParamOp.currentProduction.batchNo }}
+        </text>
+      </view>
+      <scroll-view scroll-y class="dialog-body">
+        <view v-if="currentParamOp && currentParamOp.parameterDefinitions && currentParamOp.parameterDefinitions.length">
+          <view class="param-group">
+            <view class="group-fields">
+              <view v-for="def in currentParamOp.parameterDefinitions" :key="def.id" class="param-field">
+                <view class="field-label-wrapper">
+                  <text class="field-label">{{ def.parameterName }}</text>
+                  <text
+                    v-if="(def.minValue || def.maxValue) && (def.minValue !== undefined || def.maxValue !== undefined)"
+                    class="field-range">
+                    ({{ def.minValue ?? '无' }} ~ {{ def.maxValue ?? '无' }}{{ def.unit ? ' ' + def.unit : '' }})
+                  </text>
+                </view>
+                <view class="field-input-wrapper" :class="{ 'error': fieldErrors[def.parameterName] }">
+                  <nut-input :type="def.parameterType === 'number' ? 'digit' : 'text'"
+                    v-model="paramGroup[def.parameterName]" :placeholder="'请输入' + def.parameterName" class="field-input"
+                    @blur="() => validateSingleParam(def)">
+                    <template #right>
+                      <text v-if="def.unit" class="field-unit">{{ def.unit }}</text>
+                    </template>
+                  </nut-input>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view v-else class="empty-param">该工序暂无参数定义</view>
+      </scroll-view>
+      <view class="dialog-footer">
+        <nut-button type="primary" block :loading="paramSubmitting" @click="submitParameters">提交参数</nut-button>
+        <nut-button block plain @click="closeParamDialog">取消</nut-button>
+      </view>
+    </view>
+  </nut-popup>
 </template>
 
 <script setup lang="ts">
@@ -208,8 +242,9 @@ import NavBar from '@/components/NavBar.vue';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useTabbarStore } from '@/store/tabbar';
 import { getWorkOrderDetail } from '@/api/work-order/look-up';
-import { feedMaterial } from '@/api/prod/index'
-import type { WorkOrderDetail, WorkOrderOperation } from '@/types/work-order';
+import { feedMaterial, recordParameters } from '@/api/prod/index'
+import type { WorkOrderDetail, WorkOrderOperation, ParameterDefinition } from '@/types/work-order';
+import { getOperationStatusText, getProductionStatusText } from '@/util/statusText'
 
 // ========== 路由参数 ==========
 const instance = Taro.getCurrentInstance();
@@ -222,6 +257,13 @@ const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed'>('all');
 const expandedSet = ref<Set<string>>(new Set());
 const inputLoading = ref(false);
 const inputTargetId = ref<string | null>(null);
+
+// 参数录入弹窗状态
+const showParamDialog = ref(false);
+const currentParamOp = ref<WorkOrderOperation | null>(null);
+const paramGroup = ref<Record<string, string>>({});   // 单组参数对象
+const paramSubmitting = ref(false);
+const fieldErrors = ref<Record<string, string>>({});  // 字段错误映射
 
 // ========== 计算属性 ==========
 const overallProgress = computed(() => {
@@ -248,33 +290,33 @@ const completedCount = computed(() => operations.value.filter(op => op.status ==
 // ========== 辅助函数 ==========
 const statusLabel = (s: string) => ({ Pending: '待领料', Processing: '生产中', Completed: '已完成' }[s] || s);
 const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[s] || '');
-const opStatusLabel = (s: string) => ({ Pending: '待处理', Processing: '进行中', Completed: '已完成' }[s] || s);
+const opStatusLabel = (s: string) => { return getOperationStatusText(s); };
+const prodStatusLabel = (s: string) => { return getProductionStatusText(s); };
+
 const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '');
 const opPercent = (op: WorkOrderOperation) => (op.plannedQty ? Math.round((op.completedQty / op.plannedQty) * 100) : 0);
 
-// 判断前置工序是否完成（顺序依赖）
-const isBlocked = (op: WorkOrderOperation): boolean => {
-  // 找到当前索引
-  if (op.currentProduction?.status == 'Feeding') return false;
-  const currentIndex = operations.value.findIndex(o => o.id === op.id);
-  if (currentIndex <= 0) return false;
-  const currentBatchNo = op.currentProduction?.batchNo ?? '';
-  const prevProd = operations.value[currentIndex - 1].productions?.find(i => {
-    var result = (i.status == 'Completed' && i.batchNo > currentBatchNo);
-    return result;
-  });
-  return prevProd?.status !== 'Completed';
+// 判断投料按钮是否禁用
+const isMaterialInputDisabled = (op: WorkOrderOperation): boolean => {
+  // 如果当前批次不存在，则需要检查前置工序是否有已完成批次
+  if (!op.currentProduction) {
+    const currentIndex = operations.value.findIndex(o => o.id === op.id);
+    if (currentIndex <= 0) return false; // 第一个工序无需等待前置
+    const prevOp = operations.value[currentIndex - 1];
+    const hasCompletedBatch = prevOp.productions?.some(p => p.status === 'COMPLETED') ?? false;
+    return !hasCompletedBatch; // 若前置无完成批次则禁用投料
+  }
+  // 当前批次存在：检查所有物料是否已投满
+  const allMaterialsFulfilled = op.materialDefinitions.every(def => (def.consumedQty || 0) >= def.standardQty);
+  return allMaterialsFulfilled;
 };
 
 // 是否可以录入参数（投料全部完成且当前批次未完成）
 const canInputParameter = (op: WorkOrderOperation): boolean => {
-  if (!op.currentProduction) return false;
+  if (!op.isParameterRecordEnabled) return false;
+  if (op.currentProduction?.status !== 'RECORDING') return false;
   // 检查所有物料是否已投满
-  const allInputsReady = op.materialDefinitions.every(def => {
-    const consumed = def.consumedQty || 0;
-    return consumed >= def.standardQty;
-  });
-  return allInputsReady && op.currentProduction.status !== 'Completed';
+  return true;
 };
 
 // ========== 展开/折叠 ==========
@@ -287,7 +329,7 @@ const toggleExpand = (opId: string) => {
 const handleMaterialInput = async (op: WorkOrderOperation) => {
   // 检查是否有物料需要投料
   const incompleteDef = op.materialDefinitions.find(def => (def.consumedQty || 0) < def.standardQty);
-  if (!incompleteDef && op.plannedQty == op.completedQty) {
+  if (!incompleteDef) {
     Taro.showToast({ title: '所有物料已投满。', icon: 'none' });
     return;
   }
@@ -296,12 +338,12 @@ const handleMaterialInput = async (op: WorkOrderOperation) => {
   // 找到当前工序索引
   const currentIndex = operations.value.findIndex(o => o.id === op.id);
   const isFirstOperation = currentIndex === 0;
-  if (op.currentProduction?.status == 'Feeding') {
+  if (op.currentProduction?.status == 'FEEDING') {
     batchNo = op.currentProduction.batchNo;
   }
   else if (!isFirstOperation) {
     let prevProductions = operations.value[currentIndex - 1].productions;
-    let prev = prevProductions?.find(i => (i.status == 'Completed' && i.batchNo > (op.currentProduction?.batchNo ?? '')));
+    let prev = prevProductions?.find(i => (i.status == 'COMPLETED' && i.batchNo > (op.currentProduction?.batchNo ?? '')));
     batchNo = prev?.batchNo ?? '';
   }
 
@@ -333,15 +375,7 @@ const handleMaterialInput = async (op: WorkOrderOperation) => {
   try {
     const updatedOp = await feedMaterial(params);
     // 更新本地 operations 数据（用返回的新数据替换）
-    operations.value[currentIndex] = updatedOp;
-    if(currentIndex == operations.value.length - 1 && updatedOp.currentProduction?.status == 'Completed'){
-      if(workOrder.value){
-        workOrder.value.completedQty +=  1;
-        if(workOrder.value.plannedQty == workOrder.value.completedQty){
-          workOrder.value.status = 'Completed';
-        }
-      }
-    }
+    updateOperation(updatedOp, currentIndex);
     setTimeout(() => Taro.showToast({ title: `投料成功: ${incompleteDef?.materialName} ×1`, icon: 'success' }), 100)
 
   } finally {
@@ -350,10 +384,131 @@ const handleMaterialInput = async (op: WorkOrderOperation) => {
   }
 };
 
-// ========== 其他操作（占位） ==========
+// ========== 参数录入弹窗逻辑 ==========
 const handleParameterInput = (op: WorkOrderOperation) => {
-  Taro.showToast({ title: `录入参数 - ${op.operationName}`, icon: 'none' });
+  if (!op.isParameterRecordEnabled) {
+    Taro.showToast({ title: '该工序未开启参数记录', icon: 'none' });
+    return;
+  }
+  if (op.currentProduction?.status !== 'RECORDING') {
+    Taro.showToast({ title: '当前批次状态不支持录入参数', icon: 'none' });
+    return;
+  }
+   // 新增：检查是否有参数定义
+  if (!op.parameterDefinitions || op.parameterDefinitions.length === 0) {
+    Taro.showToast({ title: '该工序暂无参数定义', icon: 'none' });
+    return;
+  }
+  currentParamOp.value = op;
+  paramGroup.value = {};  // 重置
+  fieldErrors.value = {};
+  showParamDialog.value = true;
 };
+
+const updateOperation = (updatedOp: WorkOrderOperation, currentIndex: number) => {
+  operations.value[currentIndex] = updatedOp;
+  // 更新本地 operations 数据（用返回的新数据替换）
+  operations.value[currentIndex] = updatedOp;
+  if (currentIndex == operations.value.length - 1 && updatedOp.currentProduction?.status == 'COMPLETED') {
+    if (workOrder.value) {
+      workOrder.value.completedQty += 1;
+      if (workOrder.value.plannedQty == workOrder.value.completedQty) {
+        workOrder.value.status = 'Completed';
+      }
+    }
+  }
+}
+
+// 关闭弹窗
+const closeParamDialog = () => {
+  showParamDialog.value = false;
+  currentParamOp.value = null;
+  paramGroup.value = {};
+  fieldErrors.value = {};
+};
+
+// 单项校验（仅标记错误，不阻断）
+const validateSingleParam = (def: any) => {
+  const value = paramGroup.value[def.parameterName];
+  const error = validateParamValue(def, value);
+  if (error) {
+    fieldErrors.value[def.parameterName] = error;
+  } else {
+    delete fieldErrors.value[def.parameterName];
+  }
+};
+
+// 校验参数值（返回错误信息或 null）
+const validateParamValue = (def: ParameterDefinition, value: any): string | null => {
+  if (def.minValue == undefined && def.maxValue == undefined) {
+    return null; // 空值不校验
+  }
+  if (def.parameterType === 'digit') {
+    const num = Number(value);
+    if (isNaN(num)) return '请输入有效数字';
+    if (def.minValue !== undefined && num < def.minValue) {
+      return `不能小于 ${def.minValue}`;
+    }
+    if (def.maxValue !== undefined && num > def.maxValue) {
+      return `不能大于 ${def.maxValue}`;
+    }
+  }
+  return null;
+};
+
+// 提交参数
+const submitParameters = async () => {
+  if (!currentParamOp.value || !currentParamOp.value.currentProduction) {
+    Taro.showToast({ title: '当前批次不存在', icon: 'none' });
+    return;
+  }
+
+  // 校验所有参数，收集错误
+  let hasError = false;
+  const errorMessages: string[] = [];
+  currentParamOp.value.parameterDefinitions.forEach(def => {
+    const error = validateParamValue(def, paramGroup.value[def.parameterName]);
+    if (error) {
+      hasError = true;
+      errorMessages.push(`${def.parameterName}：${error}`);
+    }
+  });
+
+  // 若有错误，弹出确认框
+  if (hasError) {
+    const res = await Taro.showModal({
+      title: '参数异常',
+      content: `以下参数不在标准范围，确认继续提交？\n${errorMessages.join('\n')}`,
+      confirmText: '继续提交',
+      cancelText: '取消'
+    });
+    if (!res.confirm) return;
+  }
+  paramSubmitting.value = true;
+  try {
+    // 构造参数数组
+    const parameters: Record<string, string> = {};
+    currentParamOp.value.parameterDefinitions.forEach(def => {
+      parameters[def.parameterName] = paramGroup.value[def.parameterName] || ''
+    });
+    const payload = {
+      workOrderOperationId: currentParamOp.value.id,
+      parameters
+    };
+    const updateOp = await recordParameters(payload);
+    const idx = operations.value.findIndex(o => o.id === currentParamOp.value!.id);
+    updateOperation(updateOp, idx);
+    Taro.showToast({ title: '参数录入成功', icon: 'success' });
+
+    closeParamDialog();
+  } catch (err) {
+    console.error(err);
+    Taro.showToast({ title: '提交失败', icon: 'none' });
+  } finally {
+    paramSubmitting.value = false;
+  }
+};
+// ========== 其他操作（占位） ==========
 
 const handleAnomalyReport = (op: WorkOrderOperation) => {
   Taro.showToast({ title: `上报异常 - ${op.operationName}`, icon: 'none' });
@@ -365,7 +520,7 @@ const backToList = () => {
 };
 
 const goToDetail = (opId: string) => {
-  Taro.navigateTo({ url: `/pages/work/operation-detail?workOrderId=${workOrderId}&operationId=${opId}` });
+  Taro.navigateTo({ url: `/pages/prod/operation-detail?workOrderId=${workOrderId}&operationId=${opId}` });
 };
 
 // ========== 加载数据 ==========

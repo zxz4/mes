@@ -1,3 +1,5 @@
+import type { InputType } from "@nutui/nutui-taro";
+
 /**
  *  工单列表项
  */
@@ -66,12 +68,10 @@ export interface WorkOrderDetail extends WorkOrderListItem {
   /**
    * 工单工序信息
    */
-  operations : WorkOrderOperation[];
+  operations: WorkOrderOperation[];
 }
-
-
 /**
- * 工单工序生产实例
+ * 工单工序实例
  */
 export interface WorkOrderOperation {
   /**
@@ -89,7 +89,15 @@ export interface WorkOrderOperation {
   /**
    * 工单工序状态
    */
-  status: 'Pending' | 'Processing' | 'Completed';
+  status: 'Pending' | 'Processing' | 'Completed' ;
+  /**
+ * 是否开启记录参数
+ */
+  isParameterRecordEnabled: boolean;
+  /**
+   * 工序参数输入模板
+   */
+  parameterDefinitions: ParameterDefinition[];
   /**
    * 工序需求物料配置
    */
@@ -110,6 +118,38 @@ export interface WorkOrderOperation {
    * 该工序实际完成数量
    */
   completedQty: number;
+}
+
+
+
+/**
+ * 工单工序参数定义
+ */
+export interface ParameterDefinition {
+  /**
+   * id
+   */
+  id: string;
+  /**
+   * 参数名
+   */
+  parameterName: string;
+  /**
+   * 参数类型
+   */
+  parameterType: InputType;
+  /**
+   * 参数单位
+   */
+  unit: string;
+  /**
+   * 参数下限值（只能校验数值类型）
+   */
+  minValue?: number;
+  /**
+   * 参数上限值（只能校验数值类型）
+   */
+  maxValue?: number;
 }
 
 /**
@@ -197,11 +237,12 @@ export interface ProductionOperation {
   /**
    * 批次状态
    */
-  status: 'Feeding' | 'Completed';
+  status: 'FEEDING' | 'RECORDING' | 'ABNORMAL' | 'COMPLETED';
+
   /**
    * 投料信息
    */
-  productionInputs?: OperationInput[];
+  inputs?: OperationInput[];
   /**
    * 参数记录信息
    */
@@ -224,6 +265,8 @@ export interface ProductionOperation {
   endAt?: string;
 }
 
+
+
 // ========== 参数记录 ==========
 export interface ProductionParameter {
   /**
@@ -233,7 +276,7 @@ export interface ProductionParameter {
   /**
    * 参数名称
    */
-  paramName: string;
+  parameterName: string;
   /**
    * 参数值
    */
@@ -247,6 +290,9 @@ export interface ProductionParameter {
    */
   isAbnormal?: boolean;
 
+  /**
+   * 记录时间
+   */
   recordedAt: string;
 }
 

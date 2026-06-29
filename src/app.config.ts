@@ -1,5 +1,6 @@
 export default {
   pages: [
+    'pages/prod/operation-detail',
     'pages/work/order-list',
     'pages/work/order-detail',
     'pages/prod/prod-setup',

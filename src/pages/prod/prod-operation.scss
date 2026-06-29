@@ -1,6 +1,8 @@
 @import '@/styles/theme.scss';
 
-.content-wrapper { padding: 12px 16px; }
+.content-wrapper {
+  padding: 12px 16px;
+}
 
 .prod-operation-page {
   min-height: 100vh;
@@ -614,6 +616,7 @@
   color: $tp-text;
   padding: 16px;
 }
+
 /* 新增样式 */
 .content-wrapper {
   padding: 12px 16px;
@@ -926,6 +929,151 @@
     .view-all-wrapper {
       margin-top: 8px;
       text-align: center;
+    }
+  }
+}
+
+// 参数录入弹窗样式
+.param-dialog {
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .dialog-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .dialog-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .dialog-batch {
+      font-size: 12px;
+      color: #999;
+      margin-left: 12px;
+    }
+  }
+
+  .dialog-body {
+    flex: 1;
+    padding: 12px 16px;
+    overflow-y: auto;
+
+    .param-group {
+      background: #f7f8fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+
+      .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .group-index {
+          font-weight: 600;
+          font-size: 14px;
+        }
+      }
+
+      .group-fields {
+        .param-field {
+          margin-bottom: 10px;
+
+          .field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+
+            .field-unit {
+              font-weight: normal;
+              color: #999;
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+
+    .empty-param {
+      text-align: center;
+      color: #999;
+      padding: 40px 0;
+    }
+  }
+
+  .dialog-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+  }
+}
+
+.param-field {
+  margin-bottom: 14px;
+  .field-label-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 4px;
+    .field-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .field-range {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+  .field-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #fff;
+    transition: border-color 0.3s;
+    &:focus-within {
+      border-color: #2c68ff;
+      box-shadow: 0 0 0 2px rgba(44, 104, 255, 0.2);
+    }
+    &.error {
+      border-color: #f5222d;
+    }
+    .field-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 14px;
+      :deep(input) {
+        border: none;
+        outline: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+      }
+      :deep(.nut-input-inner) {
+        border: none !important;
+        padding: 0 !important;
+      }
+    }
+    .field-unit {
+      margin-left: 8px;
+      font-size: 14px;
+      color: #666;
+      white-space: nowrap;
     }
   }
 }

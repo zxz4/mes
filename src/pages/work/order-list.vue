@@ -51,8 +51,8 @@
               <text class="value">{{ order.completedQty }} EA</text>
             </view>
             <view class="progress-row">
-              <nut-progress :percentage="order.completedQty/order.plannedQty" :show-text="false" stroke-color="blue" class="progress-bar" />
-              <text class="progress-text">{{ order.completedQty/order.plannedQty }}%</text>
+              <nut-progress :percentage="Math.round(order.completedQty/order.plannedQty) * 100" :show-text="false" stroke-color="blue" class="progress-bar" />
+              <text class="progress-text">{{ Math.round(order.completedQty/order.plannedQty) * 100 }}%</text>
             </view>
           </view>
           <!-- 卡片底部：操作按钮（无计划时间） -->
@@ -79,12 +79,13 @@
 
 <script setup lang="ts" name="WorkOrderList">
 import { ref, computed , onMounted } from 'vue'
-import Taro from '@tarojs/taro'
+import {navigateTo} from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
 import { getLWorkOrderList } from '@/api/work-order/look-up'
 import TabbarLayout from '@/components/TabbarLayout.vue'
 import { useTabbarStore } from '@/store/tabbar'
+import { getOrderStatusText} from '@/util/statusText';
 const workOrders = ref<WorkOrderListItem[]>([]);
 
 onMounted(() => {
@@ -107,14 +108,14 @@ const filteredOrders = computed(() => {
   return workOrders.value.filter(o => o.status === filterStatus.value)
 })
 
-const statusLabel = (status: string) => ({ Pending: '配置中', Processing: '生产中', completed: '已完成' }[status] || status)
-const statusClass = (status: string) => ({ Pending: 'status-pending', Processing: 'status-progress', completed: 'status-completed' }[status] || '')
+const statusLabel = (status: string) => getOrderStatusText(status);
+const statusClass = (status: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[status] || '')
 
 // 跳转
-const goToDetail = (id: string) => Taro.navigateTo({ url: `/pages/work/order-detail?id=${id}` })
-const goToSetup = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
-const goToProduction = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
-const goToTrace = (id: string) => Taro.navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
+const goToDetail = (id: string) => navigateTo({ url: `/pages/work/order-detail?id=${id}` })
+const goToSetup = (id: string) => navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
+const goToProduction = (id: string) => navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
+const goToTrace = (id: string) => navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
 </script>
 
 <style lang="scss" scoped>
