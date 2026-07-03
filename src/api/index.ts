@@ -38,11 +38,15 @@ export async function ajax<T = any>(
     loadingManager.show();
   }
 
-  if (url.startsWith('/')) {
-    url = `https://localhost:51243${url}`;
-  }
+  // if (url.startsWith('/')) {
+  //   url = `https://localhost:51243${url}`;
+  // }
 
   return new Promise((resolve, reject) => {
+    Object.keys(data).forEach(key => {
+      if (data[key] === undefined || data[key] === null || data[key] === '')
+        delete data[key];
+    });
     let requestOptions = {
       url: url,
       method,
@@ -57,39 +61,43 @@ export async function ajax<T = any>(
         if (isShowLoading) {
           loadingManager.hide();
         }
+        const toastPara = { title : '参数错误。' , duration: 2500 };
         switch (res.statusCode) {
           case 200:
-          case 201:
-          case 204:
             resolve(<T>res.data);
             return;
-          case 400:
-          case 403:
-            let error = res.data.error as AbpError;
-            if(error.message){
-              showToast({
-                title: '无法访问到资源，请检查网络连接。',
-                icon: 'error',
-                duration: 2500
-               });
-              }
-              reject();
-              return;
-          case 500:
-          default:
-            reject(res.data);
+          case 201:
+          case 204:
+            resolve(null as T);
             return;
+          case 403:
+          case 400:
+            let error: AbpError | undefined = res.data.error as AbpError;
+            if (error && error.validationErrors && error.validationErrors.length > 0) {
+              toastPara.title = error.validationErrors[0].message;
+            }else if(error && error.message){
+              toastPara.title = error.message;
+            }
+            break;
+          case 500:
+            toastPara.title =  '服务器出现了一个异常。';
+            break;
+          default:
+            toastPara.title =  '未知错误代码。';
+            break;
         }
+        showToast({...toastPara , icon:'none' });
+        reject();
       })
       .catch(() => {
         if (isShowLoading) {
           loadingManager.forceHide();
-          showToast({
-            title: '无法访问到资源，请检查网络连接。',
-            icon: 'error',
-            duration: 2500
-          });
         }
+        showToast({
+          title: '无法访问到资源，请检查网络连接。',
+          icon: 'error',
+          duration: 2500
+        });
         reject();
       }).finally(() => {
         requestQueue = requestQueue.filter(z => z !== tempFetchFlag);

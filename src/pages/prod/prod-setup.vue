@@ -1,7 +1,7 @@
 <template>
   <TabbarLayout>
     <view class="picking-page">
-      <NavBar title="生产配置" :show-back="true" />
+      <NavBar title="工艺配置" :show-back="true" />
 
       <view v-if="!workOrder" class="error-state">
         <nut-empty description="工单不存在或加载失败" />
@@ -19,17 +19,18 @@
               <text class="value">{{ workOrder.workOrderName }}</text>
             </view>
             <view class="info-item">
-              <text class="label">产品型号</text>
+              <text class="label">生产数量</text>
+              <text class="value highlight">{{ workOrder.plannedQty }} EA</text>
+            </view>
+            <view class="info-item">
+              <text class="label">产品名称</text>
               <text class="value">{{ workOrder.materialName }}</text>
             </view>
             <view class="info-item">
               <text class="label">产品SAP</text>
               <text class="value">{{ workOrder.materialSap }}</text>
             </view>
-            <view class="info-item">
-              <text class="label">生产数量</text>
-              <text class="value highlight">{{ workOrder.plannedQty }} EA</text>
-            </view>
+
             <view class="info-item">
               <text class="label">工单状态</text>
               <view class="status-badge" :class="statusClass(workOrder.status)">
@@ -54,7 +55,7 @@
             <view class="table-header">
               <view class="col col-sap">物料SAP</view>
               <view class="col col-name">物料名称</view>
-              <view class="col col-req-qty">需求数量</view>
+              <view class="col col-req-qty">配料总量</view>
               <view class="col col-pick-qty">领料数量</view>
             </view>
             <!-- 数据行 -->
@@ -69,7 +70,7 @@
                 <text class="material-desc">{{ node.specificationDescription }}</text>
               </view>
               <view class="col col-req-qty">
-                <text>{{ calculateRequiredQty(node) }} {{ node.unit }}</text>
+                <text>{{ node.quantity }} {{ node.unit }}</text>
               </view>
               <view class="col col-pick-qty">
                 <nut-input type="digit" :model-value="pickedQuantities[node.id]"
@@ -97,7 +98,7 @@
 
         <!-- 4. 工序配置 -->
         <view class="steps-container">
-          <view v-for="op in routeSteps" :key="op.id" class="step-card">
+          <view v-for="op in routeSteps" :key="op.operationId" class="step-card">
             <view class="step-header">
               <text class="step-name">{{ op.operationCode }} - {{ op.operationName }}</text>
               <nut-button size="small" type="primary" @click="addMaterialRequirement(op)">添加工序投料</nut-button>
@@ -108,14 +109,14 @@
               <view class="table-header">
                 <view class="col col-sap">物料SAP</view>
                 <view class="col col-name">物料名称</view>
-                <view class="col col-qty">投料数量</view>
+                <view class="col col-qty">标准用量</view>
                 <view class="col col-control">是否SN</view>
                 <view class="col col-action">操作</view>
               </view>
               <view v-for="(req, idx) in op.materialDefinitions" :key="idx" class="table-row">
                 <view class="col col-sap">
                   <nut-input type="text" v-model="req.materialSap" placeholder="扫描/输入SAP"
-                    @blur="fetchMaterialInfo(req)" />
+                    @blur="fetchMaterialInfo(req,op,idx)" />
                 </view>
                 <view class="col col-name">
                   <text class="material-name">{{ req.materialName || '待查询' }}</text>
@@ -138,7 +139,7 @@
         <!-- 5. 提交按钮 -->
         <view class="action-buttons">
           <nut-button v-show="workOrder.status == 'Pending'" type="primary" block @click="submitPicking">
-            确认配置并投入生产
+            确认并开始生产
           </nut-button>
         </view>
       </view>
@@ -150,17 +151,19 @@
 import { ref, onMounted, computed } from 'vue';
 import Taro from '@tarojs/taro';
 import NavBar from '@/components/NavBar.vue';
-import type { WorkOrderDetail, WorkOrderOperation } from '@/types/work-order';
-import {getWorkOrderDetail} from "@/api/work-order/look-up"
+import type { WorkOrderDetail } from '@/types/work-order';
+import { getWorkOrderDetail } from "@/api/work-order/look-up"
 import { configure } from '@/api/work-order';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useProcessStore } from '@/store/process';
 import type { Component } from '@/types/bom';
 import { getBomNodeBySapWithChildren } from '@/api/bom';
+import { getOrderStatusText } from '@/util/statusText';
+
 
 // 工单数据
 const workOrder = ref<WorkOrderDetail | null>(null);
-const routeSteps = ref<Array<WorkOrderOperation>>([]);
+const routeSteps = ref<Array<OperationConfig>>([]);
 
 // 扁平化的物料列表（用于渲染）
 const flattenedMaterialList = ref<Component[]>([]);
@@ -173,12 +176,29 @@ const leafMaterialList = computed(() => {
 });
 // 工艺信息
 const processStore = useProcessStore();
-const routesMap = new Map<string, Array<WorkOrderOperation>>();
+
+
+interface MaterialDefinition {
+  materialSap: string;
+  materialName: string;
+  standardQty: number;
+  isSNManaged: boolean;
+  sequence: number;
+}
+
+interface OperationConfig {
+  operationId: string,
+  operationCode: string,
+  operationName: string,
+  materialDefinitions: MaterialDefinition[]
+}
+
+const routesMap = new Map<string, Array<OperationConfig>>();
 
 // 计算每个物料的实际需求数量
 const calculateRequiredQty = (node: Component): number => {
   if (!workOrder.value) return 0;
-  const baseQty = (node.quantity || 1) * workOrder.value.plannedQty;
+  const baseQty = (node.quantity || 1) / workOrder.value.plannedQty;
   return node.hasChildren ? 0 : baseQty;
 };
 
@@ -186,13 +206,13 @@ const calculateRequiredQty = (node: Component): number => {
 const updatePickQty = (nodeId: string, node: Component, value: number | string) => {
   let numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(numValue)) numValue = 0;
-  const required = calculateRequiredQty(node);
+  const required = node.quantity;
   if (numValue < 0) {
     numValue = 0;
     Taro.showToast({ title: '数量不能为负数', icon: 'none' });
   } else if (numValue > required && required > 0) {
     numValue = required;
-    Taro.showToast({ title: `不能超过需求数量 ${required}`, icon: 'none' });
+    Taro.showToast({ title: `不能超过配料总数 ${required}`, icon: 'none' });
   }
   pickedQuantities.value[nodeId] = numValue;
 };
@@ -209,25 +229,16 @@ function flattenTree(node: Component, list: Array<Component> = []) {
 // 加载BOM树
 const loadBomTree = async (productSap: string) => {
   if (!productSap) return;
-  try {
-    const rootNode = await getBomNodeBySapWithChildren(productSap);
-    if (!rootNode?.id) {
-      throw new Error('未找到BOM根节点');
-    }
-    flattenedMaterialList.value = flattenTree(rootNode);
-    // 初始化领料数量为需求数量
-    pickedQuantities.value = {};
-    leafMaterialList.value.forEach(node => {
-      pickedQuantities.value[node.id] = calculateRequiredQty(node);
-    });
-
-    console.log(flattenedMaterialList.value);
-    console.log(leafMaterialList.value);
-
-  } catch (err) {
-    console.error('加载BOM树失败:', err);
-    Taro.showToast({ title: '加载物料清单失败', icon: 'none' });
+  const rootNode = await getBomNodeBySapWithChildren(productSap);
+  if (!rootNode?.id) {
+    throw new Error('未找到BOM根节点');
   }
+  flattenedMaterialList.value = flattenTree(rootNode);
+  // 初始化领料数量为需求数量
+  pickedQuantities.value = {};
+  leafMaterialList.value.forEach(node => {
+    pickedQuantities.value[node.id] = node.quantity;
+  });
 };
 
 // 获取物料列表（用于提交）
@@ -235,24 +246,14 @@ const getMaterialListForSubmit = () => {
   return leafMaterialList.value.map(node => ({
     materialSap: node.sap,
     materialName: node.componentName,
-    standardQty: calculateRequiredQty(node),
+    standardQty: node.quantity,
     pickedQty: pickedQuantities.value[node.id] || 0,
     unit: node.unit
   }));
 };
 
-const getOperationListForSubmit = () =>
-  routeSteps.value.map(item => ({
-    materialRequirements: item.materialDefinitions.map(mt => ({
-      materialName: mt.materialName,
-      materialSap: mt.materialSap,
-      standardQty: mt.standardQty,
-      isSNManaged: mt.isSNManaged
-    }))
-}));
-
 // 状态辅助函数
-const statusLabel = (s: string) => ({ Pending: '待领料', Processing: '生产中', Completed: '已完成' }[s] || s);
+const statusLabel = (s: string) => getOrderStatusText(s);
 const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[s] || '');
 
 // 返回工单列表
@@ -264,69 +265,65 @@ const backToList = () => {
 const submitPicking = async () => {
   if (workOrder.value == null) return;
   const materialList = getMaterialListForSubmit();
+  console.log('提交的物料列表:', materialList);
   if (materialList.length === 0) {
     Taro.showToast({ title: '无物料需要领料', icon: 'none' });
     return;
   }
-  for (let item of materialList) {
+  for (let i = materialList.length - 1; i >= 0; i--) {
+    let item = materialList[i];
     let pickQty = item.pickedQty ?? 0;
+    if (pickQty === 0) {
+      materialList.splice(i, 1);
+      break;
+    }
     if (pickQty <= 0 || pickQty > item.standardQty) {
-      Taro.showToast({ title: `${item.materialName}领料数量不合法`, icon: 'none' });
+      Taro.showToast({ title: `${item.materialName}不得大于配料总数.`, icon: 'none' });
       return;
     }
   }
-  const confirm = await Taro.showModal({
-    title: '确认配置',
-    content: `将领取物料并确定工单工艺为“${processStore.routes.find(p => p.id === workOrder.value?.processId)?.routeName}”，是否继续？`,
-    confirmText: '确认',
-    cancelText: '取消',
-  });
+  const confirm = await Taro.showModal({ title: '确认配置',content: `确定工艺和投料配置？`, confirmText: '确认',cancelText: '取消'});
   if (!confirm.confirm) return;
-
-
   let para = {
-    processId:workOrder.value?.processId,
-    materialRequirements:materialList,
-    operations: getOperationListForSubmit(),
-  } ;
+    processId: workOrder.value?.processId,
+    materialRequirements: materialList,
+    operations: Object.fromEntries(routeSteps.value.map(op => [op.operationId, op.materialDefinitions]))
+  };
   await configure(workOrder.value.id, para);
-  Taro.showToast({ title: '配置成功，跳转到生产页面。', icon: 'success' , duration:900 });
+  Taro.showToast({ title: '配置成功，跳转到生产页面。', icon: 'success', duration: 900 });
   setTimeout(() => {
     Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrder.value?.id}` });
   }, 1000);
 };
 
 // 工序投料配置方法
-const addMaterialRequirement = (op: WorkOrderOperation) => {
+const addMaterialRequirement = (op: OperationConfig) => {
   op.materialDefinitions.push({
-    id: '',
-    workOrderOperationId: op.id,
-    materialId: '',
     materialName: '',
     materialSap: '',
     standardQty: 1,
-    consumedQty: 0,
     isSNManaged: false,
     sequence: op.materialDefinitions.length + 1,
   });
 };
 
-const removeMaterialRequirement = (op: WorkOrderOperation, idx: number) => {
+const removeMaterialRequirement = (op: OperationConfig, idx: number) => {
   op.materialDefinitions.splice(idx, 1);
   op.materialDefinitions.forEach((req, i) => (req.sequence = i + 1));
 };
 
-const fetchMaterialInfo = async (req: any) => {
+const fetchMaterialInfo = (req: MaterialDefinition,op:OperationConfig, idx: number) => {
   if (!req.materialSap || req.materialSap.trim() === '') return;
   const found = leafMaterialList.value.find(i => i.sap === req.materialSap);
   if (found) {
     req.materialSap = found.sap;
     req.materialName = found.componentName;
-    req.requiredQty = calculateRequiredQty(found);
-  } else {
-    req.materialId = '';
-    req.materialName = '未找到物料';
-    Taro.showToast({ title: '未找到该SAP对应的物料', icon: 'none' });
+    req.standardQty = found.quantity / workOrder.value!.plannedQty;
+  }else{
+    Taro.showToast({ title: `SAP:${req.materialSap} 不在BOMS清单之中。`, icon: 'none' });
+    setTimeout(() => {
+      op.materialDefinitions.splice(idx, 1);
+    }, 300);
   }
 };
 
@@ -337,11 +334,10 @@ const routeChange = (value: string) => {
     routes = [];
     processStore.routes.find(i => i.id == value)?.routeSteps.forEach(r => {
       routes?.push({
-        ...r,
-        status: 'Pending',
+        operationId: r.id,
+        operationCode: r.operationCode,
+        operationName: r.operationName,
         materialDefinitions: [],
-        plannedQty: 0,
-        completedQty: 0,
       });
     });
     routesMap.set(value, routes);

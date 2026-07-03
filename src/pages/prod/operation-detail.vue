@@ -1,7 +1,7 @@
 <template>
   <TabbarLayout>
     <view class="prod-trace-page">
-      <NavBar title="生产追踪" />
+      <NavBar title="工艺详情" />
 
       <!-- 工单不存在 -->
       <view v-if="!workOrder" class="error-state">
@@ -74,7 +74,7 @@
                   <view v-if="op.productions && op.productions.length">
                     <view v-for="(prod) in op.productions" :key="prod.id" class="batch-card">
                       <view class="batch-header">
-                        <text class="batch-no">📋 批次号：{{ prod.batchNo }}</text>
+                        <text class="batch-no" @click="goToReport(prod.batchNo)">📋 批次号：{{ prod.batchNo }}</text>
                         <text class="batch-status" :class="prod.status === 'COMPLETED' ? 'batch-completed' : 'batch-processing'">
                           {{ prodStatusLabel(prod.status) }}
                         </text>
@@ -175,6 +175,10 @@ const statusClass = (s: string) => ({ Pending: 'status-pending', Processing: 'st
 const opStatusLabel = (s: string) => getOperationStatusText(s);
 const prodStatusLabel = (s: string) => getProductionStatusText(s);
 const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '');
+
+const goToReport = (batchNo: string) => {
+  Taro.navigateTo({ url: `/pages/prod/operation-report?batchNo=${batchNo}` });
+};
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '--';

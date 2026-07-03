@@ -4,17 +4,17 @@
     <view class="layout-content">
       <slot />
     </view>
-    <!-- 底部导航栏 -->
-    <BottomTabBar />
+    <!-- 底部导航栏
+    <BottomTabBar /> -->
   </view>
 </template>
 
 <script>
-import BottomTabBar from './BottomTabBar.vue'
+// import BottomTabBar from './BottomTabBar.vue'
 
 export default {
   name: 'TabbarLayout',
-  components: { BottomTabBar },
+  // components: { BottomTabBar },
   options: {
     addGlobalClass: true,
   },

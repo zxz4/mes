@@ -64,7 +64,7 @@ export interface WorkOrderDetail extends WorkOrderListItem {
   /**
    * 工单领料信息
   */
-  materialDefinitions: WorkOrderOperationMaterialDefinition[];
+  materialDefinitions: WorkOrderMaterialDefinition[];
   /**
    * 工单工序信息
    */
@@ -155,7 +155,7 @@ export interface ParameterDefinition {
 /**
  * 工单物料配置信息
  */
-export interface WorkOrderOperationMaterialDefinition {
+export interface WorkOrderMaterialDefinition {
   /**
    * 物料名称
    */
@@ -171,7 +171,7 @@ export interface WorkOrderOperationMaterialDefinition {
   /**
    * 实际领取数量
    */
-  pickedQty?: number;
+  pickedQty: number;
 }
 
 
@@ -200,6 +200,10 @@ export interface WorkOrderOperationMaterialDefinition {
    * 物料SAP编码
    */
   materialSap: string;
+  /**
+   * 当前批次投料数量
+   */
+  feedQty:number;
   /**
    * 工序所需物料标准用量
    */
@@ -230,6 +234,14 @@ export interface ProductionOperation {
    * 批次号
    */
   batchNo: string;
+  /**
+   * 工序编码（冗余）
+   */
+  operationCode:string;
+  /**
+   * 工序名称（冗余）
+   */
+  operationName:string;
   /**
    * 工序编号（冗余）
    */
@@ -274,6 +286,10 @@ export interface ProductionParameter {
    */
   id: string;
   /**
+   * 物料id
+   */
+  materialInputId?: string;
+  /**
    * 参数名称
    */
   parameterName: string;
@@ -284,11 +300,11 @@ export interface ProductionParameter {
   /**
    * 单位
    */
-  unit?: string;
+  unit: string;
   /**
    * 是否异常
    */
-  isAbnormal?: boolean;
+  isAbnormal: boolean;
 
   /**
    * 记录时间
@@ -337,9 +353,9 @@ export interface OperationInput {
    */
   productionId: string;
   /**
-   * 使用的LOTID
+   * 批次号
    */
-  materialLotId: string;
+  lotCode: string;
   /**
  * 物料名称
  */
@@ -352,4 +368,9 @@ export interface OperationInput {
    * 消耗数量
    */
   quantity: number;
+
+   /**
+   * 参数记录信息(物料级)
+   */
+  parameters?: ProductionParameter[];
 }

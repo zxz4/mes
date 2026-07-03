@@ -59,11 +59,11 @@
           <view class="card-footer">
             <view class="actions">
               <nut-button v-if="order.status === 'Pending'" size="small" type="primary"
-                @click.stop="goToSetup(order.id)">工单配置</nut-button>
+                @click.stop="goToSetup(order.id)">配置工序</nut-button>
               <nut-button v-if="order.status === 'Processing'" size="small" type="success"
                 @click.stop="goToProduction(order.id)">继续生产</nut-button>
               <nut-button v-if="order.status === 'Completed'" size="small" plain
-                @click.stop="goToTrace(order.id)">查看追溯</nut-button>
+                @click.stop="goToProduction(order.id)">生产详情</nut-button>
               <!-- <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain @click.stop="goToDetail(order.id)">异常详情</nut-button> -->
             </view>
           </view>
@@ -84,12 +84,10 @@ import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
 import { getLWorkOrderList } from '@/api/work-order/look-up'
 import TabbarLayout from '@/components/TabbarLayout.vue'
-import { useTabbarStore } from '@/store/tabbar'
 import { getOrderStatusText} from '@/util/statusText';
 const workOrders = ref<WorkOrderListItem[]>([]);
 
 onMounted(() => {
- useTabbarStore().setSelected(0)
  getLWorkOrderList().then(data=>{
   workOrders.value = data.items;
  })
@@ -115,7 +113,7 @@ const statusClass = (status: string) => ({ Pending: 'status-pending', Processing
 const goToDetail = (id: string) => navigateTo({ url: `/pages/work/order-detail?id=${id}` })
 const goToSetup = (id: string) => navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
 const goToProduction = (id: string) => navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
-const goToTrace = (id: string) => navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
+// const goToTrace = (id: string) => navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
 </script>
 
 <style lang="scss" scoped>

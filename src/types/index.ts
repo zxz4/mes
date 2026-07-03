@@ -8,5 +8,11 @@ export interface AbpError {
   message: string;
   details: string;
   data: any;
-  validationErrors: string;
+  validationErrors: Array<ValidationError>;
+}
+
+
+export interface ValidationError {
+  members: Array<string>,
+  message: string
 }

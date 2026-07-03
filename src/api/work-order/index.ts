@@ -4,23 +4,7 @@ import { WorkOrderOperation} from "@/types/work-order";
 
 
 
-export async function configure(id:string,para:{
-  processId:string,
-  materialRequirements:Array<{
-      materialSap:string,
-      materialName:string,
-      pickedQty:number,
-      standardQty:number
-  }>;
-  operations:Array<{
-    materialRequirements:Array<{
-      materialSap:string,
-      materialName:string,
-      isSNManaged:boolean,
-      standardQty:number
-    }>
-  }>
-}) {
+export async function configure(id:string, para:any) {
   return ajaxPut(`/api/mes/work-order/${id}/configure`,para);
 }
 

@@ -22,7 +22,7 @@ const ProductionStatusText: Record<string, string> = {
   ['FEEDING']: '投料作业中',
   ['RECORDING']: '数据采集中',
   ['ABNORMAL']: '生产异常',
-  ['COMPLETED']: '批次完工'
+  ['COMPLETED']: '工序完工'
 };
 
 /**

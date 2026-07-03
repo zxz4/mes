@@ -69,8 +69,8 @@
               <text class="material-code">{{ item.materialSap }}</text>
             </view>
             <view class="material-qty">
-              <text>需求: {{ item.requiredQty }} EA</text>
-              <text :class="(item.pickedQty || 0) >= (item.requiredQty || 0) ? 'picked-done' : 'picked-pending'">
+              <text>需求: {{ item.standardQty }} EA</text>
+              <text :class="(item.pickedQty || 0) >= (item.standardQty || 0) ? 'picked-done' : 'picked-pending'">
                 已领: {{ item.pickedQty || 0 }}
               </text>
             </view>
@@ -121,7 +121,7 @@
       <view class="action-buttons">
         <nut-button v-if="workOrder.status === 'Pending'" type="primary" block @click="goToConfigure">配置工单</nut-button>
         <nut-button v-if="workOrder.status === 'Processing'" type="success" block @click="goToProduction">继续生产</nut-button>
-        <nut-button v-if="workOrder.status === 'Completed'" type="info" block plain @click="goToTrace">查看追溯</nut-button>
+        <nut-button v-if="workOrder.status === 'Completed'" type="info" block plain @click="goToProduction">生产详情</nut-button>
       </view>
     </view>
 
@@ -160,7 +160,7 @@ const opPercent = (op: any) => op.planQty ? Math.round((op.completedQty / op.pla
 // 跳转
 const goToConfigure = () => Taro.navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${workOrderId}` });
 const goToProduction = () => Taro.navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${workOrderId}` });
-const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/index?workOrderId=${workOrderId}` });
+// const goToTrace = () => Taro.navigateTo({ url: `/pages/prod-trace/index?workOrderId=${workOrderId}` });
 const backToList = () => Taro.navigateTo({ url: '/pages/work/order-list' });
 
 // 加载工单详情

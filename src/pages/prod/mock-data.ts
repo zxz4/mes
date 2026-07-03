@@ -18,8 +18,8 @@ export const mockOperationBatches: ProductionOperation[] = [
     sequence: 156,
     status: 'Completed',
     inputs: [
-      { id: 'in-001', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-001', materialLotId: 'lot-001', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
-      { id: 'in-002', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-001', materialLotId: 'lot-002', materialName: '端板', materialSap: 'MAT-002', quantity: 1 },
+      { id: 'in-001', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-001', lotCode: 'lot-001', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
+      { id: 'in-002', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-001', lotCode: 'lot-002', materialName: '端板', materialSap: 'MAT-002', quantity: 1 },
     ],
     parameters: [
       { id: 'param-001', parameterName: '电压', value: 3.25, unit: 'V', isAbnormal: false, recordedAt: '2026-06-25T14:30:00' },
@@ -38,7 +38,7 @@ export const mockOperationBatches: ProductionOperation[] = [
     sequence: 155,
     status: 'Completed',
     inputs: [
-      { id: 'in-003', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-002', materialLotId: 'lot-003', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
+      { id: 'in-003', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-002', lotCode: 'lot-003', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
     ],
     parameters: [
       { id: 'param-003', parameterName: '电压', value: 3.28, unit: 'V', isAbnormal: true, recordedAt: '2026-06-25T14:15:00' },
@@ -59,7 +59,7 @@ export const mockOperationBatches: ProductionOperation[] = [
     sequence: 154,
     status: 'Feeding',
     inputs: [
-      { id: 'in-004', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-003', materialLotId: 'lot-004', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
+      { id: 'in-004', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-003', lotCode: 'lot-004', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
     ],
     parameters: [],
     anomalies: [],
@@ -73,8 +73,8 @@ export const mockOperationBatches: ProductionOperation[] = [
     sequence: 153,
     status: 'Completed',
     inputs: [
-      { id: 'in-005', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-004', materialLotId: 'lot-005', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
-      { id: 'in-006', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-004', materialLotId: 'lot-006', materialName: '端板', materialSap: 'MAT-002', quantity: 1 },
+      { id: 'in-005', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-004', lotCode: 'lot-005', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
+      { id: 'in-006', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-004', lotCode: 'lot-006', materialName: '端板', materialSap: 'MAT-002', quantity: 1 },
     ],
     parameters: [
       { id: 'param-005', parameterName: '电压', value: 3.24, unit: 'V', isAbnormal: false, recordedAt: '2026-06-25T13:50:00' },
@@ -94,7 +94,7 @@ export const mockOperationBatches: ProductionOperation[] = [
     sequence: 152,
     status: 'Completed',
     inputs: [
-      { id: 'in-007', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-005', materialLotId: 'lot-007', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
+      { id: 'in-007', workOrderId: 'WO-001', workOrderOperationId: 'OP-001', productionId: 'batch-005', lotCode: 'lot-007', materialName: '电芯', materialSap: 'MAT-001', quantity: 1 },
     ],
     parameters: [
       { id: 'param-008', parameterName: '电压', value: 3.26, unit: 'V', isAbnormal: false, recordedAt: '2026-06-25T13:25:00' },

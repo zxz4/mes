@@ -6,6 +6,6 @@ export async function feedMaterial(data:object) {
 }
 
 
-export async function recordParameters(data:object) {
-  return ajaxPost<WorkOrderOperation>('/api/mes/production/record-parameter', data);
+export async function recordParameters(oprId:string,payload:object) {
+  return ajaxPost<WorkOrderOperation>(`/api/mes/production/${oprId}/record-parameter`, payload);
 }

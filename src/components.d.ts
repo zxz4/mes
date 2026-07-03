@@ -8,14 +8,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     NutButton: typeof import('@nutui/nutui-taro')['Button']
-    NutDropdown: typeof import('@nutui/nutui-taro')['Dropdown']
-    NutDropdownItem: typeof import('@nutui/nutui-taro')['DropdownItem']
     NutEmpty: typeof import('@nutui/nutui-taro')['Empty']
     NutInput: typeof import('@nutui/nutui-taro')['Input']
-    NutLoading: typeof import('@nutui/nutui-taro')['Loading']
-    NutMenu: typeof import('@nutui/nutui-taro')['Menu']
-    NutMenuItem: typeof import('@nutui/nutui-taro')['MenuItem']
-    NutPagination: typeof import('@nutui/nutui-taro')['Pagination']
     NutPopup: typeof import('@nutui/nutui-taro')['Popup']
     NutProgress: typeof import('@nutui/nutui-taro')['Progress']
     NutRadio: typeof import('@nutui/nutui-taro')['Radio']

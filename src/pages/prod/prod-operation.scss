@@ -1077,3 +1077,36 @@
     }
   }
 }
+
+.param-dialog {
+  .param-group {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: $tp-help;
+    border-radius: 8px;
+    .group-header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+      .group-title { font-weight: 600; }
+      .group-material { font-size: 13px; color: $tp-primary; }
+      .group-lot { font-size: 12px; color: $tp-text; }
+    }
+    .group-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
+  .field-error {
+    font-size: 11px;
+    color: $tp-danger;
+    margin-top: 2px;
+  }
+  .field-input-wrapper.error {
+    :deep(.nut-input) {
+      border-color: $tp-danger;
+    }
+  }
+}
