@@ -151,7 +151,7 @@ import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useTabbarStore } from '@/store/tabbar';
 import { getWorkOrderDetail } from '@/api/work-order/look-up';
 import { getOperationStatusText, getProductionStatusText } from '@/util/statusText';
-import type { WorkOrderDetail, ProductionOperation, ProductionParameter } from '@/types/work-order';
+import type { WorkOrderDetail, Batch, OperationParameter } from '@/types/work-order';
 
 // ========== 路由参数 ==========
 const instance = Taro.getCurrentInstance();
@@ -185,7 +185,7 @@ const formatDate = (dateStr: string) => {
 };
 
 // ========== 获取某个投料记录对应的参数列表 ==========
-const getParamsForInput = (prod: ProductionOperation, inputId: string): ProductionParameter[] => {
+const getParamsForInput = (prod: Batch, inputId: string): OperationParameter[] => {
   if (!prod.parameters) return [];
   return prod.parameters.filter(param => param.materialInputId === inputId);
 };

@@ -1,4 +1,4 @@
-import type { ProductionOperation } from '@/types/work-order';
+import type { Batch } from '@/types/work-order';
 
 // ===== 工序概要 MOCK =====
 export const mockOperationSummary = {
@@ -11,7 +11,7 @@ export const mockOperationSummary = {
 };
 
 // ===== 批次列表 MOCK =====
-export const mockOperationBatches: ProductionOperation[] = [
+export const mockOperationBatches: Batch[] = [
   {
     id: 'batch-001',
     batchNo: 'BT20260625OP1010-0156',

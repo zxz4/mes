@@ -102,7 +102,7 @@
             <view class="op-actions">
               <template v-if="op.status !== 'Completed'">
                 <nut-button size="small" type="primary" plain :loading="inputLoading && inputTargetId === op.id"
-                  :disabled="isMaterialInputDisabled(op)" @click="handleMaterialInput(op)">
+                  :disabled="isMaterialInputDisabled(op)" @click="openMaterialInputDialog(op)">
                   📦 扫码投料
                 </nut-button>
                 <nut-button size="small" type="warning" plain :disabled="!canInputParameter(op)"
@@ -192,7 +192,7 @@
     </view>
   </TabbarLayout>
   <!-- ========== 参数录入弹窗 ========== -->
-  <nut-popup v-model:visible="showParamDialog" position="bottom" round :style="{ height: '70%' }" closeable>
+  <nut-popup v-model:visible="showParamDialog" position="bottom" round :style="{ height: '100%' }" closeable>
     <view class="param-dialog">
       <view class="dialog-header">
         <text class="dialog-title">📝 录入参数 - {{ currentParamOp?.operationName }}</text>
@@ -218,11 +218,11 @@
                   <text v-if="def.minValue && def.maxValue" class="field-range">
                     ({{ def.minValue ?? '无' }} ~ {{ def.maxValue ?? '无' }}{{ def.unit ? ' ' + def.unit : '' }})
                   </text>
-                  <text v-else-if="def.minValue " class="field-range">
-                    ( 大于 {{ def.minValue}} {{ def.unit ? ' ' + def.unit : '' }})
+                  <text v-else-if="def.minValue" class="field-range">
+                    ( 大于 {{ def.minValue }} {{ def.unit ? ' ' + def.unit : '' }})
                   </text>
-                   <text v-else-if="def.maxValue" class="field-range">
-                    ( 小于 {{ def.maxValue}} {{ def.unit ? ' ' + def.unit : '' }})
+                  <text v-else-if="def.maxValue" class="field-range">
+                    ( 小于 {{ def.maxValue }} {{ def.unit ? ' ' + def.unit : '' }})
                   </text>
 
                 </view>
@@ -250,6 +250,64 @@
       </view>
     </view>
   </nut-popup>
+
+  <!-- 投料弹窗（统一支持SN/批次） -->
+  <nut-popup v-model:visible="showMaterialInputDialog" position="bottom" round :style="{ height: '100%' }" closeable>
+    <view class="material-input-dialog">
+      <view class="dialog-header">
+        <text class="dialog-title">📦 扫码投料 - {{ materialInputTarget?.operationName }}</text>
+      </view>
+      <scroll-view scroll-y class="dialog-body">
+        <!-- 投料物料列表 -->
+        <view v-for="(def, idx) in pendingMaterialDefs" :key="idx" class="material-input-item">
+          <view class="material-info">
+            <text class="mat-name">{{ def.materialName }}</text>
+            <text class="mat-sap">{{ def.materialSap }}</text>
+            <view class="mat-badges">
+              <text v-if="def.isSNManaged" class="badge-sn">SN</text>
+              <text v-else class="badge-lot">批次</text>
+            </view>
+            <text class="mat-status" :class="getDefStatusClass(def)">
+              {{ getDefStatusText(def) }}
+            </text>
+          </view>
+
+          <!-- SN模式：仅输入SN码 -->
+          <template v-if="def.isSNManaged">
+            <view class="input-row">
+              <nut-input v-model="snInputValues[def.id]" placeholder="扫描/输入 SN 码" @confirm="() => submitSnInput(def)" />
+              <nut-button size="small" type="primary" @click="() => submitSnInput(def)">投料</nut-button>
+            </view>
+          </template>
+          <template v-else>
+            <view class="input-row">
+              <nut-input v-model="lotInputValues[def.id].lotCode" placeholder="扫描/输入 批次号"
+                @confirm="() => submitLotInput(def)" />
+              <nut-button size="small" type="primary" @click="() => submitLotInput(def)">投料</nut-button>
+            </view>
+          </template>
+
+          <!-- 已投料记录（标签形式） -->
+          <view v-if="getConsumedRecords(def).length > 0" class="consumed-records">
+            <text class="record-label">已投料：</text>
+            <view class="record-tags">
+              <view v-for="(record, ri) in getConsumedRecords(def)" :key="ri" class="record-tag">
+                <text class="tag-text">{{ record.lotCode }}</text>
+                <text class="tag-delete" @click="() => removeConsumedRecord(def, record)">✕</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view v-if="pendingMaterialDefs.length === 0" class="empty-tip">
+          所有物料已投满 ✅
+        </view>
+      </scroll-view>
+      <view class="dialog-footer">
+        <nut-button block plain @click="closeMaterialInputDialog">关闭</nut-button>
+      </view>
+    </view>
+  </nut-popup>
 </template>
 
 <script setup lang="ts">
@@ -260,7 +318,7 @@ import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useTabbarStore } from '@/store/tabbar';
 import { getWorkOrderDetail } from '@/api/work-order/look-up';
 import { feedMaterial, recordParameters } from '@/api/prod/index'
-import type { WorkOrderDetail, WorkOrderOperation, ParameterDefinition } from '@/types/work-order';
+import type { WorkOrderDetail, WorkOrderOperationDefinition, ParameterDefinition } from '@/types/work-order';
 import { getOperationStatusText, getProductionStatusText } from '@/util/statusText'
 
 // ========== 路由参数 ==========
@@ -304,10 +362,10 @@ const opStatusLabel = (s: string) => { return getOperationStatusText(s); };
 const prodStatusLabel = (s: string) => { return getProductionStatusText(s); };
 
 const opStatusClass = (s: string) => ({ Pending: 'op-pending', Processing: 'op-progress', Completed: 'op-completed' }[s] || '');
-const opPercent = (op: WorkOrderOperation) => (op.plannedQty ? Math.round((op.completedQty / op.plannedQty) * 100) : 0);
+const opPercent = (op: WorkOrderOperationDefinition) => (op.plannedQty ? Math.round((op.completedQty / op.plannedQty) * 100) : 0);
 
 // 判断投料按钮是否禁用
-const isMaterialInputDisabled = (op: WorkOrderOperation): boolean => {
+const isMaterialInputDisabled = (op: WorkOrderOperationDefinition): boolean => {
   // const currentIndex = operations.value.findIndex(o => o.id === op.id);
   // if (currentIndex <= 0) return false; // 第一个工序无需等待前置
   // // 如果当前批次不存在，则需要检查前置工序是否有已完成批次
@@ -323,7 +381,7 @@ const isMaterialInputDisabled = (op: WorkOrderOperation): boolean => {
   if (op.currentProduction?.status == 'FEEDING') return false;
   const currentIndex = operations.value.findIndex(o => o.id === op.id);
   if (currentIndex <= 0) return false;
-  if(op.currentProduction?.status == 'RECORDING') return true;
+  if (op.currentProduction?.status == 'RECORDING') return true;
 
   const currentBatchNo = op.currentProduction?.batchNo ?? '';
   const prevProd = operations.value[currentIndex - 1].productions?.find(i => {
@@ -334,7 +392,7 @@ const isMaterialInputDisabled = (op: WorkOrderOperation): boolean => {
 };
 
 // 是否可以录入参数（投料全部完成且当前批次未完成）
-const canInputParameter = (op: WorkOrderOperation): boolean => {
+const canInputParameter = (op: WorkOrderOperationDefinition): boolean => {
   if (!op.isParameterRecordEnabled) return false;
   if (op.currentProduction?.status !== 'RECORDING') return false;
   // 检查所有物料是否已投满
@@ -347,76 +405,18 @@ const toggleExpand = (opId: string) => {
   else expandedSet.value.add(opId);
 };
 
-// ========== 模拟扫码投料 ==========
-const handleMaterialInput = async (op: WorkOrderOperation) => {
-  //模拟生成 SN/批次码（实际由扫码枪输入）
-  const mockCode = `SIM${Date.now().toString().slice(-6)}`;
-  // 检查是否有物料需要投料
-  const incompleteDef = op.materialDefinitions.find(def => def.feedQty < def.standardQty);
-  op.materialDefinitions.forEach(def => {
-    console.log(def);
-    console.log(def.feedQty < def.standardQty);
-  });
-
-  if (!incompleteDef) {
-    Taro.showToast({ title: '所有物料已投满。', icon: 'none' });
-    return;
-  }
-  const def = workOrder.value!.materialDefinitions.find(def => def.materialSap === incompleteDef.materialSap);
-
-  if (incompleteDef.consumedQty >= def!.pickedQty) {
-    Taro.showToast({ title: '已投料数量达到领料数量，无法继续投料。', icon: 'none' });
-    return;
-  }
-
-  let batchNo: string = '';
-  // 找到当前工序索引
-  const currentIndex = operations.value.findIndex(o => o.id === op.id);
-  const isFirstOperation = currentIndex === 0;
-  if (op.currentProduction?.status == 'FEEDING') {
-    batchNo = op.currentProduction.batchNo;
-  }
-  else if (!isFirstOperation) {
-    let prevProductions = operations.value[currentIndex - 1].productions;
-    let prev = prevProductions?.find(i => (i.status == 'COMPLETED' && i.batchNo > (op.currentProduction?.batchNo ?? '')));
-    batchNo = prev?.batchNo ?? '';
-  }
-  // 构造投料参数
-  let params = {
-    workOrderOperationId: op.id,
-    materialSap: incompleteDef?.materialSap ?? '',
-    materialName: incompleteDef?.materialName ?? '',
-    quantity: 1,
-    batchNo: batchNo,
-    lotCode: mockCode
-  };
-
-  inputLoading.value = true;
-  inputTargetId.value = op.id;
-  try {
-    const updatedOp = await feedMaterial(params);
-    // 更新本地 operations 数据（用返回的新数据替换）
-    updateOperation(updatedOp, currentIndex);
-    setTimeout(() => Taro.showToast({ title: `投料成功: ${incompleteDef?.materialName} ×1`, icon: 'success' }), 100)
-
-  } finally {
-    inputLoading.value = false;
-    inputTargetId.value = null;
-  }
-};
-
 // ========== 参数录入弹窗逻辑 ==========
 
 // 参数录入弹窗状态
 const showParamDialog = ref(false);
-const currentParamOp = ref<WorkOrderOperation | null>(null);
+const currentParamOp = ref<WorkOrderOperationDefinition | null>(null);
 // 改为二维对象：paramValues[inputId][parameterName] = value
 const paramValues = ref<Record<string, Record<string, string>>>({});
 const fieldErrors = ref<Record<string, Record<string, string>>>({});
 const paramSubmitting = ref(false);
 
 // 打开参数录入弹窗
-const handleParameterInput = (op: WorkOrderOperation) => {
+const handleParameterInput = (op: WorkOrderOperationDefinition) => {
   console.log(op);
   if (!op.isParameterRecordEnabled) {
     Taro.showToast({ title: '该工序未开启参数记录', icon: 'none' });
@@ -560,9 +560,152 @@ const submitParameters = async () => {
     paramSubmitting.value = false;
   }
 };
+
+// ========== 投料弹窗相关状态 ==========
+const showMaterialInputDialog = ref(false);
+const materialInputTarget = ref<WorkOrderOperationDefinition | null>(null);
+const snInputValues = ref<Record<string, string>>({});
+const lotInputValues = ref<Record<string, { lotCode: string }>>({});
+
+// 获取当前工序的待投料物料定义（未投满的）
+const pendingMaterialDefs = computed(() => {
+  const target = materialInputTarget.value;
+  if (!target) return [];
+  return target.materialDefinitions.filter(def => {
+    const consumed = def.consumedQty || 0;
+    // 当移除了 standardQty 后，这里只检查是否还有未消耗的物料
+    // 实际业务中，可能通过其他方式判断是否已投满
+    // 此处简化为：如果该物料没有任何投料记录，则视为待投料
+    // 实际可由后端返回 isFulfilled 标志
+    return consumed < 1; // 假设每件需要投1次，可根据业务调整
+  });
+});
+
+// ========== 打开投料弹窗 ==========
+const openMaterialInputDialog = (op: WorkOrderOperationDefinition) => {
+  materialInputTarget.value = op;
+  // 初始化输入值
+  op.materialDefinitions.forEach(def => {
+    if (def.isSNManaged) {
+      snInputValues.value[def.id] = '';
+    } else {
+      lotInputValues.value[def.id] = { lotCode: '' };
+    }
+  });
+  showMaterialInputDialog.value = true;
+};
+
+// ========== 关闭投料弹窗 ==========
+const closeMaterialInputDialog = () => {
+  showMaterialInputDialog.value = false;
+  materialInputTarget.value = null;
+  snInputValues.value = {};
+  lotInputValues.value = {};
+};
+
+// ========== SN码投料 ==========
+const submitSnInput = async (def: any) => {
+  const sn = snInputValues.value[def.id]?.trim();
+  if (!sn) {
+    Taro.showToast({ title: '请输入SN码', icon: 'none' });
+    return;
+  }
+  try {
+    await feedMaterial({
+      workOrderOperationId: materialInputTarget.value!.id,
+      materialDefinitionId: def.id,
+      snCode: sn
+    });
+    Taro.showToast({ title: `SN: ${sn} 投料成功`, icon: 'success' });
+    snInputValues.value[def.id] = '';
+    // 刷新工序数据
+    await refreshOperation(materialInputTarget.value!.id);
+  } catch (err: any) {
+    Taro.showToast({ title: err.message || '投料失败', icon: 'none' });
+  }
+};
+
+// ========== 批次码投料 ==========
+const submitLotInput = async (def: any) => {
+  const lotCode = lotInputValues.value[def.id]?.lotCode?.trim();
+  const qtyStr = 1;
+  if (!lotCode) {
+    Taro.showToast({ title: '请输入批次号', icon: 'none' });
+    return;
+  }
+  try {
+    def.
+    // await feedMaterial({
+    //   workOrderOperationId: materialInputTarget.value!.id,
+    //   materialDefinitionId: def.id,
+    //   lotCode: lotCode,
+    //   quantity: qty
+    // });
+    // Taro.showToast({ title: `批次 ${lotCode} 投料 ${qty} 成功`, icon: 'success' });
+    lotInputValues.value[def.id] = { lotCode: '' };
+    // 刷新工序数据
+    // await refreshOperation(materialInputTarget.value!.id);
+  } catch (err: any) {
+    Taro.showToast({ title: err.message || '投料失败', icon: 'none' });
+  }
+};
+
+// ========== 辅助函数 ==========
+const getDefStatusText = (def: any) => {
+  const consumed = def.consumedQty || 0;
+  if (consumed === 0) return '待投料';
+  return '已投料';
+};
+
+const getDefStatusClass = (def: any) => {
+  const consumed = def.consumedQty || 0;
+  return consumed === 0 ? 'status-pending' : 'status-done';
+};
+
+const getConsumedRecords = (def: any) => {
+  // 从当前工序的投料记录中筛选
+  const records = materialInputTarget.value?.currentProduction?.inputs || [];
+  return records.filter(r => r.materialSap === def.materialSap);
+};
+
+// ========== 刷新单个工序数据 ==========
+const refreshOperation = async (opId: string) => {
+  const updated = await getWorkOrderDetail(workOrderId);
+  const idx = operations.value.findIndex(o => o.id === opId);
+  if (idx !== -1) {
+    operations.value[idx] = updated.operations.find(o => o.id === opId)!;
+  }
+};
+
+// ========== 删除/撤销投料记录 ==========
+const removeConsumedRecord = async (def: any, record: any) => {
+  // 弹出二次确认
+  const confirm = await Taro.showModal({
+    title: '撤销投料',
+    content: `确定撤销 ${def.isSNManaged ? 'SN' : '批次'} ${def.isSNManaged ? record.snCode : record.lotCode} 的投料吗？`,
+    confirmText: '确定',
+    cancelText: '取消'
+  });
+  if (!confirm.confirm) return;
+
+  try {
+    // 调用撤销投料接口（需后端支持）
+    // await undoFeedMaterial({
+    //   workOrderOperationId: materialInputTarget.value!.id,
+    //   materialDefinitionId: def.id,
+    //   inputId: record.id // 投料记录ID
+    // });
+
+    // 刷新当前工序数据
+    // await refreshOperation(materialInputTarget.value!.id);
+  } catch (err: any) {
+    Taro.showToast({ title: err.message || '撤销失败', icon: 'none' });
+  }
+};
+
 // ========== 其他操作（占位） ==========
 
-const updateOperation = (updatedOp: WorkOrderOperation, currentIndex: number) => {
+const updateOperation = (updatedOp: WorkOrderOperationDefinition, currentIndex: number) => {
   const current = operations.value[currentIndex];
   // 更新本地 operations 数据（用返回的新数据替换）
   current.status = updatedOp.status;
@@ -580,7 +723,7 @@ const updateOperation = (updatedOp: WorkOrderOperation, currentIndex: number) =>
   }
 }
 
-const handleAnomalyReport = (op: WorkOrderOperation) => {
+const handleAnomalyReport = (op: WorkOrderOperationDefinition) => {
   Taro.showToast({ title: `上报异常 - ${op.operationName}`, icon: 'none' });
 };
 

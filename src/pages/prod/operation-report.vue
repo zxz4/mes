@@ -123,7 +123,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Taro from '@tarojs/taro'
-import type { ProductionOperation , ProductionParameter} from '@/types/work-order'
+import type { Batch , OperationParameter} from '@/types/work-order'
 import {getListByBatchNo} from '@/api/prod/look-up'
 
 
@@ -148,7 +148,7 @@ interface SpanInfo {
 }
 
 const batchNo = ref('')
-const operations = ref<ProductionOperation[]>([])
+const operations = ref<Batch[]>([])
 
 
 // ---------- 响应式窗口尺寸 ----------
@@ -278,7 +278,7 @@ const mobileCards = computed(() => {
     materialName: string
     materialSap: string
     lotCode: string
-    parameters: ProductionParameter[]
+    parameters: OperationParameter[]
     hasAbnormal: boolean
   }[] = []
   operations.value.forEach(op => {

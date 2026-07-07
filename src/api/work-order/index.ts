@@ -1,5 +1,5 @@
 import { ajaxGet,ajaxPut } from "..";
-import { WorkOrderOperation} from "@/types/work-order";
+import { WorkOrderOperationDefinition} from "@/types/work-order";
 
 
 
@@ -14,5 +14,5 @@ export const updateOperationMaterialRequirements = (workOrderId: string, payload
 }
 
 export async function getWorkOrderOperations(id:string) {
-  return ajaxGet<Array<WorkOrderOperation>>(`/api/mes/work-order/${id}/operations`);
+  return ajaxGet<Array<WorkOrderOperationDefinition>>(`/api/mes/work-order/${id}/operations`);
 }
