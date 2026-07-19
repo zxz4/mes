@@ -1,4 +1,4 @@
 export default {
-  navigationBarTitleText: '工单详情',
+  navigationBarTitleText: '生产执行',
   usingComponents: {},
 }

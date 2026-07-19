@@ -8,8 +8,8 @@
           <view class="stat-number blue">{{ workOrders.length }}</view>
           <view class="stat-label">全部工单</view>
         </view>
-        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'Pending' }"
-          @click="filterStatus = 'Pending'">
+        <view class="stat-card" :class="{ 'active-filter': filterStatus === 'PENDING' }"
+          @click="filterStatus = 'PENDING'">
           <view class="stat-number orange">{{ pendingConfigureCount }}</view>
           <view class="stat-label">配置中</view>
         </view>
@@ -27,13 +27,13 @@
 
       <!-- 工单列表 -->
       <view class="work-order-list">
-        <view v-for="order in filteredOrders" :key="order.id" class="work-order-card" @click="goToDetail(order.id)">
+        <view v-for="order in filteredOrders" :key="order.id" class="work-order-card" @click="goToOverview(order.id)">
           <!-- 卡片头部：项目名称 + 状态 -->
           <view class="card-header">
             <!-- 项目/产品信息左对齐 -->
             <view class="order-info">
-              <view class="project-name">{{ order.workOrderName }} ({{ order.workOrderNo }})</view>
-              <view class="product-info">{{ order.materialName }} ({{ order.materialSap }})</view>
+              <view class="project-name">{{ order.name }} ({{ order.code }})</view>
+              <view class="product-info">{{ order.productName }} ({{ order.productSap }})</view>
             </view>
             <!-- 状态徽章保持在右侧 -->
             <view class="status-badge" :class="statusClass(order.status)">
@@ -51,19 +51,20 @@
               <text class="value">{{ order.completedQty }} EA</text>
             </view>
             <view class="progress-row">
-              <nut-progress :percentage="Math.round(order.completedQty/order.plannedQty) * 100" :show-text="false" stroke-color="blue" class="progress-bar" />
-              <text class="progress-text">{{ Math.round(order.completedQty/order.plannedQty) * 100 }}%</text>
+              <nut-progress :percentage="Math.round(order.completedQty / order.plannedQty) * 100" :show-text="false"
+                stroke-color="blue" class="progress-bar" />
+              <text class="progress-text">{{ Math.round(order.completedQty / order.plannedQty) * 100 }}%</text>
             </view>
           </view>
           <!-- 卡片底部：操作按钮（无计划时间） -->
           <view class="card-footer">
             <view class="actions">
-              <nut-button v-if="order.status === 'Pending'" size="small" type="primary"
-                @click.stop="goToSetup(order.id)">配置工序</nut-button>
-              <nut-button v-if="order.status === 'Processing'" size="small" type="success"
+              <!-- <nut-button v-if="order.status === 'PENDING'" size="small" type="primary"
+                @click.stop="goToSetup(order.id)">配置工序</nut-button> -->
+              <!-- <nut-button v-if="order.status === 'Processing'" size="small" type="success"
                 @click.stop="goToProduction(order.id)">继续生产</nut-button>
               <nut-button v-if="order.status === 'Completed'" size="small" plain
-                @click.stop="goToProduction(order.id)">生产详情</nut-button>
+                @click.stop="goToProduction(order.id)">生产详情</nut-button> -->
               <!-- <nut-button v-if="order.hasAnomaly" size="small" type="danger" plain @click.stop="goToDetail(order.id)">异常详情</nut-button> -->
             </view>
           </view>
@@ -78,25 +79,25 @@
 </template>
 
 <script setup lang="ts" name="WorkOrderList">
-import { ref, computed , onMounted } from 'vue'
-import {navigateTo} from '@tarojs/taro'
+import { ref, computed, onMounted } from 'vue'
+import { navigateTo } from '@tarojs/taro'
 import NavBar from '@/components/NavBar.vue'
 import type { WorkOrderListItem } from '@/types/work-order'
 import { getLWorkOrderList } from '@/api/work-order/look-up'
 import TabbarLayout from '@/components/TabbarLayout.vue'
-import { getOrderStatusText} from '@/util/statusText';
+import { getOrderStatusText } from '@/util/statusText';
 const workOrders = ref<WorkOrderListItem[]>([]);
 
 onMounted(() => {
- getLWorkOrderList().then(data=>{
-  workOrders.value = data.items;
- })
+  getLWorkOrderList().then(data => {
+    workOrders.value = data.items;
+  })
 })
 
 
 // 状态筛选
-const filterStatus = ref<'all' | 'Pending' | 'Processing' | 'Completed' >('all')
-const pendingConfigureCount = computed(() => workOrders.value.filter(o => o.status === 'Pending').length)
+const filterStatus = ref<'all' | 'PENDING' | 'Processing' | 'Completed'>('all')
+const pendingConfigureCount = computed(() => workOrders.value.filter(o => o.status === 'PENDING').length)
 const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'Processing').length)
 const completedCount = computed(() => workOrders.value.filter(o => o.status === 'Completed').length)
 
@@ -110,9 +111,9 @@ const statusLabel = (status: string) => getOrderStatusText(status);
 const statusClass = (status: string) => ({ Pending: 'status-pending', Processing: 'status-progress', Completed: 'status-completed' }[status] || '')
 
 // 跳转
-const goToDetail = (id: string) => navigateTo({ url: `/pages/work/order-detail?id=${id}` })
-const goToSetup = (id: string) => navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
-const goToProduction = (id: string) => navigateTo({ url: `/pages/prod/prod-operation?workOrderId=${id}` })
+// const goToDetail = (id: string) => navigateTo({ url: `/pages/work/order-detail?id=${id}` })
+// const goToSetup = (id: string) => navigateTo({ url: `/pages/prod/prod-setup?workOrderId=${id}` })
+const goToOverview = (id: string) => navigateTo({ url: `/pages/prod/operate-overview?id=${id}` })
 // const goToTrace = (id: string) => navigateTo({ url: `/pages/prod/prod-trace?workOrderId=${id}` })
 </script>
 

@@ -1,9 +1,9 @@
-*{
-  font-size:$font-size-2; // 全局基础字体大小14px;
+* {
+  font-size: $font-size-1; // 全局基础字体大小12px;
 }
 
 .title {
-  font-size: $font-size-3; // 标题字体大小16px;
+  font-size: $font-size-2; // 标题字体大小14px;
   font-weight: bold;
   margin-bottom: 12px;
 }

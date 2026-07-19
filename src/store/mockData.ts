@@ -1,11 +1,11 @@
-import { WorkOrderDetail } from '@/types/work-order'
-const works: Array<WorkOrderDetail> = [
+import { WorkOrderWithOperationDetail } from '@/types/work-order'
+const works: Array<WorkOrderWithOperationDetail> = [
   {
     id: '1',
-    workOrderNo: 'PJ_1098',
-    workOrderName: 'SM1178D-310-R2.1_1178.496kWh_中交',
-    materialName: 'SM1178D-310-R2.1',
-    materialSap: '91070999',
+    code: 'PJ_1098',
+    name: 'SM1178D-310-R2.1_1178.496kWh_中交',
+    productName: 'SM1178D-310-R2.1',
+    productSap: '91070999',
     productType: 'EVE-BS-ES0726-11',
     productSpec: '2*3P198S',
     plannedQty: 1,
@@ -18,10 +18,10 @@ const works: Array<WorkOrderDetail> = [
   },
   {
     id: 'WO002',
-    workOrderNo: 'PJ_1076',
-    workOrderName: 'SE5015D-628-R1.1_400MWh_宁夏中光电',
-    materialName: 'SE5015D-628-R1.1',
-    materialSap: '91070575',
+    code: 'PJ_1076',
+    name: 'SE5015D-628-R1.1_400MWh_宁夏中光电',
+    productName: 'SE5015D-628-R1.1',
+    productSap: '91070575',
     productType: 'S556H214',
     productSpec: 'S5MB56-0.25P',
     plannedQty: 1,
@@ -33,10 +33,10 @@ const works: Array<WorkOrderDetail> = [
     leaderDept: '电力产品一部一组'
   }, {
     id: 'WO003',
-    workOrderNo: 'PJ_0823',
-    workOrderName: 'SC0261-314-R2.3_1306kWh_TD_新加坡',
-    materialName: 'SC0261-314-R2.3',
-    materialSap: '91062669',
+    code: 'PJ_0823',
+    name: 'SC0261-314-R2.3_1306kWh_TD_新加坡',
+    productName: 'SC0261-314-R2.3',
+    productSap: '91062669',
     productType: 'EVE-BS-ES0726-11',
     productSpec: '2*3P198S',
     plannedQty: 3,

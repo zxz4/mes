@@ -3,7 +3,7 @@
  * 工单状态文本映射
  */
 const OrderStatusText: Record<string, string> = {
-  ['Pending']: '待处理',
+  ['PENDING']: '待处理',
   ['Processing']: '生产中',
   ['Completed']: '已完成'
 };

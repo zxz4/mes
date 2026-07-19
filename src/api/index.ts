@@ -61,13 +61,14 @@ export async function ajax<T = any>(
         if (isShowLoading) {
           loadingManager.hide();
         }
-        const toastPara = { title : '参数错误。' , duration: 2500 };
+        const toastPara = { title: '参数错误。', duration: 2500 };
         switch (res.statusCode) {
           case 200:
             resolve(<T>res.data);
             return;
           case 201:
           case 204:
+          case 404:
             resolve(null as T);
             return;
           case 403:
@@ -75,18 +76,18 @@ export async function ajax<T = any>(
             let error: AbpError | undefined = res.data.error as AbpError;
             if (error && error.validationErrors && error.validationErrors.length > 0) {
               toastPara.title = error.validationErrors[0].message;
-            }else if(error && error.message){
+            } else if (error && error.message) {
               toastPara.title = error.message;
             }
             break;
           case 500:
-            toastPara.title =  '服务器出现了一个异常。';
+            toastPara.title = '服务器出现了一个异常。';
             break;
           default:
-            toastPara.title =  '未知错误代码。';
+            toastPara.title = '未知错误代码。';
             break;
         }
-        showToast({...toastPara , icon:'none' });
+        showToast({ ...toastPara, icon: 'none' });
         reject();
       })
       .catch(() => {

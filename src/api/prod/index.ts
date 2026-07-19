@@ -1,11 +1,21 @@
-import type { WorkOrderOperationDefinition } from "@/types/work-order";
-import { ajaxPost } from "..";
+import type { Material, MaterialLot } from "@/types/work-order";
+import { ajaxGet, ajaxPost } from "..";
 
-export async function feedMaterial(data:object) {
-  return ajaxPost<WorkOrderOperationDefinition>('/api/mes/production/feed-material', data);
+export async function getMaterialBySap(sap: string) {
+  return ajaxGet<Material>(`/api/mes/production/material/${sap}/by-sap`);
 }
 
 
-export async function recordParameters(oprId:string,payload:object) {
-  return ajaxPost<WorkOrderOperationDefinition>(`/api/mes/production/${oprId}/record-parameter`, payload);
+export async function createMaterialLot(materialId: string, lotNumber: string, workOrderId: string | null) {
+  return ajaxPost<MaterialLot>('/api/mes/production/material-lot', {
+    materialId,
+    lotNumber,
+    workOrderId
+  });
+}
+
+
+export async function scanLot(lotNumber: string, workOrderId: string) {
+  return ajaxGet<MaterialLot>(`/api/mes/production/scan/${lotNumber}`, { workOrderId });
+
 }

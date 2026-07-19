@@ -1,0 +1,422 @@
+@import '@/styles/theme.scss';
+
+.workbench-page {
+  min-height: 100vh;
+  background: $tp-help;
+  padding-bottom: 30px;
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.workbench-content {
+  padding: 12px 16px;
+}
+
+/* 工序头部 */
+.operation-header {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: $tp-shadow-sm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .op-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .op-code {
+      font-size: 14px;
+      font-weight: 700;
+      color: $tp-primary;
+    }
+
+    .op-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: $tp-title;
+    }
+
+    .op-type {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+
+      &.type-cell {
+        background: rgba($tp-primary, 0.1);
+        color: $tp-primary;
+      }
+
+      &.type-module {
+        background: rgba(#fa8c16, 0.1);
+        color: #fa8c16;
+      }
+
+      &.type-pack {
+        background: rgba($tp-success, 0.1);
+        color: $tp-success;
+      }
+    }
+
+    .op-type-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+
+      &.badge-produce {
+        background: rgba($tp-primary, 0.15);
+        color: $tp-primary;
+      }
+
+      &.badge-process {
+        background: rgba(#fa8c16, 0.15);
+        color: #fa8c16;
+      }
+    }
+
+    .op-optional {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba($tp-text, 0.1);
+      color: $tp-text;
+      font-weight: 600;
+    }
+  }
+
+  .op-stats {
+    font-size: 13px;
+    color: $tp-text;
+
+    .highlight {
+      font-weight: 700;
+      color: $tp-primary;
+    }
+  }
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: $tp-title;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .history-count {
+    font-size: 12px;
+    font-weight: 400;
+    color: $tp-text;
+  }
+}
+
+/* SAP 绑定区 */
+.sap-section {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: $tp-shadow-sm;
+
+  .sap-bind-form {
+    .sap-input-row {
+      display: flex;
+      gap: 8px;
+
+      .sap-input {
+        flex: 1;
+      }
+    }
+
+    .sap-error {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: $tp-danger;
+    }
+
+    .sap-result {
+      margin-top: 12px;
+      padding: 12px;
+      background: $tp-help;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .highlight {
+        font-weight: 700;
+        color: $tp-primary;
+      }
+
+      button {
+        align-self: flex-start;
+        margin-top: 6px;
+      }
+    }
+  }
+
+  .sap-bound-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+
+    .highlight {
+      font-weight: 700;
+      color: $tp-primary;
+    }
+
+    button {
+      margin-left: auto;
+    }
+  }
+}
+
+/* 扫描区 */
+.scan-section {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: $tp-shadow-sm;
+
+  .scan-row {
+    display: flex;
+    gap: 8px;
+
+    .scan-input {
+      flex: 1;
+    }
+  }
+
+  .scan-disabled-text {
+    text-align: center;
+    color: $tp-text;
+    font-size: 13px;
+    padding: 12px 0;
+  }
+
+  .scan-result {
+    margin-top: 12px;
+    padding: 12px;
+    background: $tp-help;
+    border-radius: 8px;
+
+    .result-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: center;
+
+      .result-label {
+        font-size: 12px;
+        color: $tp-text;
+      }
+
+      .result-value {
+        font-size: 13px;
+        font-weight: 500;
+        color: $tp-title;
+
+        &.highlight {
+          color: $tp-primary;
+          font-weight: 700;
+        }
+      }
+
+      .result-status {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+
+        &.status-inprocess {
+          background: rgba($tp-primary, 0.1);
+          color: $tp-primary;
+        }
+
+        &.status-passed {
+          background: rgba($tp-success, 0.1);
+          color: $tp-success;
+        }
+
+        &.status-scrapped {
+          background: rgba($tp-danger, 0.1);
+          color: $tp-danger;
+        }
+
+        &.status-consumed {
+          background: rgba($tp-text, 0.1);
+          color: $tp-text;
+        }
+      }
+
+      .result-create-tip {
+        font-size: 12px;
+        color: $tp-success;
+        font-weight: 600;
+      }
+    }
+
+    .scan-error {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: $tp-danger;
+    }
+  }
+}
+
+/* 参数录入 */
+.param-section {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: $tp-shadow-sm;
+
+  .param-form {
+    .param-item {
+      margin-bottom: 14px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .param-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: $tp-title;
+        margin-bottom: 4px;
+
+        .required-star {
+          color: $tp-danger;
+        }
+
+        .param-unit {
+          font-weight: 400;
+          color: $tp-text;
+          font-size: 12px;
+        }
+
+        .param-range {
+          font-weight: 400;
+          color: $tp-text;
+          font-size: 11px;
+        }
+      }
+
+      .param-input {
+        width: 100%;
+      }
+    }
+  }
+
+  .param-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+/* 已处理列表 */
+.history-section {
+  background: $tp-white;
+  border-radius: $tp-radius-base;
+  padding: 16px;
+  box-shadow: $tp-shadow-sm;
+
+  .empty-history {
+    text-align: center;
+    padding: 24px;
+    color: $tp-text;
+    font-size: 13px;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: $tp-help;
+      border-radius: 6px;
+
+      .history-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .history-index {
+          font-size: 11px;
+          font-weight: 600;
+          color: $tp-text;
+          min-width: 24px;
+        }
+
+        .history-lot {
+          font-size: 13px;
+          font-weight: 500;
+          color: $tp-title;
+        }
+
+        .history-result {
+          font-size: 11px;
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-weight: 700;
+
+          &.result-ok {
+            background: rgba($tp-success, 0.15);
+            color: $tp-success;
+          }
+
+          &.result-ng {
+            background: rgba($tp-danger, 0.15);
+            color: $tp-danger;
+          }
+        }
+      }
+
+      .history-right {
+        .history-time {
+          font-size: 11px;
+          color: $tp-text;
+        }
+      }
+    }
+  }
+}

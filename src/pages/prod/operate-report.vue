@@ -123,8 +123,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Taro from '@tarojs/taro'
-import type { Batch , OperationParameter} from '@/types/work-order'
-import {getListByBatchNo} from '@/api/prod/look-up'
+import type { Batch, OperationParameter } from '@/types/work-order'
+import { getListByBatchNo } from '@/api/prod/look-up'
 
 
 interface FlatRow {
@@ -212,7 +212,7 @@ const flatRows = computed<FlatRow[]>(() => {
           materialSap: input.materialSap,
           lotCode: input.lotCode,
           parameterName: param.parameterName,
-          unit: param.unit ,
+          unit: param.unit,
           value: param.value,
           isAbnormal: param.isAbnormal
         })

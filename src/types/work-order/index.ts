@@ -1,39 +1,57 @@
-import type { InputType } from "@nutui/nutui-taro";
-
-
 /**
  * 物料基本信息 （包括成品，半成品，载体）
  */
-export interface Material{
+export interface Material {
   /**
    * id
    */
-  id:string;
-  /**
-   * 通过parent确认组装关系
-   */
-  parentId?:string;
+  id: string;
   /**
    * 物料SAP（冗余）
    */
-  materialSap:string;
+  sapCode: string;
   /**
    * 物料名称（冗余）
    */
-  materialName:string;
+  name: string;
   /**
-   * SN码
-   */
-  sn?:string;
+ * 物料类型
+ */
+  materialType: 'CELL' | 'MODULE' | 'PACK' | 'RAW';
   /**
-   * 是否按SN管理，否则按批次管理（批次即按数量管理）
-   * 载体也按SN模式管理
+   * 规格信息
    */
-  isSNManaged : boolean;
+  specification: string;
+}
+
+/**
+ * 物料批次信息
+ */
+export interface MaterialLot {
   /**
-   * 数量
+   * id
    */
-  quantity:number;
+  id: string;
+  /**
+   * 批次号/序列号
+   */
+  lotNumber: string;
+  /**
+   * 物料id
+   */
+  materialId: string;
+  /**
+   * 物料类型
+   */
+  materialType: string;
+  /**
+   * 物料名称
+   */
+  materialName: string;
+  /**
+   * 实物状态
+   */
+  status: 'Created' | 'InProcess' | 'AwaitNext' | 'Passed' | 'Scrapped';
 }
 
 /**
@@ -47,19 +65,19 @@ export interface WorkOrderListItem {
   /**
    * 工单编号
    */
-  workOrderNo: string;
+  code: string;
   /**
    * 工单名称
    */
-  workOrderName: string;
+  name: string;
   /**
    * 产品名称
    */
-  materialName: string;
+  productName: string;
   /**
    * 产品SAP
    */
-  materialSap: string;
+  productSap: string;
   /**
    * 计划生产数量
    */
@@ -75,12 +93,12 @@ export interface WorkOrderListItem {
   /**
    * 工单状态
    */
-  status: 'Pending' | 'Processing' | 'Completed';
+  status: 'PENDING' | 'Processing' | 'Completed';
 }
 /**
  * 工单详情
  */
-export interface WorkOrderDetail extends WorkOrderListItem {
+export interface WorkOrderWithOperationDetail extends WorkOrderListItem {
   /**
    * 工序定义
    */
@@ -96,6 +114,10 @@ export interface WorkOrderOperationDefinition {
    */
   id: string;
   /**
+   * 工单id
+   */
+  workOrderId: string;
+  /**
    * 工序编码
    */
   operationCode: string;
@@ -104,39 +126,48 @@ export interface WorkOrderOperationDefinition {
    */
   operationName: string;
   /**
+   * 类型标签
+   */
+  applicableMaterialType: 'CELL' | 'MODULE' | 'PACK' | 'RAW';
+  /**
+   * Produce:产出新物料实例（如电芯上料、模组堆叠、Pack总装）
+   * Process:仅加工处理实物，不改变标识
+   */
+  operationType: 'Produce' | 'Process',
+  /**
+   * 是否可以跳过
+   */
+  skipEnabled: boolean;
+  /**
    * 工序顺序
    */
   sequence: number;
   /**
-  * 是否开启记录参数
+  * 是否启用记录参数
    */
   isParameterRecordEnabled: boolean;
   /**
    * 工序参数输入模板
    */
   parameterDefinitions: ParameterDefinition[];
-  /**
-   * 工序需求物料配置
-   */
-  materialDefinitions: MaterialDefinition[];
 }
 
 /**
- * 工单工序参数定义
+ * 工序参数定义
  */
 export interface ParameterDefinition {
-  /**
-   * id
-   */
-  id: string;
   /**
    * 参数名
    */
   parameterName: string;
   /**
-   * 参数类型
+   * 参数类型（这里后端会自动将类型转换为框架支持的input type）
    */
-  parameterType: InputType;
+  parameterType: 'text' | 'digit';
+  /**
+   * 定义该参数是否必填
+   */
+  isRequired: boolean;
   /**
    * 参数单位
    */
@@ -144,269 +175,83 @@ export interface ParameterDefinition {
   /**
    * 参数下限值（只能校验数值类型）
    */
-  minValue?: number;
+  minValue: number | null;
   /**
    * 参数上限值（只能校验数值类型）
    */
-  maxValue?: number;
+  maxValue: number | null;
 }
 
-/**
- * 工单工序投料配置
- */
-export interface MaterialDefinition {
-  /**
-   * 工单工序投料配置id
-   */
-  id: string;
-  /**
-   * 物料类型 （物料 / 载体）
-   */
-  materialType: 'MATERIAL' | 'CARRIER';
-  /**
-   * 物料名称
-   */
-  materialName: string;
-  /**
-   * 物料SAP编码（载体类型时可为空），如果是物料则需要核验SAP，仅第一次核验
-   */
-  materialSap: string;
-  /**
-  * 是否按SN管理，false按批次管理
-  */
-  isSNManaged: boolean;
-  /**
-   * 投料顺序，扫码时按顺序执行
-   */
-  sequence: number;
-}
-
-/**
- * 工单批次信息
- */
-export interface Batch {
+export interface OperationRecord {
   /**
    * id
    */
   id: string;
   /**
-   * 产品名称（冗余）
+   * 工单id
    */
-  materialName: string;
+  workOrderId: string;
   /**
-   * 产品SAP（冗余）
-   */
-  materialSap: string;
+  * 工序id
+  */
+  operationId: string;
   /**
-   * 批次号
-   */
-  batchNo: string;
+  * 加工物料id
+  */
+  processedLotNumber: string;
   /**
-   * 批次执行信息
-   */
-  operation: WorkOrderOperation[]
+  * 产出物料id
+  */
+  outputLotNumber: string;
   /**
    * 开始时间
    */
-  startAt: string;
-  /**
-   * 完成时间
-   */
-  endAt?: string;
-}
+  startTime: string;
 
-/**
- * 工序执行实例
- */
-export interface WorkOrderOperation {
   /**
-   * id
+   * 结束时间
    */
-  id: string;
-  /**
-   * 批次id
-   */
-  batchId: string;
-  /**
- * 工序编码（冗余）
- */
-  operationCode: string;
-  /**
-   * 工序名称（冗余）
-   */
-  operationName: string;
-  /**
-   * 工序编号（冗余）
-   */
-  sequence: number;
-  /**
-   * 投料信息
-   */
-  inputs?: OperationInput[];
-  /**
-   * 参数记录信息
-   */
-  parameters?: OperationParameter[];
-  /**
-   * 异常记录信息
-   */
-  anomalies?: OperationAnomaly[];
-  /**
-   * 产出信息
-   */
-  outputs?: OperationOutput[];
-    /**
-   * 物料 SAP 核验状态
-   */
-  sapCheckStatus?: 'NOT_CHECKED' | 'PASS' | 'FAIL';
-  /**
-   * 核验时间
-   */
-  sapCheckTime?: string;
-}
-
-/**
- * 工单工序投料记录
- */
-export interface OperationInput {
-  /**
-   * id
-   */
-  id: string;
-  /**
-   * 关联工序执行实例id
-   */
-  workOrderOperationId: string;
-  /**
-   * 投料后会根据SAP和SN/LOT创建一条物料记录
-   */
-  materialId:string;
-  /**
-   * 绑定的父载体或物料id
-   */
-  parentMaterialId?: string;
-    /**
-  * 物料名称(冗余)
-  */
-  materialName: string;
-  /**
-   * 物料SAP编码
-   */
-  materialSap: string;
-  /**
-   * 物料编码 SN/或SN 取决于投料类型(冗余)
-   */
-  materialCode?: string;
-  /**
-   * 消耗数量
-   */
-  quantity: number;
-  /**
-  * 参数记录信息(物料级)
-  */
-  parameters?: OperationParameter[];
-}
-
-/**
- * 参数记录
- */
-export interface OperationParameter {
-  /**
-   * id
-   */
-  id: string;
-  /**
-   * 工序实例id
-   */
-  workOrderOperationId: string;
-  /**
-   * 物料id(如果该id存在意味着参数为物料级别参数否则则为工序级别参数)
-   */
-  materialInputId?: string;
-  /**
-   * 参数名称
-   */
-  parameterName: string;
-  /**
-   * 参数值
-   */
-  value: string | number;
-  /**
-   * 单位
-   */
-  unit: string;
+  endTime: string;
   /**
    * 是否异常
    */
   isAbnormal: boolean;
   /**
-   * 记录时间
+   * 参数记录
    */
-  recordedAt: string;
+  parameters: Array<ParameterRecord>
+  /**
+   * 辅料信息
+   */
+  materialUsages: Array<OperationMaterialUsage>
 }
 
-/**
- * 异常信息
- */
-export interface OperationAnomaly {
+export interface ParameterRecord {
   /**
-   * id
+   * 参数名称
    */
-  id: string;
+  parameterName: string;
   /**
-   * 指示关联到那一道工序
+   * 单位
    */
-  workOrderOperationId: string;
+  unit: string | null;
   /**
-   * 问题类型
-   * Material:来料异常：包括物料短缺、物料损坏、规格不符等
-   * Design:包括图纸错误、BOM错误、工艺设计缺陷等
+   * 值
    */
-  anomalyType: 'Material' | 'Design' ;
+  value: string | null;
   /**
-   *  问题描述
+   * 是否异常
    */
-  description: string;
-  /**
-   * 临时措施
-   */
-  action?: string;
-  /**
-   * 发生时间
-   */
-  recordedAt: string;
+  isAbnormal: boolean
 }
 
-/**
- * 产出信息
- */
-export interface OperationOutput {
+export interface OperationMaterialUsage {
   /**
-   * id
+   * 批次/sn号
    */
-  id: string;
-   /**
-   * 物料SAP（冗余）
-   */
-  materialSap:string;
-  /**
-   * 物料名称（冗余）
-   */
-  materialName:string;
-  /**
-   * SN码
-   */
-  sn?:string;
+  lotNumber: string;
   /**
    * 数量
    */
-  quantity:number;
-  /**
-   * 产出的时间
-   */
-  outputAt: string;
-  /**
-   * 输出的物料信息
-   */
-  materialInputs: Array<OperationInput>;
+  quantity: number;
 }

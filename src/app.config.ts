@@ -1,11 +1,9 @@
 export default {
   pages: [
     'pages/work/order-list',
-    'pages/work/order-detail',
-    'pages/prod/prod-setup',
-    'pages/prod/prod-operation',
-    'pages/prod/operation-report',
-    'pages/prod/operation-detail',
+    'pages/prod/operate-overview',
+    'pages/prod/operate-execute',
+    'pages/prod/operate-report',
     // 'pages/prod/prod-trace',
     'pages/home/home-page',
     'pages/home/my-profile',

@@ -1,12 +1,16 @@
 import { ajaxGet } from "..";
 import { PagedList } from "@/types/index";
-import { WorkOrderListItem , WorkOrderDetail } from "@/types/work-order";
+import { WorkOrderListItem, WorkOrderOperationDefinition, WorkOrderWithOperationDetail } from "@/types/work-order";
 
 
 export async function getLWorkOrderList() {
   return ajaxGet<PagedList<WorkOrderListItem>>('/api/mes/work-order-look-up');
 }
 
-export async function getWorkOrderDetail(id:string) {
-  return ajaxGet<WorkOrderDetail>(`/api/mes/work-order-look-up/${id}`);
+export async function getOperation(operationId: string) {
+  return ajaxGet<WorkOrderOperationDefinition>(`/api/mes/work-order-look-up/${operationId}/operation`);
+}
+
+export async function getWithOperation(id: string) {
+  return ajaxGet<WorkOrderWithOperationDetail>(`/api/mes/work-order-look-up/${id}/with-operations`);
 }

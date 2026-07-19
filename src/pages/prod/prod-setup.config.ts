@@ -1,4 +1,0 @@
-export default {
-  navigationBarTitleText: '生产配置',
-    usingComponents: {},
-}

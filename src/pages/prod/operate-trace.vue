@@ -19,14 +19,22 @@
             </view>
           </view>
           <view class="info-grid">
-            <view class="info-item"><text class="label">工单编号</text><text class="value highlight">{{ workOrder.workOrderNo }}</text></view>
-            <view class="info-item"><text class="label">工单名称</text><text class="value">{{ workOrder.workOrderName }}</text></view>
-            <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.materialName }}</text></view>
-            <view class="info-item"><text class="label">产品SAP</text><text class="value">{{ workOrder.materialSap }}</text></view>
-            <view class="info-item"><text class="label">计划数量</text><text class="value">{{ workOrder.plannedQty }} EA</text></view>
-            <view class="info-item"><text class="label">已完成</text><text class="value">{{ workOrder.completedQty }} EA</text></view>
-            <view class="info-item"><text class="label">整体进度</text><text class="value">{{ overallProgress }}%</text></view>
-            <view class="info-item"><text class="label">工单状态</text><text class="value">{{ statusLabel(workOrder.status) }}</text></view>
+            <view class="info-item"><text class="label">工单编号</text><text class="value highlight">{{ workOrder.code
+            }}</text></view>
+            <view class="info-item"><text class="label">工单名称</text><text class="value">{{ workOrder.name
+            }}</text></view>
+            <view class="info-item"><text class="label">产品名称</text><text class="value">{{ workOrder.productName
+            }}</text></view>
+            <view class="info-item"><text class="label">产品SAP</text><text class="value">{{ workOrder.productSap
+            }}</text></view>
+            <view class="info-item"><text class="label">计划数量</text><text class="value">{{ workOrder.plannedQty }}
+                EA</text></view>
+            <view class="info-item"><text class="label">已完成</text><text class="value">{{ workOrder.completedQty }}
+                EA</text></view>
+            <view class="info-item"><text class="label">整体进度</text><text class="value">{{ overallProgress }}%</text>
+            </view>
+            <view class="info-item"><text class="label">工单状态</text><text class="value">{{ statusLabel(workOrder.status)
+            }}</text></view>
           </view>
           <view class="progress-section">
             <nut-progress :percentage="overallProgress" :show-text="false" stroke-color="blue" />
@@ -75,10 +83,12 @@
                     <view v-for="(prod) in op.productions" :key="prod.id" class="batch-card">
                       <view class="batch-header">
                         <text class="batch-no">📋 批次号：{{ prod.batchNo }}</text>
-                        <text class="batch-status" :class="prod.status === 'COMPLETED' ? 'batch-completed' : 'batch-processing'">
+                        <text class="batch-status"
+                          :class="prod.status === 'COMPLETED' ? 'batch-completed' : 'batch-processing'">
                           {{ prodStatusLabel(prod.status) }}
                         </text>
-                        <text class="batch-time">{{ formatDate(prod.startAt) }} ~ {{ prod.endAt ? formatDate(prod.endAt) : '进行中' }}</text>
+                        <text class="batch-time">{{ formatDate(prod.startAt) }} ~ {{ prod.endAt ? formatDate(prod.endAt)
+                          : '进行中' }}</text>
                       </view>
 
                       <!-- 按物料展示参数（投料+参数组合） -->
@@ -93,7 +103,8 @@
                             <view class="param-values">
                               <!-- 查找该投料记录对应的参数 -->
                               <view v-if="getParamsForInput(prod, input.id).length">
-                                <view v-for="(param, pIdx) in getParamsForInput(prod, input.id)" :key="pIdx" class="param-value-item">
+                                <view v-for="(param, pIdx) in getParamsForInput(prod, input.id)" :key="pIdx"
+                                  class="param-value-item">
                                   <text class="param-name">{{ param.parameterName }}</text>
                                   <text class="param-value" :class="{ 'abnormal': param.isAbnormal }">
                                     {{ param.value }} {{ param.unit || '' }}
@@ -149,16 +160,16 @@ import Taro from '@tarojs/taro';
 import NavBar from '@/components/NavBar.vue';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import { useTabbarStore } from '@/store/tabbar';
-import { getWorkOrderDetail } from '@/api/work-order/look-up';
+import { getWithOperation } from '@/api/work-order/look-up';
 import { getOperationStatusText, getProductionStatusText } from '@/util/statusText';
-import type { WorkOrderDetail, Batch, OperationParameter } from '@/types/work-order';
+import type { WorkOrderWithOperationDetail, Batch, OperationParameter } from '@/types/work-order';
 
 // ========== 路由参数 ==========
 const instance = Taro.getCurrentInstance();
 const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || '';
 
 // ========== 页面状态 ==========
-const workOrder = ref<WorkOrderDetail>();
+const workOrder = ref<WorkOrderWithOperationDetail>();
 const expandedSet = ref<Set<string>>(new Set());
 
 // ========== 计算属性 ==========
@@ -204,12 +215,12 @@ const loadData = async () => {
     return;
   }
 
-    const data = await getWorkOrderDetail(workOrderId);
-    workOrder.value = data;
-    // 默认展开第一个工序
-    if (data.operations && data.operations.length > 0) {
-      expandedSet.value.add(data.operations[0].id);
-    }
+  const data = await getWithOperation(workOrderId);
+  workOrder.value = data;
+  // 默认展开第一个工序
+  if (data.operations && data.operations.length > 0) {
+    expandedSet.value.add(data.operations[0].id);
+  }
 
 };
 
