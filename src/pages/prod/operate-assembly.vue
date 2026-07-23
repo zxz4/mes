@@ -1,0 +1,503 @@
+<template>
+  <TabbarLayout>
+    <view class="assembly-page">
+      <NavBar :title="'工序装配台'" :show-back="true" />
+
+      <!-- 工序不存在 -->
+      <view v-if="!currentOperation" class="error-state">
+        <nut-empty description="工序不存在" />
+        <nut-button type="primary" class="workbench-btn" @click="backToList">返回</nut-button>
+      </view>
+
+      <!-- 正常装配区 -->
+      <view v-else class="assembly-content">
+        <!-- 工序头部卡片 -->
+        <view class="operation-header-card">
+          <view class="header-top">
+            <view class="header-left">
+              <text class="op-code">{{ currentOperation.operationCode }}</text>
+              <text class="op-divider">｜</text>
+              <text class="op-name">{{ currentOperation.operationName }}</text>
+            </view>
+            <view class="header-right">
+              <text class="op-type-tag type-assembly">装配工序</text>
+              <text v-if="currentOperation.skipEnabled" class="op-optional-tag">可选</text>
+            </view>
+          </view>
+          <view class="header-bottom" v-if="mainLot">
+            <text class="stats-label">当前主物料</text>
+            <text class="stats-value">{{ mainLot.lotNumber }}</text>
+          </view>
+        </view>
+
+        <!-- 动态步骤指示器 -->
+        <view class="step-indicator">
+          <view v-for="(step, index) in steps" :key="step.key" class="step-item" :class="{
+            'step-active': step.status === 'active',
+            'step-done': step.status === 'done',
+            'step-optional': step.optional,
+          }">
+            <view class="step-dot">
+              <text v-if="step.status === 'done'">✓</text>
+              <text v-else>{{ index + 1 }}</text>
+            </view>
+            <text class="step-label">
+              {{ step.label }}
+              <text v-if="step.optional" class="optional-tag">(选填)</text>
+            </text>
+            <view v-if="index < steps.length - 1" class="step-line" :class="{ 'line-done': step.status === 'done' }">
+            </view>
+          </view>
+        </view>
+
+        <!-- 扫描主物料SN区域 -->
+        <view class="scan-section-card" v-if="!mainLot">
+          <view class="scan-section-header">
+            <text class="scan-section-title">📷 扫描主物料SN码</text>
+          </view>
+          <view class="scan-input-row">
+            <view class="scan-input-wrapper">
+              <nut-input ref="scanInputRef" v-model="mainSnCode" placeholder="扫描或输入主物料SN/批次号" class="scan-input"
+                clearable @confirm="handleScanMainSN" />
+            </view>
+            <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!mainSnCode.trim()"
+              @click="handleScanMainSN">
+              查询
+            </nut-button>
+          </view>
+          <view class="scan-hint">💡 扫描主物料SN获取工序及状态</view>
+        </view>
+
+        <!-- 主物料信息卡片 -->
+        <view class="material-card" v-if="mainLot">
+          <view class="material-card-header">
+            <view class="material-status-dot" :class="statusDotClass(mainLot.status)"></view>
+            <text class="material-card-title">主物料</text>
+            <nut-button size="mini" plain type="default" class="unbind-btn" @click="mainLot = null">
+              重新扫描
+            </nut-button>
+          </view>
+          <view class="material-card-body">
+            <view class="material-info-row">
+              <text class="material-label">名称</text>
+              <text class="material-value highlight">{{ mainLot.name }}</text>
+            </view>
+            <view class="material-info-row">
+              <text class="material-label">SAP</text>
+              <text class="material-value mono">{{ mainLot.sap }}</text>
+            </view>
+            <view class="material-info-row">
+              <text class="material-label">SN</text>
+              <text class="material-value">{{ mainLot.lotNumber }}</text>
+            </view>
+            <view class="material-info-row">
+              <text class="material-label">状态</text>
+              <text class="material-value" :class="statusTextClass(mainLot.status)">
+                {{ statusLabel(mainLot.status) }}
+              </text>
+            </view>
+            <view class="material-info-row" v-if="mainLot.specification">
+              <text class="material-label">规格</text>
+              <text class="material-value">{{ mainLot.specification }}</text>
+            </view>
+          </view>
+
+          <!-- 可执行工序标签 -->
+          <view class="available-ops" v-if="mainLot.availableOperations.length > 0">
+            <text class="available-title">可执行工序：</text>
+            <view class="op-tags">
+              <text v-for="op in mainLot.availableOperations" :key="op.operationId" class="op-tag"
+                :class="{ 'op-tag-current': op.operationId === currentOperation.id }">
+                {{ op.operationCode }} {{ op.operationName }}
+              </text>
+            </view>
+            <view v-if="!isCurrentOpAvailable" class="op-warning">
+              ⚠️ 当前工序不在可执行列表中
+            </view>
+            <view v-if="!canProcessMainLot" class="op-warning">
+              ⚠️ 主物料状态为“{{ statusLabel(mainLot.status) }}”，无法进行装配
+            </view>
+          </view>
+        </view>
+
+        <!-- 参数表单卡片 -->
+        <view class="param-card"
+          v-if="mainLot && currentOperation.parameterDefinitions && currentOperation.parameterDefinitions.length > 0">
+          <view class="param-card-header">
+            <text class="param-title">📝 工艺参数</text>
+            <text v-if="currentOperation.isParameterRecordEnabled" class="param-required-hint">
+              * 必填项
+            </text>
+          </view>
+          <view class="param-form">
+            <view v-for="(param, index) in currentOperation.parameterDefinitions" :key="index" class="param-item">
+              <view class="param-label">
+                {{ param.parameterName }}
+                <text v-if="param.isRequired" class="required-star">*</text>
+                <text v-if="param.unit" class="param-unit">({{ param.unit }})</text>
+              </view>
+              <nut-input v-model="parameters[param.parameterName]" :placeholder="`请输入${param.parameterName}`"
+                :type="param.parameterType" class="param-input"
+                :class="{ 'input-error': paramErrors[param.parameterName] }" @blur="validateParam(param)" />
+              <text v-if="paramErrors[param.parameterName]" class="error-msg">
+                {{ paramErrors[param.parameterName] }}
+              </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 装配组件扫描区 -->
+        <view class="assembly-section-card" v-if="mainLot">
+          <view class="assembly-header">
+            <text class="assembly-title">🔧 装配组件</text>
+            <text class="assembly-sub">扫描组件SN（仅Passed状态可装配）</text>
+          </view>
+
+          <!-- 组件SN扫描行 -->
+          <view class="assembly-scan-row">
+            <view class="scan-input-wrapper">
+              <nut-input v-model="componentSnCode" placeholder="扫描组件SN码" class="scan-input" clearable
+                @confirm="handleScanComponentSN" />
+            </view>
+            <nut-button type="default" size="small" class="assembly-add-btn" :loading="loading"
+              :disabled="!componentSnCode.trim()" @click="handleScanComponentSN">
+              添加
+            </nut-button>
+          </view>
+
+          <!-- 已添加组件列表 -->
+          <view v-if="componentList.length > 0" class="component-list">
+            <view v-for="(comp, index) in componentList" :key="comp.id" class="component-item">
+              <view class="component-info">
+                <view class="component-status-dot" :class="statusDotClass('Passed')"></view>
+                <view class="component-text">
+                  <text class="component-name">{{ comp.name }}</text>
+                  <text class="component-lot mono">{{ comp.lotNumber }}</text>
+                  <text class="component-sap">{{ comp.sap }}</text>
+                </view>
+              </view>
+              <nut-button size="mini" type="danger" plain class="component-remove-btn" @click="removeComponent(index)">
+                移除
+              </nut-button>
+            </view>
+          </view>
+          <view v-else class="component-empty">
+            <text>暂无组件，扫描SN码添加（仅支持Passed状态）</text>
+          </view>
+        </view>
+
+        <!-- ===== 底部单个装配按钮 ===== -->
+        <view class="submit-area" v-if="mainLot">
+          <nut-button type="primary" class="assembly-submit-btn" :loading="loading" :disabled="!canSubmit"
+            @click="handleAssemblySubmit">
+            🔧 装配
+          </nut-button>
+          <text v-if="submitError" class="submit-error">{{ submitError }}</text>
+        </view>
+
+        <view class="bottom-safe-area"></view>
+      </view>
+    </view>
+  </TabbarLayout>
+</template>
+
+<script lang="ts" setup name="Assembly">
+import type { WorkOrderOperationDefinition, ParameterDefinition } from '@/types/work-order';
+import { ScannedLot } from '@/types/production';
+import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
+import { scanLot, submitOperationRecord } from '@/api/prod';
+import { ref, onMounted, nextTick, computed } from 'vue';
+import { getOperation } from '@/api/work-order/look-up';
+
+onMounted(async () => {
+  const instance = getCurrentInstance();
+  const currentOperationId = instance?.router?.params?.operationId || instance?.router?.params?.id || '';
+  if (!currentOperationId) {
+    showToast({ title: '参数错误', icon: 'none' });
+    setTimeout(() => backToList(), 1500);
+    return;
+  }
+  loading.value = true;
+  currentOperation.value = await getOperation(currentOperationId);
+  loading.value = false;
+  focusScanInput();
+});
+
+const loading = ref(true);
+const currentOperation = ref<WorkOrderOperationDefinition | null>(null);
+const mainLot = ref<ScannedLot | null>(null);
+const mainSnCode = ref('');
+const componentSnCode = ref('');
+const parameters = ref<Record<string, string>>({});
+const paramErrors = ref<Record<string, string>>({});
+
+type PartComponent = Omit<ScannedLot, 'availableOperations' | 'materialType' | 'status'>;
+const componentList = ref<PartComponent[]>([]);
+
+const steps = computed(() => {
+  const list = [
+    {
+      key: 'scan',
+      label: '扫描SN',
+      status: mainLot.value ? 'done' : 'active',
+      optional: false,
+    },
+  ];
+  if (currentOperation.value?.isParameterRecordEnabled) {
+    const paramDone = paramCompleted.value;
+    list.push({
+      key: 'params',
+      label: '填写参数',
+      status: !mainLot.value ? 'pending' : (paramDone ? 'done' : 'active'),
+      optional: false,
+    });
+  }
+  list.push({
+    key: 'assembly',
+    label: '装配组件',
+    status: mainLot.value ? 'active' : 'pending',
+    optional: true,
+  });
+  return list;
+});
+
+const isCurrentOpAvailable = computed(() => {
+  if (!mainLot.value) return false;
+  return mainLot.value.availableOperations.some(
+    op => op.operationId == currentOperation.value!.id
+  );
+});
+
+const canProcessMainLot = computed(() => {
+  if (!mainLot.value) return false;
+  return mainLot.value.status === 'AwaitNext' || mainLot.value.status === 'Passed';
+});
+
+const paramCompleted = computed(() => {
+  if (!mainLot.value || !currentOperation.value?.isParameterRecordEnabled || currentOperation.value?.parameterDefinitions?.length === 0) {
+    return true;
+  }
+  const defs = currentOperation.value!.parameterDefinitions;
+  return defs
+    .filter(p => p.isRequired)
+    .every(p => parameters.value[p.parameterName] !== null && parameters.value[p.parameterName] !== '');
+});
+
+const canSubmit = computed(() => {
+  if (!mainLot.value || !isCurrentOpAvailable.value || !canProcessMainLot.value) return false;
+  if (mainLot.value.materialType != currentOperation.value?.applicableMaterialType) return false;
+  if (currentOperation.value?.isParameterRecordEnabled && !paramCompleted.value) return false;
+  if (componentList.value.length === 0) return false;
+  return true;
+});
+
+const backToList = () => {
+  navigateTo({ url: '/pages/work/order-list' });
+};
+
+const handleScanMainSN = async () => {
+  if (!mainSnCode.value.trim() || loading.value) return;
+  const code = mainSnCode.value.trim();
+  loading.value = true;
+  try {
+    const lot = await scanLot(code, currentOperation.value!.workOrderId);
+    mainSnCode.value = '';
+    if (lot.materialType != currentOperation.value?.applicableMaterialType) {
+      showToast({ title: `${lot.name}与工序类型不匹配.`, icon: 'error' });
+      return;
+    }
+    let hit = '';
+    switch (lot.status) {
+      case 'Consumed':
+        hit = `(${code})已消耗`;
+        break;
+      case 'Scrapped':
+        hit = `(${code})已报废`;
+        break;
+      case 'Passed':
+        hit = `(${code})已完工`;
+        break;
+    }
+
+    if (hit) {
+      showToast({ title: hit, icon: 'error' });
+      return;
+    }
+
+    mainLot.value = lot;
+    initParameters();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const initParameters = () => {
+  parameters.value = {};
+  paramErrors.value = {};
+  if (currentOperation.value?.parameterDefinitions) {
+    currentOperation.value.parameterDefinitions.forEach(p => {
+      parameters.value[p.parameterName] = '';
+    });
+  }
+};
+
+const validateParam = (param: ParameterDefinition) => {
+  const value = parameters.value[param.parameterName];
+  if (param.isRequired && (value === '' || value === null)) {
+    paramErrors.value[param.parameterName] = `${param.parameterName}不能为空`;
+    return;
+  }
+  if (param.parameterType === 'digit') {
+    const num = parseFloat(value);
+    if (isNaN(num)) {
+      paramErrors.value[param.parameterName] = '请输入有效数字';
+      return;
+    }
+  }
+  delete paramErrors.value[param.parameterName];
+};
+
+// 扫描组件SN（增加自身装配检查）
+const handleScanComponentSN = async () => {
+  if (!componentSnCode.value.trim() || loading.value) return;
+  const code = componentSnCode.value.trim();
+  loading.value = true;
+  try {
+    const response = await scanLot(code, currentOperation.value!.workOrderId);
+    if (response.status !== "Passed") {
+      let hit = '';
+      switch (response.status) {
+        case 'Consumed':
+          hit = '该物料已被使用';
+          break;
+        case 'Scrapped':
+          hit = '该物料已报废';
+          break;
+        default:
+          hit = '该物料尚未完工';
+          break;
+      }
+      componentSnCode.value = '';
+      showToast({ title: hit, icon: 'error' });
+      return;
+    }
+    // 禁止装配自身
+    if (response.lotNumber === mainLot.value?.lotNumber) {
+      showToast({ title: '不能装配自身', icon: 'none' });
+      componentSnCode.value = '';
+      return;
+    }
+    if (componentList.value.some(c => c.id === response.id)) {
+      showToast({ title: '该组件已添加', icon: 'error' });
+      componentSnCode.value = '';
+      return;
+    }
+    componentList.value.push({
+      id: response.id,
+      lotNumber: response.lotNumber,
+      sap: response.sap,
+      name: response.name,
+      specification: response.specification,
+    });
+    componentSnCode.value = '';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const removeComponent = (index: number) => {
+  componentList.value.splice(index, 1);
+};
+
+const submitError = ref('');
+
+// 装配提交（固定 isAbnormal 为 false）
+const handleAssemblySubmit = async () => {
+  if (!canSubmit.value) return;
+
+  if (currentOperation.value?.isParameterRecordEnabled && currentOperation.value.parameterDefinitions?.length > 0) {
+    for (let param of currentOperation.value.parameterDefinitions) {
+      validateParam(param);
+    }
+    if (Object.values(paramErrors.value).some(e => e)) {
+      submitError.value = '请更正参数错误';
+      return;
+    }
+  }
+
+  const paramList: Array<Record<string, string>> = [];
+  if (currentOperation.value?.isParameterRecordEnabled && currentOperation.value?.parameterDefinitions) {
+    currentOperation.value.parameterDefinitions.forEach(p => {
+      paramList.push({
+        parameterName: p.parameterName,
+        value: String(parameters.value[p.parameterName] || ''),
+      });
+    });
+  }
+
+  const payload = {
+    workOrderId: currentOperation.value?.workOrderId,
+    operationId: currentOperation.value?.id,
+    processedLotNumber: mainLot.value?.lotNumber,
+    isAbnormal: false, // 装配默认为合格
+    parameters: paramList,
+    componentLotNumbers: componentList.value.map(c => c.id),
+  };
+
+  loading.value = true;
+  try {
+    await submitOperationRecord(payload);
+    showToast({ title: '装配成功' });
+    // 重置表单
+    mainLot.value = null;
+    componentList.value = [];
+    parameters.value = {};
+    paramErrors.value = {};
+    componentSnCode.value = '';
+    mainSnCode.value = '';
+    focusScanInput();
+  } catch (error) {
+    submitError.value = '提交失败，请重试';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const scanInputRef = ref();
+const focusScanInput = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      scanInputRef.value?.$refs?.inputRef?.focus();
+    }, 500);
+  });
+};
+
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    'Created': '已创建',
+    'AwaitNext': '等待下一道',
+    'Passed': '已通过',
+    'Consumed': '已消耗',
+    'Scrapped': '已报废',
+  };
+  return map[status] || '未知状态';
+};
+
+const statusDotClass = (status: string) => {
+  if (status === 'AwaitNext') return 'dot-process';
+  if (status === 'Passed') return 'dot-done';
+  if (status === 'Consumed' || status === 'Scrapped') return 'dot-ng';
+  return 'dot-created';
+};
+
+const statusTextClass = (status: string) => {
+  if (status === 'AwaitNext') return 'text-process';
+  if (status === 'Passed') return 'text-done';
+  if (status === 'Consumed' || status === 'Scrapped') return 'text-ng';
+  return 'text-created';
+};
+</script>
+
+<style scoped>
+@import './operate-assembly.css';
+</style>

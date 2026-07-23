@@ -97,7 +97,7 @@ onMounted(() => {
 
 // 状态筛选
 const filterStatus = ref<'all' | 'PENDING' | 'Processing' | 'Completed'>('all')
-const pendingConfigureCount = computed(() => workOrders.value.filter(o => o.status === 'PENDING').length)
+const pendingConfigureCount = computed(() => workOrders.value.filter(o => o.status === 'Pending').length)
 const inProductionCount = computed(() => workOrders.value.filter(o => o.status === 'Processing').length)
 const completedCount = computed(() => workOrders.value.filter(o => o.status === 'Completed').length)
 

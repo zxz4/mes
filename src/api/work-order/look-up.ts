@@ -3,8 +3,8 @@ import { PagedList } from "@/types/index";
 import { WorkOrderListItem, WorkOrderOperationDefinition, WorkOrderWithOperationDetail } from "@/types/work-order";
 
 
-export async function getLWorkOrderList() {
-  return ajaxGet<PagedList<WorkOrderListItem>>('/api/mes/work-order-look-up');
+export async function getLWorkOrderList(para: object = {}) {
+  return ajaxGet<PagedList<WorkOrderListItem>>('/api/mes/work-order-look-up', para);
 }
 
 export async function getOperation(operationId: string) {

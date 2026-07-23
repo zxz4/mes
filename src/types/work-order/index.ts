@@ -9,15 +9,11 @@ export interface Material {
   /**
    * 物料SAP（冗余）
    */
-  sapCode: string;
+  sap: string;
   /**
    * 物料名称（冗余）
    */
   name: string;
-  /**
- * 物料类型
- */
-  materialType: 'CELL' | 'MODULE' | 'PACK' | 'RAW';
   /**
    * 规格信息
    */
@@ -37,21 +33,64 @@ export interface MaterialLot {
    */
   lotNumber: string;
   /**
-   * 物料id
-   */
-  materialId: string;
-  /**
-   * 物料类型
-   */
-  materialType: string;
+  * 物料类型
+  */
+  materialType: 'CELL' | 'MODULE' | 'PACK' | 'RAW';
   /**
    * 物料名称
    */
   materialName: string;
   /**
+   * 物料SAP
+   */
+  materialSap: string;
+  /**
+   *  物料规格
+   */
+  specification: string;
+
+  /**
    * 实物状态
    */
   status: 'Created' | 'InProcess' | 'AwaitNext' | 'Passed' | 'Scrapped';
+}
+
+/**
+ * 物料处理记录
+ */
+export interface ProcessedLot {
+  /**
+   * 记录 id
+   */
+  recordId: string;
+  /**
+   * 批次id
+   */
+  lotId: string;
+  /**
+   * 批次号
+   */
+  lotNumber: string;
+  /**
+   * 物料名称
+   */
+  name: string;
+  /**
+   * 规格信息
+   */
+  specification: string;
+  /**
+   * SAP
+   */
+  sap: string;
+  /**
+   * 是否异常
+   */
+  isAbnormal: boolean;
+  /**
+   * 结束时间
+   */
+  endAt: string;
 }
 
 /**
@@ -93,7 +132,7 @@ export interface WorkOrderListItem {
   /**
    * 工单状态
    */
-  status: 'PENDING' | 'Processing' | 'Completed';
+  status: 'Pending' | 'Processing' | 'Exception' | 'Completed';
 }
 /**
  * 工单详情
@@ -130,10 +169,12 @@ export interface WorkOrderOperationDefinition {
    */
   applicableMaterialType: 'CELL' | 'MODULE' | 'PACK' | 'RAW';
   /**
-   * Produce:产出新物料实例（如电芯上料、模组堆叠、Pack总装）
-   * Process:仅加工处理实物，不改变标识
+   * 工序类型
+   * - Produce: 产出新物料（从原材料到成品）
+   * - Process: 仅加工处理，不改变物料标识
+   * - Assembly: 装配（多个子件组合成父件）
    */
-  operationType: 'Produce' | 'Process',
+  operationType: 'Produce' | 'Process' | 'Assembly';
   /**
    * 是否可以跳过
    */
@@ -207,11 +248,10 @@ export interface OperationRecord {
    * 开始时间
    */
   startTime: string;
-
   /**
    * 结束时间
    */
-  endTime: string;
+  recordAt: string;
   /**
    * 是否异常
    */

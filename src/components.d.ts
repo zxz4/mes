@@ -8,15 +8,23 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     NutButton: typeof import('@nutui/nutui-taro')['Button']
+    NutCell: typeof import('@nutui/nutui-taro')['Cell']
     NutEmpty: typeof import('@nutui/nutui-taro')['Empty']
+    NutForm: typeof import('@nutui/nutui-taro')['Form']
+    NutFormItem: typeof import('@nutui/nutui-taro')['FormItem']
     NutIcon: typeof import('@nutui/nutui-taro')['Icon']
+    NutInfiniteloading: typeof import('@nutui/nutui-taro')['Infiniteloading']
     NutInput: typeof import('@nutui/nutui-taro')['Input']
+    NutInputnumber: typeof import('@nutui/nutui-taro')['Inputnumber']
+    NutInputNumber: typeof import('@nutui/nutui-taro')['InputNumber']
     NutLoading: typeof import('@nutui/nutui-taro')['Loading']
     NutPopup: typeof import('@nutui/nutui-taro')['Popup']
     NutProgress: typeof import('@nutui/nutui-taro')['Progress']
     NutRadio: typeof import('@nutui/nutui-taro')['Radio']
     NutRadioGroup: typeof import('@nutui/nutui-taro')['RadioGroup']
+    NutSearchbar: typeof import('@nutui/nutui-taro')['Searchbar']
     NutSwitch: typeof import('@nutui/nutui-taro')['Switch']
+    NutTable: typeof import('@nutui/nutui-taro')['Table']
     NutTag: typeof import('@nutui/nutui-taro')['Tag']
   }
 }

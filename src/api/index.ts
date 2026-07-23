@@ -46,6 +46,8 @@ export async function ajax<T = any>(
     Object.keys(data).forEach(key => {
       if (data[key] === undefined || data[key] === null || data[key] === '')
         delete data[key];
+      else if (Array.isArray(data[key]) && data[key].length == 0)
+        delete data[key];
     });
     let requestOptions = {
       url: url,
@@ -68,9 +70,8 @@ export async function ajax<T = any>(
             return;
           case 201:
           case 204:
-          case 404:
             resolve(null as T);
-            return;
+          case 404:
           case 403:
           case 400:
             let error: AbpError | undefined = res.data.error as AbpError;

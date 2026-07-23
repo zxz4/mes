@@ -1,0 +1,621 @@
+/* 全局 */
+.assembly-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.assembly-content {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 工序头部卡片 */
+.operation-header-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.op-code {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.op-divider {
+  color: #d0d0d0;
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.op-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.op-type-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.type-assembly {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.op-optional-tag {
+  font-size: 11px;
+  color: #999;
+  background: #f5f5f5;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.header-bottom {
+  margin-top: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.stats-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.stats-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0369a1;
+}
+
+/* 步骤指示器 */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  padding: 8px 6px;
+  gap: 0;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+}
+
+.step-item:last-child {
+  flex: 0 0 auto;
+}
+
+.step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e8e8e8;
+  color: #999;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.step-active .step-dot {
+  background: #0369a1;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+}
+
+.step-done .step-dot {
+  background: #2ca85c;
+  color: #fff;
+}
+
+.step-label {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.step-active .step-label {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.step-done .step-label {
+  color: #2ca85c;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #e8e8e8;
+  margin: 0 4px;
+  border-radius: 1px;
+  transition: background 0.4s;
+}
+
+.line-done {
+  background: #2ca85c;
+}
+
+.step-optional .step-dot {
+  border: 1.5px dashed #ccc;
+}
+
+.optional-tag {
+  font-size: 10px;
+  color: #999;
+  margin-left: 2px;
+}
+
+/* 扫描区域 */
+.scan-section-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.scan-section-header {
+  margin-bottom: 10px;
+}
+
+.scan-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.scan-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.scan-input-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.scan-input {
+  border-radius: 10px;
+  border: 1.5px solid #e0e0e0;
+  padding: 10px 12px;
+  font-size: 15px;
+  background: #fafbfc;
+}
+
+.submit-btn {
+  flex-shrink: 0;
+  min-width: 72px;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.scan-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #bbb;
+}
+
+/* 物料卡片 */
+.material-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border-left: 4px solid #0369a1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.material-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.material-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-created {
+  background: #f59e0b;
+}
+
+.dot-process {
+  background: #3b82f6;
+}
+
+.dot-done {
+  background: #2ca85c;
+}
+
+.dot-ng {
+  background: #e8553d;
+}
+
+.material-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+  flex: 1;
+}
+
+.unbind-btn {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  color: #999;
+  border-color: #ddd;
+}
+
+.material-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.material-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.material-label {
+  font-size: 12px;
+  color: #999;
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.material-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  word-break: break-all;
+}
+
+.material-value.highlight {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+.material-value.mono {
+  font-family: monospace;
+}
+
+.text-created {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.text-process {
+  color: #3b82f6;
+}
+
+.text-done {
+  color: #2ca85c;
+}
+
+.text-ng {
+  color: #e8553d;
+}
+
+.available-ops {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.available-title {
+  font-size: 12px;
+  color: #888;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.op-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.op-tag {
+  font-size: 11px;
+  background: #f3f4f6;
+  color: #555;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.op-tag-current {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+  font-weight: 600;
+}
+
+.op-warning {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #e8553d;
+}
+
+/* 参数卡片 */
+.param-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.param-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.param-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.param-required-hint {
+  font-size: 11px;
+  color: #e8553d;
+}
+
+.param-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.param-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+
+.required-star {
+  color: #e8553d;
+  margin-left: 2px;
+}
+
+.param-unit {
+  font-size: 11px;
+  color: #999;
+  margin-left: 4px;
+}
+
+.param-input {
+  border-radius: 8px;
+  border: 1.5px solid #e0e0e0;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.input-error {
+  border-color: #e8553d !important;
+  background: #fff5f5;
+}
+
+.error-msg {
+  font-size: 11px;
+  color: #e8553d;
+}
+
+/* ========== 装配组件卡片 ========== */
+.assembly-section-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.assembly-header {
+  margin-bottom: 12px;
+}
+
+.assembly-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.assembly-sub {
+  font-size: 11px;
+  color: #999;
+  margin-left: 8px;
+}
+
+.assembly-scan-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.assembly-add-btn {
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.component-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.component-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.component-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.component-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ca85c;
+  flex-shrink: 0;
+}
+
+.component-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.component-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.component-lot {
+  font-size: 11px;
+  color: #0369a1;
+  font-family: monospace;
+}
+
+.component-sap {
+  font-size: 10px;
+  color: #777;
+}
+
+.component-remove-btn {
+  font-size: 10px;
+  padding: 2px 8px;
+  color: #e8553d;
+}
+
+.component-empty {
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+/* 提交按钮 */
+.submit-area {
+  margin-top: 8px;
+}
+
+.submit-buttons-row {
+  display: flex;
+  gap: 12px;
+}
+
+.submit-btn-ng,
+.submit-btn-pass {
+  flex: 1;
+  height: 46px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.submit-btn-ng {
+  background: #fef2f2;
+  color: #e8553d;
+  border: 1.5px solid #fecaca;
+}
+
+.submit-btn-pass {
+  background: #ecfdf5;
+  color: #2ca85c;
+  border: 1.5px solid #a7f3d0;
+}
+
+.submit-error {
+  font-size: 12px;
+  color: #e8553d;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.bottom-safe-area {
+  height: 20px;
+}
+
+.workbench-btn {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.assembly-submit-btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  background: #ecfdf5;
+  color: #2ca85c;
+  border: 1.5px solid #a7f3d0;
+}
+
+.assembly-submit-btn:active {
+  background: #d1fae5;
+}
