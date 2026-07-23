@@ -57,7 +57,11 @@
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
               <nut-input ref="scanInputRef" v-model="snCode" placeholder="扫描或输入物料SN/批次号" class="scan-input" clearable
-                @confirm="handleScanSN" />
+                @confirm="handleScanSN">
+                <template #left>
+                  <IconFont name="scan2" color="#999" @click="showScanner = true" />
+                </template>
+              </nut-input>
             </view>
             <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!snCode.trim()"
               @click="handleScanSN">
@@ -229,6 +233,7 @@
       </view>
     </view>
   </TabbarLayout>
+  <ScannerModal v-model:visible="showScanner" @success="onScanSuccess" />
 </template>
 
 <script lang="ts" setup name="Process">
@@ -238,6 +243,14 @@ import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
 import { getMaterialBySap, scanLot, submitOperationRecord } from '@/api/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { getOperation } from '@/api/work-order/look-up';
+import { IconFont } from '@nutui/icons-vue-taro';
+
+import ScannerModal from '@/components/ScannerModal.vue';
+const showScanner = ref(false);
+const onScanSuccess = (result: string) => {
+  snCode.value = result;
+  handleScanSN();
+};
 
 onMounted(async () => {
   const instance = getCurrentInstance();

@@ -51,6 +51,7 @@
     "@tarojs/runtime": "4.2.0",
     "@tarojs/shared": "4.2.0",
     "@tarojs/taro": "4.2.0",
+    "html5-qrcode": "^2.3.8",
     "pinia": "^3.0.4",
     "vue": "^3.3.0"
   },

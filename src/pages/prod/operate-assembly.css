@@ -211,6 +211,31 @@
   min-width: 0;
 }
 
+/* 调整 nut-input 内部左侧图标插槽的样式 */
+.scan-input :deep(.nut-input__left) {
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+}
+
+/* 相机图标按钮样式 */
+.scan-input :deep(.camera-icon) {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f7ff;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.scan-input :deep(.camera-icon):active {
+  background: #dbeafe;
+}
+
 .scan-input {
   border-radius: 10px;
   border: 1.5px solid #e0e0e0;

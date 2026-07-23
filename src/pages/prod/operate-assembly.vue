@@ -53,12 +53,16 @@
         <!-- 扫描主物料SN区域 -->
         <view class="scan-section-card" v-if="!mainLot">
           <view class="scan-section-header">
-            <text class="scan-section-title">📷 扫描主物料SN码</text>
+            <text class="scan-section-title"> 扫描主物料SN码</text>
           </view>
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
               <nut-input ref="scanInputRef" v-model="mainSnCode" placeholder="扫描或输入主物料SN/批次号" class="scan-input"
-                clearable @confirm="handleScanMainSN" />
+                clearable @confirm="handleScanMainSN">
+                <template #left>
+                  <IconFont name="scan2" color="#999" @click="showScanner = true" />
+                </template>
+              </nut-input>
             </view>
             <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!mainSnCode.trim()"
               @click="handleScanMainSN">
@@ -199,6 +203,7 @@
       </view>
     </view>
   </TabbarLayout>
+  <ScannerModal v-model:visible="showScanner" @success="onScanSuccess" />
 </template>
 
 <script lang="ts" setup name="Assembly">
@@ -208,6 +213,14 @@ import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
 import { scanLot, submitOperationRecord } from '@/api/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { getOperation } from '@/api/work-order/look-up';
+import { IconFont } from '@nutui/icons-vue-taro';
+
+import ScannerModal from '@/components/ScannerModal.vue';
+const showScanner = ref(false);
+const onScanSuccess = (result: string) => {
+  mainSnCode.value = result;
+  handleScanMainSN();
+};
 
 onMounted(async () => {
   const instance = getCurrentInstance();

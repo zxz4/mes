@@ -107,7 +107,11 @@
             <view class="scan-input-wrapper">
               <nut-input ref="scanInputRef" v-model="scanCode"
                 :placeholder="mainMaterial ? '请扫描或输入物料SN码...' : '请扫描或输入主物料SAP码...'" class="scan-input" clearable
-                @confirm="handleScan" @clear="scanCode = ''" />
+                @confirm="handleScan" @clear="scanCode = ''">
+                <template #left>
+                  <IconFont name="scan2" color="#999" @click="showScanner = true" />
+                </template>
+              </nut-input>
             </view>
             <nut-button v-if="mainMaterial" type="primary" class="submit-btn" :loading="loading"
               :disabled="!scanCode.trim()" @click="handleScan">
@@ -187,6 +191,7 @@
       </view>
     </view>
   </TabbarLayout>
+  <ScannerModal v-model:visible="showScanner" @success="onScanSuccess" />
 </template>
 
 <script lang="ts" name="Produce" setup>
@@ -197,6 +202,14 @@ import { navigateTo, showToast, getCurrentInstance } from '@tarojs/taro';
 import { getMaterialBySap, submitOperationRecord } from '@/api/prod';
 import { getOperation } from '@/api/work-order/look-up';
 import { getProducedLotByOperationId } from '@/api/record/look-up';
+import { IconFont } from '@nutui/icons-vue-taro';
+
+import ScannerModal from '@/components/ScannerModal.vue';
+const showScanner = ref(false);
+const onScanSuccess = (result: string) => {
+  scanCode.value = result;
+  handleScan();
+};
 
 
 // 分页页码
