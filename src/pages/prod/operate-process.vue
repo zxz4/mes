@@ -572,7 +572,7 @@ const resetForm = () => {
 const statusLabel = (status: string) => {
   const map = {
     'Created': '已创建',
-    'AwaitNext ': '等待下一道',
+    'AwaitNext': '等待下一道',
     'Passed': '已通过',
     'Consumed': '已消耗',
     'Scrapped': '已报废',

@@ -64,3 +64,7 @@ export interface AvailableOperation {
    */
   sequence: number
 }
+
+/**
+ *
+ */

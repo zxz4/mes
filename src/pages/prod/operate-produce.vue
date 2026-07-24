@@ -272,12 +272,16 @@ const handleScan = async () => {
     showToast({ title: '请输入条码', icon: 'none', duration: 300 });
     return;
   }
-
   // Step 1: 尝试作为SAP查询（查询物料SAP）
   if (!mainMaterial.value) {
     const material = await getMaterialBySap(code);
-    mainMaterial.value = material;
     scanCode.value = '';
+    if (!material) {
+      showToast({ title: '无法获得该料号信息，请核验BOMS清单', icon: 'error' });
+      return;
+    }
+
+    mainMaterial.value = material;
     return;
   }
 

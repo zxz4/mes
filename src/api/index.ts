@@ -71,6 +71,7 @@ export async function ajax<T = any>(
           case 201:
           case 204:
             resolve(null as T);
+            return;
           case 404:
           case 403:
           case 400:
