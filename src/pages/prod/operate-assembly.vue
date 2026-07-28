@@ -24,9 +24,9 @@
               <text v-if="currentOperation.skipEnabled" class="op-optional-tag">可选</text>
             </view>
           </view>
-          <view class="header-bottom" v-if="mainLot">
+          <view class="header-bottom" v-if="scannedLot">
             <text class="stats-label">当前主物料</text>
-            <text class="stats-value">{{ mainLot.lotNumber }}</text>
+            <text class="stats-value">{{ scannedLot.lotNumber }}</text>
           </view>
         </view>
 
@@ -51,20 +51,20 @@
         </view>
 
         <!-- 扫描主物料SN区域 -->
-        <view class="scan-section-card" v-if="!mainLot">
+        <view class="scan-section-card" v-show="!isCurrentOpAvailable">
           <view class="scan-section-header">
             <text class="scan-section-title"> 扫描主物料SN码</text>
           </view>
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
-              <nut-input ref="scanInputRef" v-model="mainSnCode" placeholder="扫描或输入主物料SN/批次号" class="scan-input"
-                clearable @confirm="handleScanMainSN">
+              <nut-input ref="scanInputRef" v-model="scanCode" placeholder="扫描或输入主物料SN/批次号" class="scan-input" clearable
+                @confirm="handleScanMainSN">
                 <template #left>
                   <IconFont name="scan2" color="#999" @click="showScanner = true" />
                 </template>
               </nut-input>
             </view>
-            <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!mainSnCode.trim()"
+            <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!scanCode.trim()"
               @click="handleScanMainSN">
               查询
             </nut-button>
@@ -73,60 +73,60 @@
         </view>
 
         <!-- 主物料信息卡片 -->
-        <view class="material-card" v-if="mainLot">
+        <view class="material-card" v-show="scannedLot">
           <view class="material-card-header">
-            <view class="material-status-dot" :class="statusDotClass(mainLot.status)"></view>
+            <view class="material-status-dot" :class="statusDotClass(scannedLot?.status ?? '')"></view>
             <text class="material-card-title">主物料</text>
-            <nut-button size="mini" plain type="default" class="unbind-btn" @click="mainLot = null">
+            <nut-button size="mini" plain type="default" class="unbind-btn" @click="scannedLot = null">
               重新扫描
             </nut-button>
           </view>
           <view class="material-card-body">
             <view class="material-info-row">
               <text class="material-label">名称</text>
-              <text class="material-value highlight">{{ mainLot.name }}</text>
+              <text class="material-value highlight">{{ scannedLot?.name }}</text>
             </view>
             <view class="material-info-row">
               <text class="material-label">SAP</text>
-              <text class="material-value mono">{{ mainLot.sap }}</text>
+              <text class="material-value mono">{{ scannedLot?.sap }}</text>
             </view>
             <view class="material-info-row">
               <text class="material-label">SN</text>
-              <text class="material-value">{{ mainLot.lotNumber }}</text>
+              <text class="material-value">{{ scannedLot?.lotNumber }}</text>
             </view>
             <view class="material-info-row">
               <text class="material-label">状态</text>
-              <text class="material-value" :class="statusTextClass(mainLot.status)">
-                {{ statusLabel(mainLot.status) }}
+              <text class="material-value" :class="statusTextClass(scannedLot?.status ?? '')">
+                {{ statusLabel }}
               </text>
             </view>
-            <view class="material-info-row" v-if="mainLot.specification">
+            <view class="material-info-row" v-show="scannedLot?.specification">
               <text class="material-label">规格</text>
-              <text class="material-value">{{ mainLot.specification }}</text>
+              <text class="material-value">{{ scannedLot?.specification }}</text>
             </view>
           </view>
 
           <!-- 可执行工序标签 -->
-          <view class="available-ops" v-if="mainLot.availableOperations.length > 0">
+          <view class="available-ops" v-show="scannedLot">
             <text class="available-title">可执行工序：</text>
             <view class="op-tags">
-              <text v-for="op in mainLot.availableOperations" :key="op.operationId" class="op-tag"
+              <text v-for="op in scannedLot?.availableOperations" :key="op.operationId" class="op-tag"
                 :class="{ 'op-tag-current': op.operationId === currentOperation.id }">
                 {{ op.operationCode }} {{ op.operationName }}
               </text>
             </view>
-            <view v-if="!isCurrentOpAvailable" class="op-warning">
+            <view v-show="!isCurrentOpAvailable" class="op-warning">
               ⚠️ 当前工序不在可执行列表中
             </view>
-            <view v-if="!canProcessMainLot" class="op-warning">
-              ⚠️ 主物料状态为“{{ statusLabel(mainLot.status) }}”，无法进行装配
+            <view v-show="!canProcessMainLot" class="op-warning">
+              ⚠️ 主物料状态为“{{ statusLabel }}”，无法进行装配
             </view>
           </view>
         </view>
 
         <!-- 参数表单卡片 -->
         <view class="param-card"
-          v-if="mainLot && currentOperation.parameterDefinitions && currentOperation.parameterDefinitions.length > 0">
+          v-if="scannedLot && currentOperation.parameterDefinitions && currentOperation.parameterDefinitions.length > 0">
           <view class="param-card-header">
             <text class="param-title">📝 工艺参数</text>
             <text v-if="currentOperation.isParameterRecordEnabled" class="param-required-hint">
@@ -151,7 +151,7 @@
         </view>
 
         <!-- 装配组件扫描区 -->
-        <view class="assembly-section-card" v-if="mainLot">
+        <view class="assembly-section-card" v-show="canProcessMainLot">
           <view class="assembly-header">
             <text class="assembly-title">🔧 装配组件</text>
             <text class="assembly-sub">扫描组件SN（仅Passed状态可装配）</text>
@@ -191,7 +191,7 @@
         </view>
 
         <!-- ===== 底部单个装配按钮 ===== -->
-        <view class="submit-area" v-if="mainLot">
+        <view class="submit-area" v-if="scannedLot">
           <nut-button type="primary" class="assembly-submit-btn" :loading="loading" :disabled="!canSubmit"
             @click="handleAssemblySubmit">
             🔧 装配
@@ -214,11 +214,12 @@ import { scanLot, submitOperationRecord } from '@/api/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { getOperation } from '@/api/work-order/look-up';
 import { IconFont } from '@nutui/icons-vue-taro';
+import { getProductStatusText } from '@/util/statusText';
 
 import ScannerModal from '@/components/ScannerModal.vue';
 const showScanner = ref(false);
 const onScanSuccess = (result: string) => {
-  mainSnCode.value = result;
+  scanCode.value = result;
   handleScanMainSN();
 };
 
@@ -238,8 +239,8 @@ onMounted(async () => {
 
 const loading = ref(true);
 const currentOperation = ref<WorkOrderOperationDefinition | null>(null);
-const mainLot = ref<ScannedLot | null>(null);
-const mainSnCode = ref('');
+const scannedLot = ref<ScannedLot | null>(null);
+const scanCode = ref('');
 const componentSnCode = ref('');
 const parameters = ref<Record<string, string>>({});
 const paramErrors = ref<Record<string, string>>({});
@@ -252,7 +253,7 @@ const steps = computed(() => {
     {
       key: 'scan',
       label: '扫描SN',
-      status: mainLot.value ? 'done' : 'active',
+      status: scannedLot.value ? 'done' : 'active',
       optional: false,
     },
   ];
@@ -261,33 +262,33 @@ const steps = computed(() => {
     list.push({
       key: 'params',
       label: '填写参数',
-      status: !mainLot.value ? 'pending' : (paramDone ? 'done' : 'active'),
+      status: !scannedLot.value ? 'pending' : (paramDone ? 'done' : 'active'),
       optional: false,
     });
   }
   list.push({
     key: 'assembly',
     label: '装配组件',
-    status: mainLot.value ? 'active' : 'pending',
+    status: scannedLot.value ? 'active' : 'pending',
     optional: true,
   });
   return list;
 });
 
 const isCurrentOpAvailable = computed(() => {
-  if (!mainLot.value) return false;
-  return mainLot.value.availableOperations.some(
+  if (!scannedLot.value) return false;
+  return scannedLot.value.availableOperations.some(
     op => op.operationId == currentOperation.value!.id
   );
 });
 
 const canProcessMainLot = computed(() => {
-  if (!mainLot.value) return false;
-  return mainLot.value.status === 'AwaitNext' || mainLot.value.status === 'Passed';
+  if (!scannedLot.value) return false;
+  return scannedLot.value.status === 'AwaitNext' || scannedLot.value.status === 'Passed';
 });
 
 const paramCompleted = computed(() => {
-  if (!mainLot.value || !currentOperation.value?.isParameterRecordEnabled || currentOperation.value?.parameterDefinitions?.length === 0) {
+  if (!scannedLot.value || !currentOperation.value?.isParameterRecordEnabled || currentOperation.value?.parameterDefinitions?.length === 0) {
     return true;
   }
   const defs = currentOperation.value!.parameterDefinitions;
@@ -297,8 +298,8 @@ const paramCompleted = computed(() => {
 });
 
 const canSubmit = computed(() => {
-  if (!mainLot.value || !isCurrentOpAvailable.value || !canProcessMainLot.value) return false;
-  if (mainLot.value.materialType != currentOperation.value?.applicableMaterialType) return false;
+  if (!scannedLot.value || !isCurrentOpAvailable.value || !canProcessMainLot.value) return false;
+  if (scannedLot.value.materialType != currentOperation.value?.applicableMaterialType) return false;
   if (currentOperation.value?.isParameterRecordEnabled && !paramCompleted.value) return false;
   if (componentList.value.length === 0) return false;
   return true;
@@ -309,36 +310,35 @@ const backToList = () => {
 };
 
 const handleScanMainSN = async () => {
-  if (!mainSnCode.value.trim() || loading.value) return;
-  const code = mainSnCode.value.trim();
+  if (!scanCode.value.trim() || loading.value) return;
+  const code = scanCode.value.trim();
   loading.value = true;
   try {
     const lot = await scanLot(code, currentOperation.value!.workOrderId);
-    mainSnCode.value = '';
-    if (lot.materialType != currentOperation.value?.applicableMaterialType) {
-      showToast({ title: `${lot.name}与工序类型不匹配.`, icon: 'error' });
-      return;
-    }
-    let hit = '';
-    switch (lot.status) {
-      case 'Consumed':
-        hit = `(${code})已消耗`;
-        break;
-      case 'Scrapped':
-        hit = `(${code})已报废`;
-        break;
-      case 'Passed':
-        hit = `(${code})已完工`;
-        break;
-    }
+    scannedLot.value = lot;
+    scanCode.value = '';
+    // if (lot.materialType != currentOperation.value?.applicableMaterialType) {
+    //   showToast({ title: `${lot.name}与工序类型不匹配.`, icon: 'error' });
+    //   return;
+    // }
+    // let hit = '';
+    // switch (lot.status) {
+    //   case 'Consumed':
+    //     hit = `(${code})已消耗`;
+    //     break;
+    //   case 'Scrapped':
+    //     hit = `(${code})已报废`;
+    //     break;
+    //   case 'Passed':
+    //     hit = `(${code})已完工`;
+    //     break;
+    // }
 
-    if (hit) {
-      showToast({ title: hit, icon: 'error' });
-      return;
-    }
-
-    mainLot.value = lot;
-    initParameters();
+    // if (hit) {
+    //   showToast({ title: hit, icon: 'error' });
+    //   return;
+    // }
+    if (canProcessMainLot.value) initParameters();
   } finally {
     loading.value = false;
   }
@@ -395,7 +395,7 @@ const handleScanComponentSN = async () => {
       return;
     }
     // 禁止装配自身
-    if (response.lotNumber === mainLot.value?.lotNumber) {
+    if (response.lotNumber === scannedLot.value?.lotNumber) {
       showToast({ title: '不能装配自身', icon: 'none' });
       componentSnCode.value = '';
       return;
@@ -451,7 +451,7 @@ const handleAssemblySubmit = async () => {
   const payload = {
     workOrderId: currentOperation.value?.workOrderId,
     operationId: currentOperation.value?.id,
-    processedLotNumber: mainLot.value?.lotNumber,
+    processedLotNumber: scannedLot.value?.lotNumber,
     isAbnormal: false, // 装配默认为合格
     parameters: paramList,
     componentLotNumbers: componentList.value.map(c => c.id),
@@ -462,12 +462,12 @@ const handleAssemblySubmit = async () => {
     await submitOperationRecord(payload);
     showToast({ title: '装配成功' });
     // 重置表单
-    mainLot.value = null;
+    scannedLot.value = null;
     componentList.value = [];
     parameters.value = {};
     paramErrors.value = {};
     componentSnCode.value = '';
-    mainSnCode.value = '';
+    scanCode.value = '';
     focusScanInput();
   } catch (error) {
     submitError.value = '提交失败，请重试';
@@ -477,6 +477,7 @@ const handleAssemblySubmit = async () => {
 };
 
 const scanInputRef = ref();
+
 const focusScanInput = () => {
   nextTick(() => {
     setTimeout(() => {
@@ -485,29 +486,30 @@ const focusScanInput = () => {
   });
 };
 
-const statusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    'Created': '已创建',
-    'AwaitNext': '等待下一道',
-    'Passed': '已通过',
-    'Consumed': '已消耗',
-    'Scrapped': '已报废',
-  };
-  return map[status] || '未知状态';
-};
+const statusLabel = computed(() => {
+  return scannedLot.value == null ? '' : getProductStatusText(scannedLot?.value.status);
+})
 
 const statusDotClass = (status: string) => {
-  if (status === 'AwaitNext') return 'dot-process';
-  if (status === 'Passed') return 'dot-done';
-  if (status === 'Consumed' || status === 'Scrapped') return 'dot-ng';
-  return 'dot-created';
+  switch (status) {
+    case 'AwaitNext': return 'dot-process';
+    case 'Passed': return 'dot-done';
+    case 'Consumed':
+    case 'Scrapped':
+      return 'dot-ng';
+    default: return 'dot-created';
+  }
 };
 
 const statusTextClass = (status: string) => {
-  if (status === 'AwaitNext') return 'text-process';
-  if (status === 'Passed') return 'text-done';
-  if (status === 'Consumed' || status === 'Scrapped') return 'text-ng';
-  return 'text-created';
+  switch (status) {
+    case 'AwaitNext': return 'text-process';
+    case 'Passed': return 'text-done';
+    case 'Consumed':
+    case 'Scrapped':
+      return 'text-ng';
+    default: return 'text-created';
+  }
 };
 </script>
 

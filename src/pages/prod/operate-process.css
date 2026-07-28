@@ -1,11 +1,10 @@
-/* 全局 */
-.assembly-page {
+.process-page {
   min-height: 100vh;
   background: #f5f6f8;
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-.assembly-content {
+.process-content {
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -65,9 +64,9 @@
   font-weight: 600;
 }
 
-.type-assembly {
-  background: #e0f2fe;
-  color: #0369a1;
+.type-process {
+  background: #ede9fe;
+  color: #6d28d9;
 }
 
 .op-optional-tag {
@@ -95,7 +94,7 @@
 .stats-value {
   font-size: 18px;
   font-weight: 700;
-  color: #0369a1;
+  color: #6d28d9;
 }
 
 /* 步骤指示器 */
@@ -133,9 +132,9 @@
 }
 
 .step-active .step-dot {
-  background: #0369a1;
+  background: #6d28d9;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.35);
 }
 
 .step-done .step-dot {
@@ -151,7 +150,7 @@
 }
 
 .step-active .step-label {
-  color: #0369a1;
+  color: #6d28d9;
   font-weight: 600;
 }
 
@@ -211,30 +210,6 @@
   min-width: 0;
 }
 
-/* 调整 nut-input 内部左侧图标插槽的样式 */
-.scan-input :deep(.nut-input__left) {
-  margin-right: 6px;
-  display: flex;
-  align-items: center;
-}
-
-.scan-input :deep(.camera-icon) {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f0f7ff;
-  border-radius: 8px;
-  font-size: 18px;
-  line-height: 1;
-  transition: background 0.2s;
-}
-
-.scan-input :deep(.camera-icon):active {
-  background: #dbeafe;
-}
-
 .scan-input {
   border-radius: 10px;
   border: 1.5px solid #e0e0e0;
@@ -262,7 +237,7 @@
   background: #fff;
   border-radius: 14px;
   padding: 14px 16px;
-  border-left: 4px solid #0369a1;
+  border-left: 4px solid #6d28d9;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
@@ -298,7 +273,7 @@
 .material-card-title {
   font-size: 13px;
   font-weight: 600;
-  color: #0369a1;
+  color: #6d28d9;
   flex: 1;
 }
 
@@ -393,9 +368,9 @@
 }
 
 .op-tag-current {
-  background: #e0f2fe;
-  color: #0369a1;
-  border-color: #7dd3fc;
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #c4b5fd;
   font-weight: 600;
 }
 
@@ -477,112 +452,168 @@
   color: #e8553d;
 }
 
-/* ========== 装配组件卡片 ========== */
-.assembly-section-card {
+/* ========== 辅料卡片全新样式 ========== */
+.aux-section-card {
   background: #fff;
   border-radius: 14px;
   padding: 14px 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.assembly-header {
+.aux-header {
   margin-bottom: 12px;
 }
 
-.assembly-title {
+.aux-title {
   font-size: 14px;
   font-weight: 600;
   color: #333;
 }
 
-.assembly-sub {
+.aux-sub {
   font-size: 11px;
   color: #999;
   margin-left: 8px;
 }
 
-.assembly-scan-row {
+.aux-scan-row {
   display: flex;
   gap: 8px;
   align-items: center;
   margin-bottom: 14px;
 }
 
-.assembly-add-btn {
+.aux-add-btn {
   flex-shrink: 0;
   border-radius: 8px;
 }
 
-.component-list {
+.aux-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
-.component-item {
+.aux-material-group {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #eef0f2;
+}
+
+.aux-material-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 10px;
-  padding: 10px 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
 }
 
-.component-info {
+.aux-material-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.aux-material-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+
+.aux-material-sap {
+  font-size: 11px;
+  color: #777;
+  font-family: monospace;
+}
+
+.aux-material-spec {
+  font-size: 11px;
+  color: #999;
+}
+
+.aux-remove-btn {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.aux-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.aux-batch-item {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #eee;
+}
+
+.batch-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.batch-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
-.component-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #2ca85c;
+.batch-label {
+  font-size: 11px;
+  color: #666;
+  width: 28px;
   flex-shrink: 0;
 }
 
-.component-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.component-name {
+.small-input {
+  padding: 6px 8px;
   font-size: 13px;
-  font-weight: 600;
-  color: #0c4a6e;
+  border-radius: 6px;
 }
 
-.component-lot {
-  font-size: 11px;
-  color: #0369a1;
-  font-family: monospace;
+.quantity-input {
+  width: 70px;
+  flex-shrink: 0;
 }
 
-.component-sap {
+.batch-remove-btn {
   font-size: 10px;
-  color: #777;
-}
-
-.component-remove-btn {
-  font-size: 10px;
-  padding: 2px 8px;
+  padding: 2px 6px;
   color: #e8553d;
 }
 
-.component-empty {
+.add-batch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-batch-btn {
+  font-size: 11px;
+  padding: 3px 12px;
+  border-radius: 6px;
+}
+
+.no-batch-hint {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.aux-empty {
   text-align: center;
-  padding: 20px;
+  padding: 16px;
   color: #aaa;
   font-size: 12px;
 }
 
-/* 提交按钮 */
+/* 提交区域 */
 .submit-area {
   margin-top: 8px;
 }
@@ -627,19 +658,4 @@
 .workbench-btn {
   border-radius: 10px;
   font-weight: 500;
-}
-
-.assembly-submit-btn {
-  width: 100%;
-  height: 46px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 15px;
-  background: #ecfdf5;
-  color: #2ca85c;
-  border: 1.5px solid #a7f3d0;
-}
-
-.assembly-submit-btn:active {
-  background: #d1fae5;
 }

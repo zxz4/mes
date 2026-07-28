@@ -18,18 +18,33 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/components/*": ["./src/components/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/styles/*": ["./src/styles/*"],
-      "@/store/*" : ["./src/store/*"],
-      "@/api/*":  ["./src/api/*"],
-      "@/util/*":["./src/util/*"]
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
+      ],
+      "@/styles/*": [
+        "./src/styles/*"
+      ],
+      "@/store/*": [
+        "./src/store/*"
+      ],
+      "@/api/*": [
+        "./src/api/*"
+      ],
+      "@/util/*": [
+        "./src/util/*"
+      ]
     },
     "typeRoots": [
       "node_modules/@types"
     ],
-
   },
-  "include": ["./src", "./types", "components.d.ts"],
+  "include": [
+    "./src",
+    "./types",
+    "components.d.ts"
+  ],
   "compileOnSave": false
 }

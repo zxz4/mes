@@ -1,4 +1,3 @@
-// utils/loadingManager.ts
 import { showLoading, hideLoading } from '@tarojs/taro';
 
 class LoadingManager {

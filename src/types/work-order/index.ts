@@ -91,6 +91,10 @@ export interface ProcessedLot {
    * 结束时间
    */
   endAt: string;
+  /**
+   * 实物状态
+   */
+  status: 'Created' | 'InProcess' | 'AwaitNext' | 'Passed' | 'Scrapped';
 }
 
 /**

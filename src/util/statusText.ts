@@ -16,13 +16,14 @@ export const OperationStatusText: Record<string, string> = {
   ['Completed']: '已完成'
 };
 /**
- * 生产状态文本映射
+ * 产品状态文本映射
  */
-const ProductionStatusText: Record<string, string> = {
-  ['FEEDING']: '投料作业中',
-  ['RECORDING']: '数据采集中',
-  ['ABNORMAL']: '生产异常',
-  ['COMPLETED']: '工序完工'
+const ProductStatusText: Record<string, string> = {
+  ['Created']: '已创建',
+  ['AwaitNext']: '加工中',
+  ['Passed']: '已通过',
+  ['Consumed']: '已装配',
+  ['Scrapped']: '已报废'
 };
 
 /**
@@ -48,8 +49,10 @@ export const getOperationStatusText = (status: string, defaultValue: string = '�
  * @param status - 订单状态键
  * @param defaultValue - 可选的自定义默认值，默认为 '未知状态'
  */
-export const getProductionStatusText = (status: string, defaultValue: string = '未知状态'): string => {
-  return ProductionStatusText[status] ?? defaultValue;
+export const getProductStatusText = (status: string, defaultValue: string = '未知状态'): string => {
+  return ProductStatusText[status] ?? defaultValue;
 };
+
+
 
 

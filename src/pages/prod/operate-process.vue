@@ -50,20 +50,20 @@
         </view>
 
         <!-- ===== 扫描SN区域 ===== -->
-        <view class="scan-section-card" v-show="!scannedLot">
+        <view class="scan-section-card" v-show="!isCurrentOpAvailable">
           <view class="scan-section-header">
             <text class="scan-section-title">📷 扫描物料SN码</text>
           </view>
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
-              <nut-input ref="scanInputRef" v-model="snCode" placeholder="扫描或输入物料SN/批次号" class="scan-input" clearable
+              <nut-input ref="scanInputRef" v-model="scanCode" placeholder="扫描或输入物料SN/批次号" class="scan-input" clearable
                 @confirm="handleScanSN">
                 <template #left>
                   <IconFont name="scan2" color="#999" @click="showScanner = true" />
                 </template>
               </nut-input>
             </view>
-            <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!snCode.trim()"
+            <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!scanCode.trim()"
               @click="handleScanSN">
               查询
             </nut-button>
@@ -96,7 +96,7 @@
             <view class="material-info-row">
               <text class="material-label">状态</text>
               <text class="material-value" :class="statusTextClass(scannedLot?.status ?? '')">
-                {{ statusLabel(scannedLot?.status ?? '') }}
+                {{ statusLabel }}
               </text>
             </view>
             <view class="material-info-row" v-show="scannedLot?.specification">
@@ -244,11 +244,12 @@ import { getMaterialBySap, scanLot, submitOperationRecord } from '@/api/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { getOperation } from '@/api/work-order/look-up';
 import { IconFont } from '@nutui/icons-vue-taro';
+import { getProductStatusText } from '@/util/statusText';
 
 import ScannerModal from '@/components/ScannerModal.vue';
 const showScanner = ref(false);
 const onScanSuccess = (result: string) => {
-  snCode.value = result;
+  scanCode.value = result;
   handleScanSN();
 };
 
@@ -271,7 +272,7 @@ const loading = ref(true);
 const currentOperation = ref<WorkOrderOperationDefinition | null>(null);
 // 扫码相关
 const scannedLot = ref<ScannedLot | null>(null);
-const snCode = ref('');
+const scanCode = ref('');
 
 // 参数相关
 const parameters = ref<Record<string, string>>({});
@@ -321,7 +322,7 @@ const canSubmit = computed(() => {
 });
 
 const backToList = () => {
-  navigateTo({ url: '/pages/work/order-list' });
+  navigateTo({ url: '/pages/work/list-page' });
 };
 
 const steps = computed(() => {
@@ -364,12 +365,12 @@ const initParameters = () => {
 }
 
 const handleScanSN = async () => {
-  if (!snCode.value.trim() || loading.value) return;
-  const code = snCode.value.trim();
+  if (!scanCode.value.trim() || loading.value) return;
+  const code = scanCode.value.trim();
   loading.value = true;
   try {
     scannedLot.value = await scanLot(code, currentOperation.value!.workOrderId);
-    snCode.value = ''
+    scanCode.value = ''
     // 初始化参数对象
     initParameters();
   } finally {
@@ -565,698 +566,37 @@ const resetForm = () => {
   paramErrors.value = {};
   auxMaterials.value = [];
   auxSapCode.value = '';
-  snCode.value = '';
+  scanCode.value = '';
   submitError.value = '';
 }
 
-const statusLabel = (status: string) => {
-  const map = {
-    'Created': '已创建',
-    'AwaitNext': '等待下一道',
-    'Passed': '已通过',
-    'Consumed': '已消耗',
-    'Scrapped': '已报废',
-  }
-  return map[status] !== undefined ? map[status] : '未知状态';
-};
+const statusLabel = computed(() => {
+  return scannedLot.value == null ? '' : getProductStatusText(scannedLot.value.status);
+});
+
 const statusDotClass = (status: string) => {
-  if (status === 'AwaitNext') return 'dot-process';  // AwaitNext 蓝色
-  if (status === 'Passed') return 'dot-done';       // Passed 绿色
-  if (status === 'Consumed') return 'dot-ng';     // Consumed 红色（不可用）
-  if (status === 'Scrapped') return 'dot-ng';       // Scrapped 红色
-  return 'dot-created';                     // Created=0 黄色
-};
-const statusTextClass = (status: string) => {
-  if (status === 'Created') return 'text-created';
-  if (status === 'AwaitNext') return 'text-process';
-  if (status === 'Passed') return 'text-done';
-  if (status === 'Consumed' || status == 'Scrapped') return 'text-ng';
-  return ''
+  switch (status) {
+    case 'AwaitNext': return 'dot-process';
+    case 'Passed': return 'dot-done';
+    case 'Consumed':
+    case 'Scrapped':
+      return 'dot-ng';
+    default: return 'dot-created';
+  }
 };
 
+const statusTextClass = (status: string) => {
+  switch (status) {
+    case 'AwaitNext': return 'text-process';
+    case 'Passed': return 'text-done';
+    case 'Consumed':
+    case 'Scrapped':
+      return 'text-ng';
+    default: return 'text-created';
+  }
+};
 </script>
 
 <style scoped>
-/* ========== 全局复用样式 ========== */
-.process-page {
-  min-height: 100vh;
-  background: #f5f6f8;
-  padding-bottom: env(safe-area-inset-bottom, 20px);
-}
-
-.process-content {
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* 工序头部卡片 */
-.operation-header-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.op-code {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.op-divider {
-  color: #d0d0d0;
-  font-size: 14px;
-  margin: 0 4px;
-}
-
-.op-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: #333;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.op-type-tag {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-}
-
-.type-process {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.op-optional-tag {
-  font-size: 11px;
-  color: #999;
-  background: #f5f5f5;
-  padding: 3px 8px;
-  border-radius: 10px;
-}
-
-.header-bottom {
-  margin-top: 10px;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.stats-label {
-  font-size: 12px;
-  color: #999;
-}
-
-.stats-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #6d28d9;
-}
-
-/* 步骤指示器 */
-.step-indicator {
-  display: flex;
-  align-items: center;
-  padding: 8px 6px;
-  gap: 0;
-}
-
-.step-item {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 8px;
-}
-
-.step-item:last-child {
-  flex: 0 0 auto;
-}
-
-.step-dot {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  background: #e8e8e8;
-  color: #999;
-  flex-shrink: 0;
-  transition: all 0.3s;
-}
-
-.step-active .step-dot {
-  background: #6d28d9;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.35);
-}
-
-.step-done .step-dot {
-  background: #2ca85c;
-  color: #fff;
-}
-
-.step-label {
-  font-size: 13px;
-  color: #999;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.step-active .step-label {
-  color: #6d28d9;
-  font-weight: 600;
-}
-
-.step-done .step-label {
-  color: #2ca85c;
-}
-
-.step-line {
-  flex: 1;
-  height: 2px;
-  background: #e8e8e8;
-  margin: 0 4px;
-  border-radius: 1px;
-  transition: background 0.4s;
-}
-
-.line-done {
-  background: #2ca85c;
-}
-
-.step-optional .step-dot {
-  border: 1.5px dashed #ccc;
-}
-
-.optional-tag {
-  font-size: 10px;
-  color: #999;
-  margin-left: 2px;
-}
-
-/* 扫描区域 */
-.scan-section-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
-}
-
-.scan-section-header {
-  margin-bottom: 10px;
-}
-
-.scan-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.scan-input-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.scan-input-wrapper {
-  flex: 1;
-  min-width: 0;
-}
-
-.scan-input {
-  border-radius: 10px;
-  border: 1.5px solid #e0e0e0;
-  padding: 10px 12px;
-  font-size: 15px;
-  background: #fafbfc;
-}
-
-.submit-btn {
-  flex-shrink: 0;
-  min-width: 72px;
-  height: 44px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.scan-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: #bbb;
-}
-
-/* 物料卡片 */
-.material-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 16px;
-  border-left: 4px solid #6d28d9;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.material-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.material-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dot-created {
-  background: #f59e0b;
-}
-
-.dot-process {
-  background: #3b82f6;
-}
-
-.dot-done {
-  background: #2ca85c;
-}
-
-.dot-ng {
-  background: #e8553d;
-}
-
-.material-card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6d28d9;
-  flex: 1;
-}
-
-.unbind-btn {
-  font-size: 11px;
-  padding: 2px 10px;
-  border-radius: 12px;
-  color: #999;
-  border-color: #ddd;
-}
-
-.material-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.material-info-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.material-label {
-  font-size: 12px;
-  color: #999;
-  width: 56px;
-  flex-shrink: 0;
-}
-
-.material-value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  flex: 1;
-  word-break: break-all;
-}
-
-.material-value.highlight {
-  font-weight: 700;
-  color: #1a1a1a;
-  font-size: 15px;
-}
-
-.material-value.mono {
-  font-family: monospace;
-}
-
-.text-created {
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.text-process {
-  color: #3b82f6;
-}
-
-.text-done {
-  color: #2ca85c;
-}
-
-.text-ng {
-  color: #e8553d;
-}
-
-.available-ops {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.available-title {
-  font-size: 12px;
-  color: #888;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.op-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.op-tag {
-  font-size: 11px;
-  background: #f3f4f6;
-  color: #555;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-}
-
-.op-tag-current {
-  background: #ede9fe;
-  color: #6d28d9;
-  border-color: #c4b5fd;
-  font-weight: 600;
-}
-
-.op-warning {
-  margin-top: 8px;
-  font-size: 11px;
-  color: #e8553d;
-}
-
-/* 参数卡片 */
-.param-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.param-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.param-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.param-required-hint {
-  font-size: 11px;
-  color: #e8553d;
-}
-
-.param-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.param-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.param-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #444;
-}
-
-.required-star {
-  color: #e8553d;
-  margin-left: 2px;
-}
-
-.param-unit {
-  font-size: 11px;
-  color: #999;
-  margin-left: 4px;
-}
-
-.param-input {
-  border-radius: 8px;
-  border: 1.5px solid #e0e0e0;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-.input-error {
-  border-color: #e8553d !important;
-  background: #fff5f5;
-}
-
-.error-msg {
-  font-size: 11px;
-  color: #e8553d;
-}
-
-/* ========== 辅料卡片全新样式 ========== */
-.aux-section-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.aux-header {
-  margin-bottom: 12px;
-}
-
-.aux-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.aux-sub {
-  font-size: 11px;
-  color: #999;
-  margin-left: 8px;
-}
-
-.aux-scan-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.aux-add-btn {
-  flex-shrink: 0;
-  border-radius: 8px;
-}
-
-.aux-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.aux-material-group {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 12px;
-  border: 1px solid #eef0f2;
-}
-
-.aux-material-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-
-.aux-material-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.aux-material-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #222;
-}
-
-.aux-material-sap {
-  font-size: 11px;
-  color: #777;
-  font-family: monospace;
-}
-
-.aux-material-spec {
-  font-size: 11px;
-  color: #999;
-}
-
-.aux-remove-btn {
-  font-size: 10px;
-  padding: 2px 8px;
-}
-
-.aux-batch-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.aux-batch-item {
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  border: 1px solid #eee;
-}
-
-.batch-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.batch-input-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-
-.batch-label {
-  font-size: 11px;
-  color: #666;
-  width: 28px;
-  flex-shrink: 0;
-}
-
-.small-input {
-  padding: 6px 8px;
-  font-size: 13px;
-  border-radius: 6px;
-}
-
-.quantity-input {
-  width: 70px;
-  flex-shrink: 0;
-}
-
-.batch-remove-btn {
-  font-size: 10px;
-  padding: 2px 6px;
-  color: #e8553d;
-}
-
-.add-batch-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.add-batch-btn {
-  font-size: 11px;
-  padding: 3px 12px;
-  border-radius: 6px;
-}
-
-.no-batch-hint {
-  font-size: 11px;
-  color: #ccc;
-}
-
-.aux-empty {
-  text-align: center;
-  padding: 16px;
-  color: #aaa;
-  font-size: 12px;
-}
-
-/* 提交区域 */
-.submit-area {
-  margin-top: 8px;
-}
-
-.submit-buttons-row {
-  display: flex;
-  gap: 12px;
-}
-
-.submit-btn-ng,
-.submit-btn-pass {
-  flex: 1;
-  height: 46px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.submit-btn-ng {
-  background: #fef2f2;
-  color: #e8553d;
-  border: 1.5px solid #fecaca;
-}
-
-.submit-btn-pass {
-  background: #ecfdf5;
-  color: #2ca85c;
-  border: 1.5px solid #a7f3d0;
-}
-
-.submit-error {
-  font-size: 12px;
-  color: #e8553d;
-  text-align: center;
-  margin-top: 6px;
-}
-
-.bottom-safe-area {
-  height: 20px;
-}
-
-.workbench-btn {
-  border-radius: 10px;
-  font-weight: 500;
-}
+@import './operate-process.css';
 </style>

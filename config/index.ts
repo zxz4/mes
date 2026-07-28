@@ -3,10 +3,9 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
 import prodConfig from './prod'
 import NutUIResolver from '@nutui/auto-import-resolver'
-
+import { resolve } from 'path';
 import Components from 'unplugin-vue-components/vite'
 
-const path = require('path');
 
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
@@ -59,7 +58,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       type: 'vite',
       vitePlugins: [
         Components({
-          resolvers: [NutUIResolver({ taro: true , importStyle: 'sass' })]
+          resolvers: [NutUIResolver({ taro: true, importStyle: 'sass' })]
         })
       ]
     },
@@ -112,12 +111,12 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       }
     },
     alias: {
-      '@/components': path.resolve(__dirname, '..', 'src/components'),
-      '@/types': path.resolve(__dirname, '..', 'src/types'),
-      '@/api': path.resolve(__dirname, '..', 'src/api'),
-      '@/styles': path.resolve(__dirname, '..', 'src/styles'),
-      '@/store': path.resolve(__dirname, '..', 'src/store'),
-      "@/util":path.resolve(__dirname, '..', 'src/util'),
+      '@/components': resolve(__dirname, '..', 'src/components'),
+      '@/types': resolve(__dirname, '..', 'src/types'),
+      '@/api': resolve(__dirname, '..', 'src/api'),
+      '@/styles': resolve(__dirname, '..', 'src/styles'),
+      '@/store': resolve(__dirname, '..', 'src/store'),
+      "@/util": resolve(__dirname, '..', 'src/util'),
     },
   }
   if (process.env.NODE_ENV === 'development') {
