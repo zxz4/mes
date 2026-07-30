@@ -5,7 +5,6 @@
 
       <view v-show="!workOrder" class="error-state">
         <nut-empty description="工单不存在" />
-        <nut-button type="primary" class="workbench-btn" @click="backToList">返回列表</nut-button>
       </view>
 
       <view v-if="workOrder" class="overview-content">
@@ -56,7 +55,8 @@
         <!-- 工序列表 -->
         <view class="operation-section">
           <view class="section-title">📋 工序列表</view>
-          <view v-for="(op) in workOrder.operationDefinitions" :key="op.id" class="operation-card">
+          <view v-for="(op) in workOrder.operationDefinitions" :key="op.id" class="operation-card"
+            @click="enterOperation(op)">
             <view class="op-card-left">
               <view class="op-sequence">{{ op.sequence }}</view>
               <view class="op-info">
@@ -68,14 +68,14 @@
                   <text class="op-type-tag" :class="typeTagClass(op.operationType)">
                     {{ typeLabel(op.operationType) }}
                   </text>
-                  <text v-if="op.skipEnabled" class="op-skip-tag">可选</text>
+                  <text v-show="op.skipEnabled" class="op-skip-tag">可选</text>
                 </view>
               </view>
             </view>
             <view class="op-card-right">
-              <nut-button size="small" :type="actionButtonType(op.operationType)" class="enter-btn"
-                @click="enterOperation(op)">
-                作业
+              <nut-button size="small" :type="actionButtonType(op.operationType)" class="record-btn"
+                @click.stop="enterRecord(op.id)">
+                详情
               </nut-button>
             </view>
           </view>
@@ -90,17 +90,18 @@
 <script lang="ts" setup name="WorkOrderOverview">
 import { ref, computed, onMounted } from 'vue';
 import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
-import { getWithOperation } from '@/api/work-order/look-up';
+import { getWithOperation } from '../../apis/work-order/look-up';
 import type { WorkOrderWithOperationDetail, WorkOrderOperationDefinition } from '@/types/work-order';
 
 // 获取当前路由参数
-const instance = getCurrentInstance();
-const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || '';
 
 const loading = ref(true);
 const workOrder = ref<WorkOrderWithOperationDetail | null>(null);
 
 onMounted(async () => {
+  const instance = getCurrentInstance();
+  const workOrderId = instance?.router?.params?.workOrderId || instance?.router?.params?.id || '';
+
   if (!workOrderId) {
     showToast({ title: '工单参数错误', icon: 'none' });
     setTimeout(() => backToList(), 1500);
@@ -139,6 +140,12 @@ const enterOperation = (operation: WorkOrderOperationDefinition) => {
     url: `${baseUrl}${pageName}?operationId=${operation.id}&workOrderId=${workOrder.value!.id}`,
   });
 };
+
+const enterRecord = (id: string) => {
+  navigateTo({
+    url: `/pages/prod/record-list?operationId=${id}`,
+  });
+}
 
 // 辅助方法
 const statusLabel = (status: string) => {

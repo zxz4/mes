@@ -27,14 +27,14 @@
       "@/styles/*": [
         "./src/styles/*"
       ],
-      "@/store/*": [
-        "./src/store/*"
+      "@/stores/*": [
+        "./src/stores/*"
       ],
-      "@/api/*": [
-        "./src/api/*"
+      "@/apis/*": [
+        "./src/apis/*"
       ],
-      "@/util/*": [
-        "./src/util/*"
+      "@/utils/*": [
+        "./src/utils/*"
       ]
     },
     "typeRoots": [

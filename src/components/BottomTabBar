@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { IconFont } from '@nutui/icons-vue-taro'
-import { useTabbarStore } from '@/store/tabbar'
+import { useTabbarStore } from '../stores/tabbar'
 import { navigateTo } from '@tarojs/taro'
 export default {
   name: 'BottomTabBar',
@@ -22,31 +22,10 @@ export default {
     return {
       tabbarList: [
         // {
-        //   pagePath: '/pages/home/home-page',
-        //   text: '首页',
-        //   icon: 'home',
-        //   // selectedIcon: 'home',
-        // },
-        {
-          pagePath: '/pages/work/order-list',
-          text: '工单',
-          icon: 'order',
-          // selectedIcon: 'horizontal',
-        },
-        {
-          pagePath: '/pages/prod/prod-operation',
-          text: '生产',
-          icon: 'horizontal',
-          // selectedIcon: 'setting-fill',
-        },
-
-
-        {
-          pagePath: '/pages/prod/prod-trace',
-          text: '追溯',
-          icon: 'search',
-          // selectedIcon: 'user-fill',
-        },
+        //   pagePath: '/pages/work/order-list',
+        //   text: '工单',
+        //   icon: 'order',
+        // }
       ],
     }
   },
@@ -91,7 +70,7 @@ export default {
     gap: 4rpx; // 图标与文字间距
 
     .tabbar-icon {
-      font-size:14px;
+      font-size: 14px;
       color: #999999;
     }
 

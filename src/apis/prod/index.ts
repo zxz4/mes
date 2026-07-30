@@ -1,4 +1,4 @@
-import type { Material, MaterialLot, OperationRecord } from "@/types/work-order";
+import type { Material, Product, OperationRecord } from "@/types/work-order";
 import type { ScannedLot } from "@/types/production";
 
 import { ajaxGet, ajaxPost } from "..";
@@ -16,7 +16,7 @@ export async function getMaterialBySap(sap: string) {
 
 
 export async function createMaterialLot(materialId: string, lotNumber: string, workOrderId: string | null) {
-  return ajaxPost<MaterialLot>('/api/mes/production/material-lot', {
+  return ajaxPost<Product>('/api/mes/production/material-lot', {
     materialId,
     lotNumber,
     workOrderId

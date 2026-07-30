@@ -286,8 +286,3 @@
 .bottom-safe-area {
   height: 20px;
 }
-
-.workbench-btn {
-  border-radius: 10px;
-  font-weight: 500;
-}

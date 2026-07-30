@@ -113,10 +113,10 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     alias: {
       '@/components': resolve(__dirname, '..', 'src/components'),
       '@/types': resolve(__dirname, '..', 'src/types'),
-      '@/api': resolve(__dirname, '..', 'src/api'),
+      '@/apis': resolve(__dirname, '..', 'src/apis'),
       '@/styles': resolve(__dirname, '..', 'src/styles'),
-      '@/store': resolve(__dirname, '..', 'src/store'),
-      "@/util": resolve(__dirname, '..', 'src/util'),
+      '@/stores': resolve(__dirname, '..', 'src/stores'),
+      "@/utils": resolve(__dirname, '..', 'src/utils'),
     },
   }
   if (process.env.NODE_ENV === 'development') {

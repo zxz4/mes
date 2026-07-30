@@ -210,11 +210,11 @@
 import type { WorkOrderOperationDefinition, ParameterDefinition } from '@/types/work-order';
 import { ScannedLot } from '@/types/production';
 import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
-import { scanLot, submitOperationRecord } from '@/api/prod';
+import { scanLot, submitOperationRecord } from '../../apis/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
-import { getOperation } from '@/api/work-order/look-up';
+import { getOperation } from '../../apis/work-order/look-up';
 import { IconFont } from '@nutui/icons-vue-taro';
-import { getProductStatusText } from '@/util/statusText';
+import { getProductStatusText } from '../../utils/statusText';
 
 import ScannerModal from '@/components/ScannerModal.vue';
 const showScanner = ref(false);

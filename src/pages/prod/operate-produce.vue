@@ -199,11 +199,11 @@ import { ref, onMounted, nextTick } from 'vue';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import type { WorkOrderOperationDefinition, Material, ProcessedLot } from '@/types/work-order';
 import { navigateTo, showToast, getCurrentInstance } from '@tarojs/taro';
-import { getMaterialBySap, submitOperationRecord } from '@/api/prod';
-import { getOperation } from '@/api/work-order/look-up';
-import { getProducedLotByOperationId } from '@/api/record/look-up';
+import { getMaterialBySap, submitOperationRecord } from '../../apis/prod';
+import { getOperation } from '../../apis/work-order/look-up';
+import { getProducedLotByOperationId } from '../../apis/record/look-up';
 import { IconFont } from '@nutui/icons-vue-taro';
-import { getProductStatusText } from '@/util/statusText';
+import { getProductStatusText } from '../../utils/statusText';
 
 import ScannerModal from '@/components/ScannerModal.vue';
 const showScanner = ref(false);

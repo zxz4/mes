@@ -7,3 +7,35 @@
   font-weight: bold;
   margin-bottom: 12px;
 }
+
+
+.search-bar {
+  padding: 10px 14px 0;
+}
+
+.status-filter {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-tag {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fff;
+  color: #555;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s;
+}
+
+.tag-active {
+  background: #2b7de9;
+  color: #fff;
+  border-color: #2b7de9;
+}

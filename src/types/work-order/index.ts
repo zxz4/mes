@@ -21,9 +21,9 @@ export interface Material {
 }
 
 /**
- * 物料批次信息
+ * 产出产品信息
  */
-export interface MaterialLot {
+export interface Product {
   /**
    * id
    */
@@ -39,11 +39,11 @@ export interface MaterialLot {
   /**
    * 物料名称
    */
-  materialName: string;
+  name: string;
   /**
    * 物料SAP
    */
-  materialSap: string;
+  sap: string;
   /**
    *  物料规格
    */
@@ -243,11 +243,20 @@ export interface OperationRecord {
   /**
   * 加工物料id
   */
-  processedLotNumber: string;
+  processedLotId: string;
+
+  /**
+   * 工序编号
+   */
+  operationCode: string;
+  /**
+   * 工序名称
+   */
+  operationName: string;
   /**
   * 产出物料id
   */
-  outputLotNumber: string;
+  outputLotId: string;
   /**
    * 开始时间
    */
@@ -261,13 +270,21 @@ export interface OperationRecord {
    */
   isAbnormal: boolean;
   /**
+   * 处理批次
+   */
+  processLot: Product;
+  /**
    * 参数记录
    */
   parameters: Array<ParameterRecord>
   /**
    * 辅料信息
    */
-  materialUsages: Array<OperationMaterialUsage>
+  materialUsages: Array<OperationMaterialUsage>;
+  /**
+   * 子件信息
+   */
+  subComponents: Array<OperationMaterialUsage>;
 }
 
 export interface ParameterRecord {
@@ -290,6 +307,18 @@ export interface ParameterRecord {
 }
 
 export interface OperationMaterialUsage {
+  /**
+   * id
+   */
+  id: string;
+  /**
+   * 辅料名称
+   */
+  materialName: string;
+  /**
+   * 辅料sap
+   */
+  materialSap: string;
   /**
    * 批次/sn号
    */

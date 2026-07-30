@@ -7,7 +7,6 @@
         <nut-searchbar v-model="filterKeyword" placeholder="搜索工单编码或名称" @change="onSearchChange"
           @clear="onSearchClear" />
       </view>
-
       <!-- 状态筛选标签 -->
       <view class="status-filter">
         <view v-for="status in statusOptions" :key="status.value" class="filter-tag"
@@ -18,11 +17,9 @@
 
       <!-- 列表区域 -->
       <view class="list-container">
-
         <view v-show="list.length === 0" class="empty-state">
           <nut-empty description="暂无工单" />
         </view>
-
         <view v-if="list.length > 0" class="order-list">
           <view v-for="order in list" :key="order.id" class="order-card" @click="goToOverview(order.id)">
             <view class="card-header">
@@ -80,8 +77,9 @@
 <script lang="ts" setup name="WorkOrderList">
 import { ref, computed, onMounted } from 'vue';
 import { navigateTo } from '@tarojs/taro';
-import { getLWorkOrderList } from '@/api/work-order/look-up';
+import { getLWorkOrderList } from '../../apis/work-order/look-up';
 import type { WorkOrderListItem } from '@/types/work-order';
+import { getProductStatusText } from '../../utils/statusText';
 
 const filterKeyword = ref('');
 const currentStatus = ref(''); // 空字符串表示全部
@@ -175,13 +173,7 @@ const getProgress = (order: WorkOrderListItem): number => {
 };
 
 const statusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    'Pending': '待处理',
-    'Processing': '进行中',
-    'Exception': '异常',
-    'Completed': '已完成',
-  };
-  return map[status] || status;
+  return getProductStatusText(status);
 };
 
 const statusClass = (status: string) => {
@@ -193,215 +185,5 @@ const statusClass = (status: string) => {
 </script>
 
 <style scoped>
-.order-list-page {
-  min-height: 100vh;
-  background: #f5f6f8;
-  display: flex;
-  flex-direction: column;
-}
-
-.search-bar {
-  padding: 10px 14px 0;
-}
-
-.status-filter {
-  display: flex;
-  gap: 10px;
-  padding: 12px 14px;
-  overflow-x: auto;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-}
-
-.filter-tag {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 18px;
-  font-size: 13px;
-  font-weight: 500;
-  background: #fff;
-  color: #555;
-  border: 1px solid #e0e0e0;
-  transition: all 0.2s;
-}
-
-.tag-active {
-  background: #2b7de9;
-  color: #fff;
-  border-color: #2b7de9;
-}
-
-.list-container {
-  flex: 1;
-  padding: 0 14px;
-}
-
-.loading-state,
-.empty-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 80px;
-}
-
-.order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: transform 0.1s;
-}
-
-.order-card:active {
-  background: #f9fafb;
-  transform: scale(0.98);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-@media (hover: hover) {
-  .order-card:hover {
-    background: #f5f5f5;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-}
-
-.order-card:active {
-  transform: scale(0.98);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.order-code {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.order-name {
-  font-size: 13px;
-  color: #777;
-}
-
-.status-tag {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.status-pending {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.status-processing {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-exception {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.status-completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-}
-
-.info-label {
-  font-size: 12px;
-  color: #999;
-  width: 64px;
-  flex-shrink: 0;
-}
-
-.info-value {
-  font-size: 13px;
-  color: #333;
-  font-weight: 500;
-}
-
-.info-value.mono {
-  font-family: monospace;
-}
-
-.info-value.highlight {
-  font-weight: 700;
-  color: #2b7de9;
-}
-
-.card-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #2b7de9;
-  border-radius: 3px;
-  transition: width 0.3s;
-}
-
-.progress-text {
-  font-size: 12px;
-  color: #555;
-  font-weight: 600;
-  min-width: 32px;
-  text-align: right;
-}
-
-/* 加载更多区域 */
-.load-section {
-  display: flex;
-  justify-content: center;
-  padding: 16px 0 10px;
-}
-
-.no-more {
-  font-size: 12px;
-  color: #bbb;
-}
-
-.bottom-safe-area {
-  height: 20px;
-}
+@import './order-list.css';
 </style>

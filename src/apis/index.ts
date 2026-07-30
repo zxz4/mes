@@ -1,5 +1,5 @@
 import { request, getStorageSync, showToast } from '@tarojs/taro';
-import { loadingManager } from '@/util/loadingManager';
+import { loadingManager } from '../utils/loadingManager';
 import { AbpError } from '../types';
 
 export const customHeader: Record<string, string> = {
@@ -38,9 +38,9 @@ export async function ajax<T = any>(
     loadingManager.show();
   }
 
-  if (url.startsWith('/')) {
-    url = `https://localhost:51243${url}`;
-  }
+  // if (url.startsWith('/')) {
+  //   url = `https://localhost:51243${url}`;
+  // }
 
   return new Promise((resolve, reject) => {
     Object.keys(data).forEach(key => {
