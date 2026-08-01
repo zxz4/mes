@@ -1,4 +1,4 @@
-import type { Material, Product, OperationRecord } from "@/types/work-order";
+import type { Material, TraceTreeNode, OperationRecord } from "@/types/work-order";
 import type { ScannedLot } from "@/types/production";
 
 import { ajaxGet, ajaxPost } from "..";
@@ -15,21 +15,17 @@ export async function getMaterialBySap(sap: string) {
 }
 
 
-export async function createMaterialLot(materialId: string, lotNumber: string, workOrderId: string | null) {
-  return ajaxPost<Product>('/api/mes/production/material-lot', {
-    materialId,
-    lotNumber,
-    workOrderId
-  });
-}
-
-
 export async function scanLot(lotNumber: string, workOrderId: string) {
   return ajaxGet<ScannedLot>(`/api/mes/production/scan/${lotNumber}`, { workOrderId });
 }
 
-
-
 export async function submitOperationRecord(params: object) {
   return ajaxPost<OperationRecord>('/api/mes/production/operation-record', params);
+}
+
+/**
+ * 产品全链路追溯（给定 id，返回树形结构）
+ */
+export const getProductTrace = (id: string) => {
+  return ajaxGet<TraceTreeNode>(`/api/mes/product-look-up/${id}/trace`,);
 }

@@ -328,3 +328,72 @@ export interface OperationMaterialUsage {
    */
   quantity: number;
 }
+
+
+/**
+ * 追溯树状结构
+ */
+export interface TraceTreeNode {
+  /**
+   * 产品id
+   */
+  rootId: string;
+  /**
+   * 批次号
+   */
+  lotNumber: string;
+  /**
+   * 物料名称
+   */
+  materialName: string;
+  /**
+   * SAP
+   */
+  materialSap: string;
+  /**
+   * 物料类型
+   */
+  materialType: 'CELL' | 'MODULE' | 'PACK';
+  /**
+   * 状态
+   */
+  status: 'Created' | 'AwaitNext' | 'Passed' | 'Consumed' | 'Scrapped';
+  /**
+   * 子节点
+   */
+  children: TraceTreeNode[];
+  /**
+   * 处理历史
+   */
+  processHistory: ProcessHistory[];
+}
+
+/**
+ * 工序处理记录
+ */
+export interface ProcessHistory {
+  /**
+   * 工序id
+   */
+  operationId: string;
+  /**
+   * 工序编码
+   */
+  operationCode: string;
+  /**
+   * 工序名称
+   */
+  operationName: string;
+  /**
+   * 是否异常
+   */
+  isAbnormal: boolean;
+  /**
+   * 参数信息
+   */
+  parameters: ParameterRecord[];
+  /**
+   * 辅料使用信息
+   */
+  materialUsages: OperationMaterialUsage[];
+}

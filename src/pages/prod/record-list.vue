@@ -87,7 +87,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue';
 import { getCurrentInstance, navigateTo } from '@tarojs/taro';
-import { getRecordList, getRecordDetail } from '@/apis/record/look-up';
+import { getRecordList } from '@/apis/record/look-up';
 import type { OperationRecord } from '@/types/work-order';
 import { getProductStatusText } from '@/utils/statusText';
 
