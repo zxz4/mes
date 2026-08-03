@@ -27,7 +27,7 @@
 
     <!-- 装配树 -->
     <view class="tree-card">
-      <text class="card-title">📦 装配结构追溯</text>
+      <text class="card-title">📦 生产历史追溯</text>
       <TraceNode :node="rootNode" :level="0" />
     </view>
   </view>

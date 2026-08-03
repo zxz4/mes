@@ -39,7 +39,8 @@
         </view>
         <view v-else class="record-list">
           <view v-for="record in records" :key="record.id" class="record-card">
-            <view class="card-main" @click="goToDetail(record.id)" :class="record.isAbnormal ? 'card-ng' : 'card-pass'">
+            <view class="card-main" @click="goToTrace(record.processedLotId)"
+              :class="record.isAbnormal ? 'card-ng' : 'card-pass'">
               <!-- 左侧状态条 -->
               <view class="status-bar"></view>
 
@@ -117,10 +118,6 @@ const records = ref<OperationRecord[]>([]);
 const loading = ref(false);
 const hasMore = computed(() => records.value.length < totalCount.value);
 
-// 详情展开
-const expandedId = ref<string | null>(null);
-const detailLoaded = new Set<string>(); // 已加载过详情的记录ID
-
 onMounted(() => {
   const instance = getCurrentInstance();
   operationId = instance?.router?.params?.operationId || '';
@@ -184,9 +181,9 @@ const switchStatus = (val: boolean | null) => {
   fetchRecords(true);
 };
 
-const goToDetail = (id: string) => {
+const goToTrace = (id: string) => {
   navigateTo({
-    url: `/pages/prod/record-detail?id=${id}`
+    url: `/pages/record/produce-trace?id=${id}`
   });
 };
 

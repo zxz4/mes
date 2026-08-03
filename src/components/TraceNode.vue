@@ -38,10 +38,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { TreeNode } from '@/types/product-trace.ts';
+import type { TraceTreeNode } from '@/types/work-order';
+import { getProductStatusText } from '@/utils/statusText';
 
 const props = defineProps<{
-  node: TreeNode;
+  node: TraceTreeNode;
   level: number; // 层级深度，用于缩进
 }>();
 
@@ -52,21 +53,15 @@ const toggleExpand = () => {
 };
 
 const statusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    'Created': '已创建',
-    'AwaitNext': '等待下一道',
-    'Passed': '已通过',
-    'Consumed': '已消耗',
-    'Scrapped': '已报废',
-  };
-  return map[status] || status;
+  return getProductStatusText(status);
 };
 
 const statusClass = (status: string) => {
-  if (status === 'Passed') return 'ok';
-  if (status === 'Consumed') return 'gray';
-  if (status === 'Scrapped') return 'ng';
-  return '';
+  const map: Record<string, string> = {
+    'Created': 'ok', 'AwaitNext': 'ok', 'Passed': 'ok',
+    'Consumed': 'gray', 'Scrapped': 'ng',
+  };
+  return map[status] || '';
 };
 </script>
 
