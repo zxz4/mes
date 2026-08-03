@@ -39,7 +39,7 @@ import { getProductTrace } from '@/apis/prod'; // 替换为实际API
 import type { TraceTreeNode } from '@/types/work-order';
 import TraceNode from '@/components/TraceNode.vue';
 import { getCurrentInstance, navigateTo, showToast } from '@tarojs/taro';
-
+import { getProductStatusText } from '@/utils/statusText';
 const rootNode = ref<TraceTreeNode>();
 
 // 获取数据
@@ -87,11 +87,7 @@ const abnormalCount = computed(() => {
 });
 
 const statusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    'Created': '已创建', 'AwaitNext': '等待下一道', 'Passed': '已通过',
-    'Consumed': '已消耗', 'Scrapped': '已报废',
-  };
-  return map[status] || status;
+  return getProductStatusText(status);
 };
 </script>
 

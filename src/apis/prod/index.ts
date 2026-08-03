@@ -1,5 +1,6 @@
-import type { Material, TraceTreeNode, OperationRecord } from "@/types/work-order";
+import type { Material, Product, TraceTreeNode, OperationRecord } from "@/types/work-order";
 import type { ScannedLot } from "@/types/production";
+import { PagedList } from "@/types/index";
 
 import { ajaxGet, ajaxPost } from "..";
 
@@ -28,4 +29,8 @@ export async function submitOperationRecord(params: object) {
  */
 export const getProductTrace = (id: string) => {
   return ajaxGet<TraceTreeNode>(`/api/mes/product-look-up/${id}/trace`,);
+}
+
+export const getProductList = (params: object = {}) => {
+  return ajaxGet<PagedList<Product>>('/api/mes/product-look-up', params);
 }

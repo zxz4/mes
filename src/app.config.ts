@@ -7,6 +7,7 @@ export default {
     'pages/prod/operate-assembly',
     'pages/prod/record-list',
     'pages/prod/record-detail',
+    'pages/record/product-list',
     'pages/record/produce-trace',
   ],
   window: {

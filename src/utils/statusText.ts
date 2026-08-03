@@ -18,10 +18,10 @@ export const OperationStatusText: Record<string, string> = {
 /**
  * 产品状态文本映射
  */
-const ProductStatusText: Record<string, string> = {
-  ['Created']: '已创建',
-  ['AwaitNext']: '加工中',
-  ['Passed']: '已通过',
+export const ProductStatusText: Record<string, string> = {
+  ['Created']: '已上线',
+  ['AwaitNext']: '生产中',
+  ['Passed']: '已完工',
   ['Consumed']: '已装配',
   ['Scrapped']: '已报废'
 };
