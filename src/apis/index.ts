@@ -39,7 +39,7 @@ export async function ajax<T = any>(
   }
 
   if (url.startsWith('/')) {
-    url = `https://localhost:51243${url}`;
+    url = `https://10.100.1.74:9103${url}`;
   }
 
   return new Promise((resolve, reject) => {
@@ -73,6 +73,8 @@ export async function ajax<T = any>(
             resolve(null as T);
             return;
           case 404:
+            resolve(null as T);
+            return;
           case 403:
           case 400:
             let error: AbpError | undefined = res.data.error as AbpError;

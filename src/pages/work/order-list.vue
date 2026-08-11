@@ -21,46 +21,9 @@
           <nut-empty description="暂无工单" />
         </view>
         <view v-if="list.length > 0" class="order-list">
-          <view v-for="order in list" :key="order.id" class="order-card" @click="goToOverview(order.id)">
-            <view class="card-header">
-              <view class="header-left">
-                <text class="order-code">{{ order.code }}</text>
-                <text class="order-name">{{ order.name }}</text>
-              </view>
-              <text class="status-tag" :class="statusClass(order.status)">
-                {{ statusLabel(order.status) }}
-              </text>
-            </view>
-
-            <view class="card-body">
-              <view class="info-row">
-                <text class="info-label">产品名称</text>
-                <text class="info-value">{{ order.productName }}</text>
-              </view>
-              <view class="info-row">
-                <text class="info-label">产品SAP</text>
-                <text class="info-value mono">{{ order.productSap }}</text>
-              </view>
-              <view class="info-row">
-                <text class="info-label">计划数量</text>
-                <text class="info-value">{{ order.plannedQty }}</text>
-              </view>
-              <view class="info-row">
-                <text class="info-label">完成数量</text>
-                <text class="info-value highlight">{{ order.completedQty }}</text>
-              </view>
-            </view>
-
-            <view class="card-footer">
-              <view class="progress-bar">
-                <view class="progress-fill" :style="{ width: getProgress(order) + '%' }"></view>
-              </view>
-              <text class="progress-text">{{ getProgress(order) }}%</text>
-            </view>
-          </view>
+          <OrderCard v-for="order in list" :key="order.id" :order="order" @click="goToOverview" />
         </view>
 
-        <!-- 加载更多按钮（替代 infiniteloading） -->
         <view v-if="list.length > 0" class="load-section">
           <nut-button v-if="hasMore" :loading="loading" plain size="small" @click="loadMore">
             加载更多
@@ -79,7 +42,7 @@ import { ref, computed, onMounted } from 'vue';
 import { navigateTo } from '@tarojs/taro';
 import { getLWorkOrderList } from '../../apis/work-order/look-up';
 import type { WorkOrderListItem } from '@/types/work-order';
-import { getProductStatusText } from '../../utils/statusText';
+import OrderCard from "@/components/OrderCard.vue";
 
 const filterKeyword = ref('');
 const currentStatus = ref(''); // 空字符串表示全部
@@ -164,23 +127,6 @@ const onSearchClear = () => {
 // 跳转到工序概览
 const goToOverview = (workOrderId: string) => {
   navigateTo({ url: `/pages/prod/overview-page?workOrderId=${workOrderId}` });
-};
-
-// 计算完成进度
-const getProgress = (order: WorkOrderListItem): number => {
-  if (order.plannedQty === 0) return 0;
-  return Math.min(Math.round((order.completedQty / order.plannedQty) * 100), 100);
-};
-
-const statusLabel = (status: string) => {
-  return getProductStatusText(status);
-};
-
-const statusClass = (status: string) => {
-  if (status === 'Processing') return 'status-processing';
-  if (status === 'Exception') return 'status-exception';
-  if (status === 'Completed') return 'status-completed';
-  return 'status-pending';
 };
 </script>
 

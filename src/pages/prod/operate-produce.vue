@@ -35,61 +35,10 @@
           </view>
         </view>
 
-        <!-- ===== 步骤指示器 ===== -->
-        <view class="step-indicator">
-          <view class="step-item" :class="{ 'step-active': !scannedMaterial, 'step-done': scannedMaterial }">
-            <view class="step-dot">
-              <text v-if="scannedMaterial">✓</text>
-              <text v-else>1</text>
-            </view>
-            <text class="step-label">绑定主物料</text>
-            <view class="step-line" :class="{ 'line-done': scannedMaterial }"></view>
-          </view>
-          <view class="step-item" :class="{ 'step-active': scannedMaterial, 'step-done': false }">
-            <view class="step-dot">
-              <text>2</text>
-            </view>
-            <text class="step-label">扫描SN/批次</text>
-          </view>
-        </view>
+        <StepIndicator :steps="steps" />
 
-        <!-- ===== 主物料信息卡片 ===== -->
-        <view class="material-card" v-show="scannedMaterial">
-          <view class="material-card-header">
-            <view class="material-status-dot"></view>
-            <text class="material-card-title">已绑定主物料</text>
-            <nut-button size="mini" plain type="default" class="unbind-btn" @click="scannedMaterial = null">
-              解绑
-            </nut-button>
-          </view>
-          <view class="material-card-body">
-            <view class="material-info-row">
-              <text class="material-label">物料名称</text>
-              <text class="material-value highlight">
-                {{ scannedMaterial?.name }}
-              </text>
-            </view>
-            <view class="material-info-row">
-              <text class="material-label">SAP码</text>
-              <text class="material-value mono">
-                {{ scannedMaterial?.sap }}
-              </text>
-            </view>
-            <view class="material-info-row">
-              <text class="material-label">规格</text>
-              <text class="material-value">
-                {{ scannedMaterial?.specification }}
-              </text>
-            </view>
-          </view>
-        </view>
-
-        <!-- ===== 未绑定主物料提示 ===== -->
-        <view class="material-placeholder" v-show="!scannedMaterial">
-          <view class="placeholder-icon">📱</view>
-          <text class="placeholder-title">尚未绑定主物料</text>
-          <text class="placeholder-desc">请在下方扫描主物料条码进行绑定</text>
-        </view>
+        <MaterialInfoCard :material="scannedMaterial" title="已绑定主物料" :show-unbind="true" unbind-text="重新绑定"
+          @unbind="scannedMaterial = null" />
 
         <!-- ===== 扫码输入区 ===== -->
         <view class="scan-section-card">
@@ -106,11 +55,8 @@
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
               <nut-input ref="scanInputRef" v-model="scanCode"
-                :placeholder="scannedMaterial ? '请扫描或输入物料SN码...' : '请扫描或输入主物料SAP码...'" class="scan-input" clearable
-                @confirm="handleScan" @clear="scanCode = ''">
-                <template #left>
-                  <IconFont name="scan2" color="#999" @click="showScanner = true" />
-                </template>
+                :placeholder="scannedMaterial ? '请扫描或输入物料SN码...' : '请扫描或输入主物料SAP码...'" clearable @confirm="handleScan"
+                @clear="scanCode = ''">
               </nut-input>
             </view>
             <nut-button v-if="scannedMaterial" type="primary" class="submit-btn" :loading="loading"
@@ -191,26 +137,34 @@
       </view>
     </view>
   </TabbarLayout>
-  <ScannerModal v-model:visible="showScanner" @success="onScanSuccess" />
 </template>
 
 <script lang="ts" name="Produce" setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import TabbarLayout from '@/components/TabbarLayout.vue';
 import type { WorkOrderOperationDefinition, Material, ProcessedLot } from '@/types/work-order';
 import { navigateTo, showToast, getCurrentInstance } from '@tarojs/taro';
 import { getMaterialBySap, submitOperationRecord } from '../../apis/prod';
 import { getOperation } from '../../apis/work-order/look-up';
 import { getProducedLotByOperationId } from '../../apis/record/look-up';
-import { IconFont } from '@nutui/icons-vue-taro';
 import { getProductStatusText } from '../../utils/statusText';
+import StepIndicator from '@/components/StepIndicator.vue';
+import type { StepItem } from '@/components/StepIndicator.vue';
+import MaterialInfoCard from '@/components/MaterialInfoCard.vue';
 
-import ScannerModal from '@/components/ScannerModal.vue';
-const showScanner = ref(false);
-const onScanSuccess = (result: string) => {
-  scanCode.value = result;
-  handleScan();
-};
+
+const steps = computed<StepItem[]>(() => [
+  {
+    key: 'bind',
+    label: '绑定主物料',
+    status: scannedMaterial.value ? 'done' : 'active',
+  },
+  {
+    key: 'scan',
+    label: '扫描SN/批次',
+    status: scannedMaterial.value ? 'active' : 'pending',
+  },
+]);
 
 const statusLabel = (status: string) => {
   return getProductStatusText(status);

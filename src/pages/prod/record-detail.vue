@@ -171,7 +171,7 @@ const formatTime = (isoStr: string) => {
 }
 
 .op-code {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
 }

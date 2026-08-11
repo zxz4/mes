@@ -9,6 +9,8 @@ export default {
     'pages/prod/record-detail',
     'pages/record/product-list',
     'pages/record/produce-trace',
+    'pages/bom-view',
+
   ],
   window: {
     backgroundTextStyle: 'light',

@@ -1,14 +1,21 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import { App } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
+import { history } from "@tarojs/router";
 
+import "./app.scss";
 
-import './app.scss'
+// 仅在原生环境生效
+if (Capacitor.isNativePlatform()) {
+  App.addListener("backButton", () => {
+    if (history.location.pathname != "/pages/work/order-list") {
+      window.history.back();
+    } else {
+      App.removeAllListeners();
+      App.exitApp();
+    }
+  });
+}
 
-const App = createApp({
-  onShow(options) {
-  }
-  // 入口组件不需要实现 render 方法，即使实现了也会被 taro 所覆盖
-})
-App.use(createPinia())
-
-export default App
+export default createApp({}).use(createPinia());

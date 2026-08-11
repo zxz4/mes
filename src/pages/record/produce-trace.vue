@@ -120,13 +120,13 @@ const statusLabel = (status: string) => {
 }
 
 .hero-name {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1d23;
 }
 
 .hero-sub {
-  font-size: 13px;
+  font-size: 14px;
   color: #5f6673;
 }
 
@@ -152,9 +152,10 @@ const statusLabel = (status: string) => {
 }
 
 .hero-val {
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 700;
   color: #1e293b;
+  text-align: center;
 }
 
 .hero-val.warn {
@@ -162,7 +163,7 @@ const statusLabel = (status: string) => {
 }
 
 .hero-lbl {
-  font-size: 11px;
+  font-size: 12px;
   color: #969ba6;
 }
 
@@ -178,5 +179,6 @@ const statusLabel = (status: string) => {
   font-weight: 600;
   color: #1a1d23;
   margin-bottom: 16px;
+  display: block;
 }
 </style>

@@ -30,25 +30,36 @@
           </view>
         </view>
 
-        <!-- 动态步骤指示器 -->
-        <view class="step-indicator">
-          <view v-for="(step, index) in steps" :key="step.key" class="step-item" :class="{
-            'step-active': step.status === 'active',
-            'step-done': step.status === 'done',
-            'step-optional': step.optional,
-          }">
-            <view class="step-dot">
-              <text v-if="step.status === 'done'">✓</text>
-              <text v-else>{{ index + 1 }}</text>
+        <StepIndicator :steps="steps" />
+
+        <MaterialInfoCard :material="scannedLot" :status="scannedLot?.status" title="当前物料" placeholder-icon="📱"
+          placeholder-title="尚未扫描SN" placeholder-desc="请扫描SN码获取信息" @unbind="scannedLot = null">
+          <!-- 插槽：物料状态和可执行工序 -->
+          <template #extra>
+            <view class="material-info-row">
+              <text class="material-label">状态</text>
+              <text class="material-value" :class="statusTextClass(scannedLot?.status ?? '')">
+                {{ statusLabel }}
+              </text>
             </view>
-            <text class="step-label">
-              {{ step.label }}
-              <text v-if="step.optional" class="optional-tag">(选填)</text>
-            </text>
-            <view v-if="index < steps.length - 1" class="step-line" :class="{ 'line-done': step.status === 'done' }">
+            <!-- 可执行工序标签 -->
+            <view class="available-ops" v-show="scannedLot">
+              <text class="available-title">可执行工序：</text>
+              <view class="op-tags">
+                <text v-for="op in scannedLot?.availableOperations" :key="op.operationId" class="op-tag"
+                  :class="{ 'op-tag-current': op.operationId === currentOperation.id }">
+                  {{ op.operationCode }} {{ op.operationName }}
+                </text>
+              </view>
+              <view v-show="!isCurrentOpAvailable" class="op-warning">
+                ⚠️ 当前工序不在可执行列表中
+              </view>
+              <view v-show="!canProcessMainLot" class="op-warning">
+                ⚠️ 主物料状态为“{{ statusLabel }}”，无法进行装配
+              </view>
             </view>
-          </view>
-        </view>
+          </template>
+        </MaterialInfoCard>
 
         <!-- 扫描主物料SN区域 -->
         <view class="scan-section-card" v-show="!isCurrentOpAvailable">
@@ -57,11 +68,8 @@
           </view>
           <view class="scan-input-row">
             <view class="scan-input-wrapper">
-              <nut-input ref="scanInputRef" v-model="scanCode" placeholder="扫描或输入主物料SN/批次号" class="scan-input" clearable
+              <nut-input ref="scanInputRef" v-model="scanCode" placeholder="扫描或输入主物料SN/批次号" clearable
                 @confirm="handleScanMainSN">
-                <template #left>
-                  <IconFont name="scan2" color="#999" @click="showScanner = true" />
-                </template>
               </nut-input>
             </view>
             <nut-button type="primary" class="submit-btn" :loading="loading" :disabled="!scanCode.trim()"
@@ -70,58 +78,6 @@
             </nut-button>
           </view>
           <view class="scan-hint">💡 扫描主物料SN获取工序及状态</view>
-        </view>
-
-        <!-- 主物料信息卡片 -->
-        <view class="material-card" v-show="scannedLot">
-          <view class="material-card-header">
-            <view class="material-status-dot" :class="statusDotClass(scannedLot?.status ?? '')"></view>
-            <text class="material-card-title">主物料</text>
-            <nut-button size="mini" plain type="default" class="unbind-btn" @click="scannedLot = null">
-              重新扫描
-            </nut-button>
-          </view>
-          <view class="material-card-body">
-            <view class="material-info-row">
-              <text class="material-label">名称</text>
-              <text class="material-value highlight">{{ scannedLot?.name }}</text>
-            </view>
-            <view class="material-info-row">
-              <text class="material-label">SAP</text>
-              <text class="material-value mono">{{ scannedLot?.sap }}</text>
-            </view>
-            <view class="material-info-row">
-              <text class="material-label">SN</text>
-              <text class="material-value">{{ scannedLot?.lotNumber }}</text>
-            </view>
-            <view class="material-info-row">
-              <text class="material-label">状态</text>
-              <text class="material-value" :class="statusTextClass(scannedLot?.status ?? '')">
-                {{ statusLabel }}
-              </text>
-            </view>
-            <view class="material-info-row" v-show="scannedLot?.specification">
-              <text class="material-label">规格</text>
-              <text class="material-value">{{ scannedLot?.specification }}</text>
-            </view>
-          </view>
-
-          <!-- 可执行工序标签 -->
-          <view class="available-ops" v-show="scannedLot">
-            <text class="available-title">可执行工序：</text>
-            <view class="op-tags">
-              <text v-for="op in scannedLot?.availableOperations" :key="op.operationId" class="op-tag"
-                :class="{ 'op-tag-current': op.operationId === currentOperation.id }">
-                {{ op.operationCode }} {{ op.operationName }}
-              </text>
-            </view>
-            <view v-show="!isCurrentOpAvailable" class="op-warning">
-              ⚠️ 当前工序不在可执行列表中
-            </view>
-            <view v-show="!canProcessMainLot" class="op-warning">
-              ⚠️ 主物料状态为“{{ statusLabel }}”，无法进行装配
-            </view>
-          </view>
         </view>
 
         <!-- 参数表单卡片 -->
@@ -160,8 +116,7 @@
           <!-- 组件SN扫描行 -->
           <view class="assembly-scan-row">
             <view class="scan-input-wrapper">
-              <nut-input v-model="componentSnCode" placeholder="扫描组件SN码" class="scan-input" clearable
-                @confirm="handleScanComponentSN" />
+              <nut-input v-model="componentSnCode" placeholder="扫描组件SN码" clearable @confirm="handleScanComponentSN" />
             </view>
             <nut-button type="default" size="small" class="assembly-add-btn" :loading="loading"
               :disabled="!componentSnCode.trim()" @click="handleScanComponentSN">
@@ -203,7 +158,6 @@
       </view>
     </view>
   </TabbarLayout>
-  <ScannerModal v-model:visible="showScanner" @success="onScanSuccess" />
 </template>
 
 <script lang="ts" setup name="Assembly">
@@ -213,15 +167,11 @@ import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
 import { scanLot, submitOperationRecord } from '../../apis/prod';
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { getOperation } from '../../apis/work-order/look-up';
-import { IconFont } from '@nutui/icons-vue-taro';
 import { getProductStatusText } from '../../utils/statusText';
+import StepIndicator from '@/components/StepIndicator.vue';
+import type { StepItem } from '@/components/StepIndicator.vue';
+import MaterialInfoCard from '@/components/MaterialInfoCard.vue';
 
-import ScannerModal from '@/components/ScannerModal.vue';
-const showScanner = ref(false);
-const onScanSuccess = (result: string) => {
-  scanCode.value = result;
-  handleScanMainSN();
-};
 
 onMounted(async () => {
   const instance = getCurrentInstance();
@@ -248,8 +198,8 @@ const paramErrors = ref<Record<string, string>>({});
 type PartComponent = Omit<ScannedLot, 'availableOperations' | 'materialType' | 'status'>;
 const componentList = ref<PartComponent[]>([]);
 
-const steps = computed(() => {
-  const list = [
+const steps = computed<StepItem[]>(() => {
+  const list: StepItem[] = [
     {
       key: 'scan',
       label: '扫描SN',

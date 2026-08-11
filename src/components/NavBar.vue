@@ -1,10 +1,10 @@
 <template>
-<nav class="nav-bar">
-  <view class="nav-back" @click="handleBack">        <!-- 添加包裹容器 -->
-    <IconFont name="rect-left" size="18"></IconFont>
-  </view>
-  <span class="nav-title">{{ title }}</span>
-</nav>
+  <nav class="nav-bar">
+    <view class="nav-back" @click="handleBack"> <!-- 添加包裹容器 -->
+      <IconFont name="rect-left" size="18"></IconFont>
+    </view>
+    <span class="nav-title">{{ title }}</span>
+  </nav>
 </template>
 <script setup lang="ts" name="NavBar">
 
@@ -35,6 +35,7 @@ const handleBack = () => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   border-bottom: 1px solid $help-color;
 }
+
 .nav-back {
   width: 36px;
   height: 36px;
@@ -50,9 +51,11 @@ const handleBack = () => {
   color: $title-color;
   transition: background 0.15s;
 }
+
 .nav-back:active {
   background: rgba(0, 0, 0, 0.05); // 科技主题无直接深色变量，使用半透明叠加
 }
+
 .nav-title {
   font-size: $font-size-4; // 18px
   font-weight: 500;

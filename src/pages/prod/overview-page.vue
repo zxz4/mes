@@ -8,49 +8,7 @@
       </view>
 
       <view v-if="workOrder" class="overview-content">
-        <!-- 工单基本信息卡片 -->
-        <view class="order-info-card">
-          <view class="order-header">
-            <view class="order-code">
-              <text class="code-text">{{ workOrder.code }}</text>
-              <text class="status-tag" :class="statusClass(workOrder.status)">
-                {{ statusLabel(workOrder.status) }}
-              </text>
-            </view>
-            <text class="order-name">{{ workOrder.name }}</text>
-          </view>
-
-          <view class="order-details">
-            <view class="detail-row">
-              <text class="detail-label">产品名称</text>
-              <text class="detail-value">{{ workOrder.productName }}</text>
-            </view>
-            <view class="detail-row">
-              <text class="detail-label">产品SAP</text>
-              <text class="detail-value mono">{{ workOrder.productSap }}</text>
-            </view>
-            <view class="detail-row">
-              <text class="detail-label">工单编号</text>
-              <text class="detail-value mono">{{ workOrder.code }}</text>
-            </view>
-            <view class="detail-row">
-              <text class="detail-label">计划数量</text>
-              <text class="detail-value">{{ workOrder.plannedQty }}</text>
-            </view>
-            <view class="detail-row">
-              <text class="detail-label">完成数量</text>
-              <text class="detail-value highlight">{{ workOrder.completedQty }}</text>
-            </view>
-          </view>
-
-          <!-- 进度条 -->
-          <view class="progress-section">
-            <view class="progress-bar">
-              <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
-            </view>
-            <text class="progress-text">{{ progressPercent }}% 完成</text>
-          </view>
-        </view>
+        <OrderCard :order="workOrder" />
 
         <!-- 工序列表 -->
         <view class="operation-section">
@@ -88,12 +46,11 @@
 </template>
 
 <script lang="ts" setup name="WorkOrderOverview">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { navigateTo, getCurrentInstance, showToast } from '@tarojs/taro';
 import { getWithOperation } from '../../apis/work-order/look-up';
 import type { WorkOrderWithOperationDetail, WorkOrderOperationDefinition } from '@/types/work-order';
-
-// 获取当前路由参数
+import OrderCard from '@/components/OrderCard.vue';
 
 const loading = ref(true);
 const workOrder = ref<WorkOrderWithOperationDetail | null>(null);
@@ -114,12 +71,6 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
-});
-
-const progressPercent = computed(() => {
-  if (!workOrder.value || workOrder.value.plannedQty === 0) return 0;
-  const pct = (workOrder.value.completedQty / workOrder.value.plannedQty) * 100;
-  return Math.min(Math.round(pct), 100);
 });
 
 const backToList = () => {
@@ -146,24 +97,6 @@ const enterRecord = (id: string) => {
     url: `/pages/prod/record-list?operationId=${id}`,
   });
 }
-
-// 辅助方法
-const statusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    'Pending': '暂停',
-    'Processing': '工作中',
-    'Exception': '异常待处理',
-    'Completed': '已完成',
-  };
-  return map[status] || status;
-};
-
-const statusClass = (status: string) => {
-  if (status === 'Processing') return 'status-processing';
-  if (status === 'Exception') return 'status-exception';
-  if (status === 'Completed') return 'status-completed';
-  return 'status-pending';
-};
 
 const typeLabel = (type: string) => {
   const map: Record<string, string> = {

@@ -11,12 +11,6 @@
   gap: 14px;
 }
 
-.loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
-}
 
 .error-state {
   display: flex;
@@ -25,129 +19,6 @@
   justify-content: center;
   padding-top: 80px;
   gap: 16px;
-}
-
-/* 工单信息卡片 */
-.order-info-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.order-header {
-  margin-bottom: 14px;
-}
-
-.order-code {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.code-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.status-tag {
-  font-size: 12px;
-  padding: 3px 12px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.status-pending {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.status-processing {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-exception {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.status-completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.order-name {
-  font-size: 15px;
-  color: #555;
-}
-
-.order-details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 14px;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-}
-
-.detail-label {
-  font-size: 13px;
-  color: #888;
-  width: 72px;
-  flex-shrink: 0;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-}
-
-.detail-value.mono {
-  font-family: monospace;
-}
-
-.detail-value.highlight {
-  font-weight: 700;
-  color: #2563eb;
-}
-
-/* 进度条 */
-.progress-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-
-.progress-text {
-  font-size: 13px;
-  color: #555;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 /* 工序列表 */
@@ -159,7 +30,7 @@
 }
 
 .section-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
   margin-bottom: 12px;
@@ -227,14 +98,15 @@
 }
 
 .op-code {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
 }
 
 .op-name {
-  font-size: 14px;
-  color: #555;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
 }
 
 .op-tags {
@@ -243,10 +115,10 @@
 }
 
 .op-type-tag {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
+  font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
 }
 
 .type-produce {

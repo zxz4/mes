@@ -92,7 +92,7 @@ const statusClass = (status: string) => {
 
 .node-title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   color: #1e293b;
 }
 
@@ -104,12 +104,12 @@ const statusClass = (status: string) => {
 }
 
 .meta-text {
-  font-size: 12px;
+  font-size: 14px;
   color: #969ba6;
 }
 
 .node-status {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
@@ -149,7 +149,7 @@ const statusClass = (status: string) => {
 }
 
 .detail-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #4a5568;
   margin-bottom: 6px;
@@ -162,7 +162,7 @@ const statusClass = (status: string) => {
   gap: 10px;
   padding: 5px 0;
   border-bottom: 1px solid #f3f5f8;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .step-dot {
@@ -184,18 +184,18 @@ const statusClass = (status: string) => {
   font-weight: 700;
   color: #1e293b;
   min-width: 48px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .step-name {
   color: #64748b;
   flex: 1;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .step-badge {
   font-weight: 700;
-  font-size: 10px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 8px;
 }
